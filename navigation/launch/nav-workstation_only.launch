@@ -1,0 +1,18 @@
+
+<launch>
+  <machine name="workstation" address="workstation" user="rss-student" 
+    password="Lucky7" ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)">
+     <env name="ROS_MASTER_URI" value="http://workstation:11311" />
+     <env name="ROS_HOSTNAME" value="workstation" />
+     <env name="DISPLAY" value=":0" />
+  </machine>
+  
+  <node name="gui" pkg="rosjava_bootstrap" type="run.py" args="lab6 GlobalNavigation.MapGUI" machine="workstation" output="screen"/>
+  <node name="nav" pkg="rosjava_bootstrap" type="run.py" args="lab6 GlobalNavigation.GlobalNavigation" machine="workstation" output="screen">
+    <param name="mapFileName" value="/home/rss-student/RSS-I-group/lab6/src/global-nav-maze-2011-med.map" />
+    <!--
+    <param name="mapFileName" value="/home/rss-student/RSS-I-group/lab6/src/practice-maze-02.map" />
+    -->
+  </node>
+
+</launch>
