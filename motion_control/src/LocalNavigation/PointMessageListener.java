@@ -3,7 +3,7 @@ package LocalNavigation;
 import java.awt.Color;
 
 import org.ros.message.MessageListener;
-import org.ros.message.lab5_msgs.GUIPointMsg;
+import org.ros.message.all_msgs.GUIPointMsg;
 
 public class PointMessageListener implements MessageListener<GUIPointMsg> {
 

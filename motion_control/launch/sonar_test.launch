@@ -1,5 +1,5 @@
 <launch>
-  <include file="$(find lab4)/launch/config.launch" />
+  <include file="$(find motion_control)/launch/config.launch" />
 
   <node name="plo" pkg="rxtools"           type="rxplot" args="/rss/Sonars/Front/range /rss/Sonars/Back/range" machine="workstation"/>
   <node name="lis" pkg="rosjava_bootstrap" type="run.py" args="uorc_listener Listener" machine="netbook" /> 

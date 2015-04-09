@@ -224,7 +224,7 @@ public class Grasping implements NodeMain {
 	 */
 	public Grasping () {
 
-		LAB_PART = PART_3A;//PART_2A;
+		LAB_PART = PART_3B;//PART_2A;
 		System.out.println("Lab part 3B"); // TODO
 
 		switch (LAB_PART) {
@@ -714,8 +714,8 @@ public class Grasping implements NodeMain {
 	}
 
 
-	private double target_hue_level = 0.03;
-	private double hue_threshold= 0.008;
+	private double target_hue_level = 0.00;
+	private double hue_threshold= 0.09;
 	private double saturation_level = 0.7;
 	private double blob_size_threshold = 0.015;
 	private double target_radius = 0.1;
@@ -726,14 +726,20 @@ public class Grasping implements NodeMain {
 	private double rotation_error_tolerance = 0.2;
 	private double rotation_velocity_gain = 0.1;
 	private double rotation_velocity_max = 0.05;
-	private boolean use_gaussian_blur = true;
+	private boolean use_gaussian_blur = false;//true;
+  int videoCounter = 0;
 	/**
 	 * <p>Handle an image message. Perform blob tracking and
 	 * servo robot towards target.</p>
 	 *
 	 * @param a received camera message
 	 */
-	public void handle(byte[] rawImage, int width, int height) {
+	public synchronized void handle(byte[] rawImage, int width, int height) {
+    ++videoCounter;
+    if (videoCounter % 12 != 0) {
+      return;
+    }
+    System.out.println("======================================+ASD=================");
 		// on first camera message, create new BlobTracking instance
 		if ( blobTrack == null ) {
 			System.out.println("Blobtracking");

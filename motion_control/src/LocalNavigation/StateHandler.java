@@ -83,7 +83,7 @@ public class StateHandler {
 
   // TODO: EXPERIMENTATION MODULE
   protected synchronized void dummyCommand() {
-    motionCommander.command(new PersistentCommand(0.2));
+    motionCommander.command(new PersistentCommand(0.02, 0.0));
   }
 
   protected synchronized void step() {

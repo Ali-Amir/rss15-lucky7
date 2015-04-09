@@ -1,7 +1,7 @@
 package GlobalNavigation;
 
 import org.ros.message.MessageListener;
-import org.ros.message.lab6_msgs.GUIPolyMsg;
+import org.ros.message.all_msgs.GUIPolyMsg;
 
 import java.awt.Color;
 import java.awt.geom.*;

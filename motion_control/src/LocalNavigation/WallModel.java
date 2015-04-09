@@ -3,8 +3,8 @@ package LocalNavigation;
 import java.awt.Color;
 import java.awt.geom.Point2D;
 
-import org.ros.message.lab5_msgs.GUISegmentMsg;
-import org.ros.message.lab5_msgs.GUILineMsg;
+import org.ros.message.all_msgs.GUISegmentMsg;
+import org.ros.message.all_msgs.GUILineMsg;
 import org.ros.node.topic.Publisher;
 import org.ros.node.Node;
 
@@ -31,8 +31,8 @@ public class WallModel {
   protected Publisher<GUISegmentMsg> guiSegmentPub;
 
   WallModel(Node node) {
-    guiLinePub = node.newPublisher("gui/Line", "lab5_msgs/GUILineMsg");
-    guiSegmentPub = node.newPublisher("gui/Segment", "lab5_msgs/GUISegmentMsg");
+    guiLinePub = node.newPublisher("gui/Line", "all_msgs/GUILineMsg");
+    guiSegmentPub = node.newPublisher("gui/Segment", "all_msgs/GUISegmentMsg");
   }
 
   public boolean isWallStable() {

@@ -438,19 +438,19 @@ public class MapGUI extends SonarGUI implements NodeMain{
     }
   }
 
-    private Subscriber<org.ros.message.lab6_msgs.GUIRectMsg> guiRectSub;
-    private Subscriber<org.ros.message.lab6_msgs.GUIPolyMsg> guiPolySub;
-    private Subscriber<org.ros.message.lab5_msgs.GUIEraseMsg> guiEraseSub;
+    private Subscriber<org.ros.message.all_msgs.GUIRectMsg> guiRectSub;
+    private Subscriber<org.ros.message.all_msgs.GUIPolyMsg> guiPolySub;
+    private Subscriber<org.ros.message.all_msgs.GUIEraseMsg> guiEraseSub;
 
     /**
      * Hook called by ROS to start the gui
      **/
     public void onStart(Node node) {
-	guiRectSub = node.newSubscriber("gui/Rect", "lab6_msgs/GUIRectMsg");
+	guiRectSub = node.newSubscriber("gui/Rect", "all_msgs/GUIRectMsg");
 	guiRectSub.addMessageListener(new RectMessageListener(this));
-	guiPolySub = node.newSubscriber("gui/Poly", "lab6_msgs/GUIPolyMsg");
+	guiPolySub = node.newSubscriber("gui/Poly", "all_msgs/GUIPolyMsg");
 	guiPolySub.addMessageListener(new PolyMessageListener(this));
-	guiEraseSub = node.newSubscriber("gui/Erase", "lab5_msgs/GUIEraseMsg");
+	guiEraseSub = node.newSubscriber("gui/Erase", "all_msgs/GUIEraseMsg");
 	guiEraseSub.addMessageListener(new EraseMessageListener(this));
 	super.onStart(node);
     }

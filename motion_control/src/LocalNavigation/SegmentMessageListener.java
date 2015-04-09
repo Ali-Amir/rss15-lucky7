@@ -3,7 +3,7 @@ package LocalNavigation;
 import java.awt.Color;
 
 import org.ros.message.MessageListener;
-import org.ros.message.lab5_msgs.GUISegmentMsg;
+import org.ros.message.all_msgs.GUISegmentMsg;
 
 public class SegmentMessageListener implements MessageListener<GUISegmentMsg> {
 

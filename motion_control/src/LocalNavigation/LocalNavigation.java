@@ -10,8 +10,8 @@ import org.ros.message.rss_msgs.SonarMsg;
 import org.ros.node.Node;
 
 import org.ros.message.MessageListener;
-import org.ros.message.lab5_msgs.GUILineMsg;
-import org.ros.message.lab5_msgs.GUIPointMsg;
+import org.ros.message.all_msgs.GUILineMsg;
+import org.ros.message.all_msgs.GUIPointMsg;
 import org.ros.message.rss_msgs.MotionMsg;
 import org.ros.namespace.GraphName;
 import org.ros.node.Node;
@@ -94,7 +94,7 @@ public class LocalNavigation implements NodeMain {
 
     statePub = node.newPublisher("/rss/state", "std_msgs/String");
     motorPub = node.newPublisher("command/Motors", "rss_msgs/MotionMsg");
-    guiPointPub = node.newPublisher("gui/Point", "lab5_msgs/GUIPointMsg");
+    guiPointPub = node.newPublisher("gui/Point", "all_msgs/GUIPointMsg");
 
     robot = new Robot();
     stateHandler = new StateHandler(State.SENSING_WALL, node, robot);

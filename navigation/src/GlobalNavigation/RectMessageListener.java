@@ -3,8 +3,8 @@ package GlobalNavigation;
 import java.awt.Color;
 
 import org.ros.message.MessageListener;
-import org.ros.message.lab5_msgs.ColorMsg;
-import org.ros.message.lab6_msgs.GUIRectMsg;
+import org.ros.message.all_msgs.ColorMsg;
+import org.ros.message.all_msgs.GUIRectMsg;
 
 public class RectMessageListener implements MessageListener<GUIRectMsg> {
 

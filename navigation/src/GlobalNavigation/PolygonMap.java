@@ -5,9 +5,9 @@ import java.io.*;
 import java.util.*;
 import java.text.*;
 
-import org.ros.message.lab5_msgs.GUIEraseMsg;
-import org.ros.message.lab6_msgs.GUIPolyMsg;
-import org.ros.message.lab6_msgs.GUIRectMsg;
+import org.ros.message.all_msgs.GUIEraseMsg;
+import org.ros.message.all_msgs.GUIPolyMsg;
+import org.ros.message.all_msgs.GUIRectMsg;
 import org.ros.node.Node;
 import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
@@ -82,7 +82,7 @@ public class PolygonMap implements NodeMain{
 
 	private Publisher<Object> polyPub;
 
-	private String mapFile = "/home/rss-staff/ros/rss/solutions/lab6/src/global-nav-maze-2011-basic.map";
+	private String mapFile = "/home/rss-staff/ros/rss/solutions/navigation/src/global-nav-maze-2011-basic.map";
 
 	/**
 	 * <p>Create a new map, parsing <code>mapFile</code>.</p>
@@ -447,9 +447,9 @@ public class PolygonMap implements NodeMain{
 	 */
 	@Override
 	public void onStart(Node node) {
-		erasePub = node.newPublisher("gui/Erase", "lab5_msgs/GUIEraseMsg");
-		rectPub = node.newPublisher("gui/Rect", "lab6_msgs/GUIRectMsg");
-		polyPub = node.newPublisher("gui/Poly", "lab6_msgs/GUIPolyMsg");
+		erasePub = node.newPublisher("gui/Erase", "all_msgs/GUIEraseMsg");
+		rectPub = node.newPublisher("gui/Rect", "all_msgs/GUIRectMsg");
+		polyPub = node.newPublisher("gui/Poly", "all_msgs/GUIPolyMsg");
 		this.instanceMain(mapFile);
 	}
 

@@ -1,7 +1,7 @@
 package GlobalNavigation;
 
 import org.ros.message.MessageListener;
-import org.ros.message.lab5_msgs.GUIEraseMsg;
+import org.ros.message.all_msgs.GUIEraseMsg;
 
 import LocalNavigation.SonarGUI;
 

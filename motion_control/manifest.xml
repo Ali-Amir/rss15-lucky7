@@ -1,7 +1,7 @@
 <package>
-  <description brief="lab5">
+  <description brief="motion_control">
 
-     lab5
+     motion_control
 
   </description>
   <author>rss-staff</author>
@@ -10,12 +10,12 @@
   <url>http://ros.org/wiki/lab5</url>
   <depend package="rosjava"/>
   <depend package="rss_msgs"/>
-  <depend package="lab5_msgs" />
-  <depend package="lab4" />
+  <depend package="all_msgs" />
+  <depend package="vision" />
 
   <export>
     <rosjava-src location="src" />
-    <rosjava-pathelement location="target/" groupId="org.ros" artifactId="lab5" version="0.0" built="true" />
+    <rosjava-pathelement location="target/" groupId="org.ros" artifactId="motion_control" version="0.0" built="true" />
   </export>
 
 </package>

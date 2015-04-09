@@ -667,10 +667,10 @@ public class SonarGUI extends VisionGUI {
     }
   }
 
-    public Subscriber<org.ros.message.lab5_msgs.GUILineMsg> guiLineSub;
-    public Subscriber<org.ros.message.lab5_msgs.GUISegmentMsg> guiSegmentSub;
-    public Subscriber<org.ros.message.lab5_msgs.GUIPointMsg> guiPointSub;
-    public Subscriber<org.ros.message.lab5_msgs.GUIEraseMsg> guiEraseSub;
+    public Subscriber<org.ros.message.all_msgs.GUILineMsg> guiLineSub;
+    public Subscriber<org.ros.message.all_msgs.GUISegmentMsg> guiSegmentSub;
+    public Subscriber<org.ros.message.all_msgs.GUIPointMsg> guiPointSub;
+    public Subscriber<org.ros.message.all_msgs.GUIEraseMsg> guiEraseSub;
 
   /**
    * <p>See <code>VisualServo.VisionGUI.instanceMain()</code> and {@link
@@ -679,10 +679,10 @@ public class SonarGUI extends VisionGUI {
   @Override
   public void onStart(Node node) {
       super.onStart(node);
-      guiLineSub = node.newSubscriber("gui/Line", "lab5_msgs/GUILineMsg");
-      guiSegmentSub = node.newSubscriber("gui/Segment", "lab5_msgs/GUISegmentMsg");
-      guiPointSub = node.newSubscriber("gui/Point", "lab5_msgs/GUIPointMsg");
-      guiEraseSub = node.newSubscriber("gui/Erase", "lab5_msgs/GUIEraseMsg");
+      guiLineSub = node.newSubscriber("gui/Line", "all_msgs/GUILineMsg");
+      guiSegmentSub = node.newSubscriber("gui/Segment", "all_msgs/GUISegmentMsg");
+      guiPointSub = node.newSubscriber("gui/Point", "all_msgs/GUIPointMsg");
+      guiEraseSub = node.newSubscriber("gui/Erase", "all_msgs/GUIEraseMsg");
 
       guiLineSub.addMessageListener(new LineMessageListener(this));
       guiSegmentSub.addMessageListener(new SegmentMessageListener(this));

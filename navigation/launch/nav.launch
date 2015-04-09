@@ -1,16 +1,16 @@
 
 <launch>
-  <include file="$(find lab4)/launch/config.launch" />
+  <include file="$(find vision)/launch/config.launch" />
 
 
   <node name="lis" pkg="rosjava_bootstrap" type="run.py" args="uorc_listener Listener" machine="netbook" /> 
   <node name="pub" pkg="rosjava_bootstrap" type="run.py" args="uorc_publisher Publisher" machine="netbook" />
   <node name="odo" pkg="rosjava_bootstrap" type="run.py" args="odometry odometry.Odometry" machine="netbook" /> 
-  <node name="gui" pkg="rosjava_bootstrap" type="run.py" args="lab6 GlobalNavigation.MapGUI" machine="workstation" />
-  <node name="nav" pkg="rosjava_bootstrap" type="run.py" args="lab6 GlobalNavigation.GlobalNavigation" machine="netbook">
+  <node name="gui" pkg="rosjava_bootstrap" type="run.py" args="navigation GlobalNavigation.MapGUI" machine="workstation" />
+  <node name="nav" pkg="rosjava_bootstrap" type="run.py" args="navigation GlobalNavigation.GlobalNavigation" machine="netbook">
     <!--
-      <param name="mapFileName" value="/home/rss-student/RSS-I-group/lab6/src/practice-maze-01.map" />
+      <param name="mapFileName" value="/home/rss-student/RSS-I-group/navigation/src/practice-maze-01.map" />
     -->
-    <param name="mapFileName" value="/home/rss-student/RSS-I-group/lab6/src/global-nav-maze-2011-basic.map" />
+    <param name="mapFileName" value="/home/rss-student/RSS-I-group/navigation/src/global-nav-maze-2011-basic.map" />
   </node>
 </launch>

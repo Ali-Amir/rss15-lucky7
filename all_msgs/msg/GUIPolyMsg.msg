@@ -1,4 +1,4 @@
-lab5_msgs/ColorMsg c
+all_msgs/ColorMsg c
 int32 numVertices
 float32[] x
 float32[] y

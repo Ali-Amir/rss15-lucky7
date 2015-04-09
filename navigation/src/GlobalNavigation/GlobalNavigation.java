@@ -12,15 +12,15 @@ import org.ros.node.*;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 import org.ros.node.parameter.ParameterTree;
-import org.ros.message.lab5_msgs.GUILineMsg;
-import org.ros.message.lab5_msgs.GUIPointMsg;
-import org.ros.message.lab5_msgs.GUISegmentMsg;
-import org.ros.message.lab5_msgs.GUIEraseMsg;
+import org.ros.message.all_msgs.GUILineMsg;
+import org.ros.message.all_msgs.GUIPointMsg;
+import org.ros.message.all_msgs.GUISegmentMsg;
+import org.ros.message.all_msgs.GUIEraseMsg;
 import org.ros.message.rss_msgs.BumpMsg;
 import org.ros.message.rss_msgs.SonarMsg;
 import org.ros.message.rss_msgs.OdometryMsg;
-import org.ros.message.lab6_msgs.GUIPolyMsg;
-import org.ros.message.lab6_msgs.GUIRectMsg;
+import org.ros.message.all_msgs.GUIPolyMsg;
+import org.ros.message.all_msgs.GUIRectMsg;
 
 import LocalNavigation.StateHandler;
 
@@ -46,16 +46,16 @@ public class GlobalNavigation implements NodeMain {
   @Override
   public void onStart(Node node) {
     
-    guiRectPub = node.newPublisher("gui/Rect", "lab6_msgs/GUIRectMsg");
-    guiPolyPub = node.newPublisher("gui/Poly", "lab6_msgs/GUIPolyMsg");
-    guiErasePub = node.newPublisher("gui/Erase", "lab5_msgs/GUIEraseMsg");
-    guiPointPub = node.newPublisher("gui/Point", "lab5_msgs/GUIPointMsg");
+    guiRectPub = node.newPublisher("gui/Rect", "all_msgs/GUIRectMsg");
+    guiPolyPub = node.newPublisher("gui/Poly", "all_msgs/GUIPolyMsg");
+    guiErasePub = node.newPublisher("gui/Erase", "all_msgs/GUIEraseMsg");
+    guiPointPub = node.newPublisher("gui/Point", "all_msgs/GUIPointMsg");
 
     motorPub = node.newPublisher("command/Motors", "rss_msgs/MotionMsg");
     robot = new LocalNavigation.Robot();
     nav = new WaypointNav(Robot_State.READY, node, robot);
 
-    guiSegmentPub = node.newPublisher("gui/Segment", "lab5_msgs/GUISegmentMsg");
+    guiSegmentPub = node.newPublisher("gui/Segment", "all_msgs/GUISegmentMsg");
     
 	  ParameterTree paramTree = node.newParameterTree();    
 	  String mapFileName = paramTree.getString(node.resolveName("~/mapFileName"));
