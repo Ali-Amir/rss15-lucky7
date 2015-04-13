@@ -27,55 +27,39 @@ import VisualServo.Image;
  **/
 
 enum RoboFSM {
-  BLIND_APPROACH,
-  DO_NOTHING,
 	/**
 	 * <p>FSM state: arm initial position.  The initial position is expected in
 	 * fully retracted state, shoulder back, arm back, gripper closed.<\p>
 	 */
 	INITIALIZE_ARM,
 	/**
-	 * <p>FSM state: positioning arm for a grasp<\p>
+	 * <p>FSM state: set arm to gated position
+	 * Shoulder: -pi/2
+	 * Wrist: pi/2<\p>
 	 */
-	SET_ARM_FOR_GRASP,
+	SET_ARM_TO_GATE,
 	/**
-	 * <p>FSM state: detect break-beam obstruction<\p>
+	 * <p>FSM state: maintain gated position<\p>
 	 */
-	WAIT_FOR_BREAKBEAM,
+	GATING,
 	/**
-	 * <p>FSM state: grasp object with gripper<\p>
+	 * <p>FSM state: set blade to collect block<\p>
 	 */
-	GRASP_OBJECT,
+	SET_ARM_TO_COLLECT,
 	/**
-	 * <p>FSM state: lift object with shoulder<\p>
+	 * <p>FSM state: collecting motion<\p>
 	 */
-	LIFT_OBJECT,
+	COLLECTING,
 	/**
 	 * <p>FSM state: object has been dropped<\p>
 	 */
-	DROPPED_OBJECT,
-
-	/**
-	 * <p>FSM state: move forward by set transport distance<\p>
-	 */
 	MOVE_FORWARD,
 	/**
-	 * <p>FSM state: lower object with shoulder<\p>
-	 */
-	LOWER_OBJECT,
-	/**
-	 * <p>FSM state: release object from gripper<\p>
-	 */
-	RELEASE_OBJECT,
-	/**
-	 * <p>FSM state: translate backward to starting point<\p>
+	 * <p>FSM state: move backward by set transport distance<\p>
 	 */
 	MOVE_BACKWARD,
-	VISUAL_SERVO_SEARCH,
-	SET_ARM_FOR_APPROACH,
 	VISUAL_SERVO_APPROACH,
-  // Part 3A
-  GRIPPER,  
+	VISUAL_SERVO_SEARCH
 }
 
 public class Grasping implements NodeMain {
@@ -85,23 +69,14 @@ public class Grasping implements NodeMain {
 	 * <p>Used to cleanly separate code fragments from different Parts of the
 	 * lab<\p>
 	 */
-	public int LAB_PART;
-	static final int PART_2A = 0;
-	static final int PART_2B = 1;
-	static final int PART_3A = 2;
-	static final int PART_3B = 3;
-
+	public int SERVO_MODE;
+	static final int FIRST_MODE = 0;
+	static final int SECOND_MODE = 1;
 	/**
 	 * <p>Shoulder joint array index.  Note, current sense is on Orc port 0,
 	 * which we want for shoulder.<\p>
 	 */
 	static final int SHOULDER_INDEX = 0;
-
-	/**
-	 * <p>Gripper joint array index.  Note, current sense is on Orc port 2,
-	 * which we want for gripper.<\p>
-	 */
-	static final int GRIPPER_INDEX = 2;
 
 	/**
 	 * <p>Wrist joint array index<\p>
@@ -114,11 +89,6 @@ public class Grasping implements NodeMain {
 	ShoulderController shoulderControl = new ShoulderController();
 
 	/**
-	 * <p>Gripper controller instance<\p>
-	 */
-	GripperController gripperControl = new GripperController();
-
-	/**
 	 * <p>Wrist controller instance<\p>
 	 */
 	WristController wristControl = new WristController();
@@ -126,7 +96,7 @@ public class Grasping implements NodeMain {
 	/**
 	 * <p>Entire Arm controller, array of JointControllers<\p>
 	 */
-	JointController[] armControl = {shoulderControl, wristControl, gripperControl};
+	JointController[] armControl = {shoulderControl, wristControl};
 
 	/**
 	 * <p>First time stamp<\p>
@@ -224,25 +194,20 @@ public class Grasping implements NodeMain {
 	 */
 	public Grasping () {
 
-		LAB_PART = PART_3B;//PART_2A;
-		System.out.println("Lab part 3B"); // TODO
+		SERVO_MODE = FIRST_MODE;//PART_2A;
+		//System.out.println("FIRST MODE"); 
 
-		switch (LAB_PART) {
-			case PART_2A: {
+		switch (SERVO_MODE) {
+			case FIRST_MODE: {
         		fsmState = RoboFSM.INITIALIZE_ARM;
-				gripperControl.setState(GripperController.GRIPPER_INITIALIZE);
 				wristControl.setState(WristController.WRIST_INITIALIZE);
 				shoulderControl.setState(ShoulderController.SHOULDER_INITIALIZE);
 				break;
 			}
-      case PART_3A: {
-        fsmState = RoboFSM.INITIALIZE_ARM;
-        break;
-      }
-			case PART_3B: {
-				fsmState = RoboFSM.INITIALIZE_ARM;
-				break;
-			}
+		    case SECOND_MODE: {
+		        fsmState = RoboFSM.INITIALIZE_ARM;
+		        break;
+		    }
 			default:
 				break;
 		}
@@ -295,7 +260,6 @@ public class Grasping implements NodeMain {
 	 */
   int counter = 0;
 	public void handle(ArmMsg msg) {
- 		gripperControl.update(msg.pwms[GRIPPER_INDEX]);
 		wristControl.update(msg.pwms[WRIST_INDEX]);
 		shoulderControl.update(msg.pwms[SHOULDER_INDEX]);
 
@@ -304,119 +268,20 @@ public class Grasping implements NodeMain {
       return;
     }
 
-    armTheta[GRIPPER_INDEX] = gripperControl.step(msg);
 		armTheta[WRIST_INDEX] = wristControl.step(msg);
 		armTheta[SHOULDER_INDEX] = shoulderControl.step(msg);
 
-  	// Send arm pose to the Orc
+  		// Send arm pose to the Orc
 		ArmMsg armMsg = new ArmMsg();
 		armMsg.pwms = armTheta;
 		armPub.publish(armMsg);
 
-		// Part 2A - Arm gymnastics
-    if (LAB_PART == PART_2A) {
-      //System.out.println("in part 2A, handle message. Current state: " + fsmState);
-      /*gripperControl.setState(GripperController.GRIPPER_OPENING);
-      wristControl.setState(WristController.WRIST_EXTENDING);
-      shoulderControl.setState(ShoulderController.SHOULDER_EXTENDING);*/
-      switch (fsmState) {
-        case DO_NOTHING: {
-        	shoulderControl.setState(ShoulderController.SHOULDER_FINALIZE);
-        }
-        
-        case INITIALIZE_ARM: {
-					if ( gripperControl.isAtDesired()
-							&& wristControl.isAtDesired()
-							&& shoulderControl.isAtDesired() ) {
-            System.out.println("Changing state to GRIPPER in part 2A");
-            fsmState = RoboFSM.GRIPPER;
-            gripperControl.setState(GripperController.GRIPPER_OPENING);
-          }
-          break;
-        }
-        
-        case GRIPPER: {
-          if (gripperControl.getState() == GripperController.GRIPPER_CLOSED) {
-            fsmState = RoboFSM.DO_NOTHING;
-          } else {
-            System.out.println("Commanding gripper to pwm: " + armTheta[GRIPPER_INDEX] +
-                                ", current pwm: " + msg.pwms[GRIPPER_INDEX]);
-            //gripperControl.setState(GripperController.GRIPPER_OPENING);
-            //armTheta[GRIPPER_INDEX] = gripperControl.step(msg);
-          }
-        }
-      }
-    } //if part 2A
-
-    if (LAB_PART == PART_3A) {
+		if (SERVO_MODE == FIRST_MODE) {
 
 			switch (fsmState) {
 
-				case DO_NOTHING: {
-					return;
-				}
-
 				case INITIALIZE_ARM: {
-					if ( gripperControl.isAtDesired()
-							&& wristControl.isAtDesired()
-							&& shoulderControl.isAtDesired() ) {
-						System.out.println("========================================================");
-						System.out.println("Arm is now initialized (in retracted state)");
-						// part 3b
-						//fsmState = RoboFSM.SET_ARM_FOR_GRASP;
-						// Part 4:
-						fsmState = RoboFSM.SET_ARM_FOR_GRASP;
-					}
-					break;
-				}
-
-				case SET_ARM_FOR_GRASP: {
-					System.out.println("SET_ARM_FOR_GRASP");
-					if (gripperControl.isAtDesired() && wristControl.isAtDesired() &&
-							shoulderControl.isAtDesired()) {
-						System.out.println("Arm is SET FOR GRASP");
-						// part 3b
-						//fsmState = RoboFSM.BLIND_APPROACH;
-						// part 4:
-						fsmState = RoboFSM.WAIT_FOR_BREAKBEAM;
-
-					}
-					break;
-				}
-
-				case SET_ARM_FOR_APPROACH: {
-					System.out.println("SET_ARM_FOR_APPROACH");
-					if (gripperControl.isAtDesired() && wristControl.isAtDesired() &&
-							shoulderControl.isAtDesired()) {
-						System.out.println("  - Arm is SET FOR APPROACH");
-						fsmState = RoboFSM.BLIND_APPROACH;
-					}
-					break;
-				}
-
-				case LOWER_OBJECT: {
-					System.out.println("LOWER OBJECT");
-					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
-						System.out.println("Arm is LOWERED");
-						fsmState = RoboFSM.RELEASE_OBJECT;
-					}
-				}
-			}
-
-		} // if Part 3b	
-    
-		if (LAB_PART == PART_3B) {
-
-			switch (fsmState) {
-
-				case DO_NOTHING: {
-					return;
-				}
-
-				case INITIALIZE_ARM: {
-					if ( gripperControl.isAtDesired()
-							&& wristControl.isAtDesired()
-							&& shoulderControl.isAtDesired() ) {
+					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() ) {
 						System.out.println("========================================================");
 						System.out.println("Arm is now initialized (in retracted state)");
 						// part 3b
@@ -427,36 +292,14 @@ public class Grasping implements NodeMain {
 					break;
 				}
 
-				case SET_ARM_FOR_GRASP: {
-					System.out.println("SET_ARM_FOR_GRASP");
-					if (gripperControl.isAtDesired() && wristControl.isAtDesired() &&
-							shoulderControl.isAtDesired()) {
-						System.out.println("Arm is SET FOR GRASP");
-						// part 3b
-						//fsmState = RoboFSM.BLIND_APPROACH;
-						// part 4:
+				case SET_ARM_TO_COLLECT: {
+					System.out.println("SET_BLADE_TO_COLLECT");
+					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
+						System.out.println("BLADE IS SET TO COLLECT");
 						fsmState = RoboFSM.VISUAL_SERVO_APPROACH;
 
 					}
 					break;
-				}
-
-				case SET_ARM_FOR_APPROACH: {
-					System.out.println("SET_ARM_FOR_APPROACH");
-					if (gripperControl.isAtDesired() && wristControl.isAtDesired() &&
-							shoulderControl.isAtDesired()) {
-						System.out.println("  - Arm is SET FOR APPROACH");
-						fsmState = RoboFSM.BLIND_APPROACH;
-					}
-					break;
-				}
-
-				case LOWER_OBJECT: {
-					System.out.println("LOWER OBJECT");
-					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
-						System.out.println("Arm is LOWERED");
-						fsmState = RoboFSM.RELEASE_OBJECT;
-					}
 				}
 			}
 
@@ -470,14 +313,9 @@ public class Grasping implements NodeMain {
 	public void handle(OdometryMsg msg) {
 		//System.out.println("Odometry Message: (" + msg.x + " ," + msg.y + ", " + msg.theta + ")");
 
-		// Part 3B - Object Transport FSM
-		if (LAB_PART == PART_3B) {
+		// 
+		if (SERVO_MODE == FIRST_MODE) {
 			switch (fsmState) {
-
-				case DO_NOTHING: {
-					setVelocity(0.0, 0.0);
-					break;
-				}
 
 				case INITIALIZE_ARM: {
 					setVelocity(0.0, 0.0);
@@ -508,7 +346,7 @@ public class Grasping implements NodeMain {
 						startingMove = true;
 						setVelocity(0.0, 0.0);
 						//					Robot.setVelocity(0.0, 0.0);
-						fsmState = RoboFSM.LOWER_OBJECT;
+						//fsmState = RoboFSM.LOWER_OBJECT; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 					}
 					break;
 				}
@@ -536,118 +374,10 @@ public class Grasping implements NodeMain {
 						startingMove = true;
 						setVelocity(0.0, 0.0);
 						System.out.println("Completed Object Transport");
-						fsmState = RoboFSM.SET_ARM_FOR_GRASP;
+						//fsmState = RoboFSM.SET_ARM_FOR_GRASP; !!!!!!!!!!!
 					}
 					break;
 				}
-
-				case BLIND_APPROACH:
-					System.out.println("odom_handler:\tBumpPressed:\t"+bumpPressed);
-					if(bumpPressed){
-						setVelocity(0,0);
-						fsmState = RoboFSM.GRASP_OBJECT;
-					}
-					else{
-						setVelocity(0, BLIND_FORWARD_VELOCITY);
-					}
-					break;
-
-					//    case STOP:
-				case DROPPED_OBJECT:
-					startingMove = true;
-					fsmState = RoboFSM.MOVE_BACKWARD;
-					//default:
-					setVelocity(0.0, 0.0);
-			}
-		}
-		// Part 3B - Object Transport FSM
-		if (LAB_PART == PART_3A) {
-			switch (fsmState) {
-
-				case DO_NOTHING: {
-					setVelocity(0.0, 0.0);
-					break;
-				}
-
-				case INITIALIZE_ARM: {
-					setVelocity(0.0, 0.0);
-					break;
-				}
-
-				case MOVE_FORWARD: {
-					System.out.println("*** MOVE_FORWARD *** " + startingMove);
-					if(startingMove) {
-						startPoint = new Point2D.Double();
-						startPoint.x = msg.x;
-						startPoint.y = msg.y;
-						startTheta = msg.theta;
-						targetPoint = new Point2D.Double();
-						targetPoint.x = startPoint.x +
-						TRANSPORT_DISTANCE*Math.cos(startTheta);
-						targetPoint.y = startPoint.y +
-						TRANSPORT_DISTANCE*Math.sin(startTheta);
-						targetTheta = startTheta;
-						startingMove = false;
-					}
-
-					if(moveTowardTarget(msg.x, msg.y, msg.theta, targetPoint.x,
-							targetPoint.y, DIR_FORWARD)) {
-						System.out.println("We are within range of target");
-						// TBD
-						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
-						startingMove = true;
-						setVelocity(0.0, 0.0);
-						//					Robot.setVelocity(0.0, 0.0);
-						fsmState = RoboFSM.LOWER_OBJECT;
-					}
-					break;
-				}
-
-				case MOVE_BACKWARD: {
-					System.out.println("*** MOVE_BACKWARD *** " + startingMove);
-					if(startingMove) {
-						startPoint = new Point2D.Double();
-						startPoint.x = msg.x;
-						startPoint.y = msg.y;
-						startTheta = msg.theta;
-						targetPoint = new Point2D.Double();
-						targetPoint.x = startPoint.x -
-						TRANSPORT_DISTANCE*Math.cos(startTheta);
-						targetPoint.y = startPoint.y -
-						TRANSPORT_DISTANCE*Math.sin(startTheta);
-						targetTheta = startTheta;
-						startingMove = false;
-					}
-
-					if(moveTowardTarget(msg.x, msg.y, msg.theta, targetPoint.x,
-							targetPoint.y, DIR_BACKWARD)) {
-						System.out.println("We are within range of target");
-
-						startingMove = true;
-						setVelocity(0.0, 0.0);
-						System.out.println("Completed Object Transport");
-						fsmState = RoboFSM.SET_ARM_FOR_GRASP;
-					}
-					break;
-				}
-
-				case BLIND_APPROACH:
-					System.out.println("odom_handler:\tBumpPressed:\t"+bumpPressed);
-					if(bumpPressed){
-						setVelocity(0,0);
-						fsmState = RoboFSM.GRASP_OBJECT;
-					}
-					else{
-						setVelocity(0, BLIND_FORWARD_VELOCITY);
-					}
-					break;
-
-					//    case STOP:
-				case DROPPED_OBJECT:
-					startingMove = true;
-					fsmState = RoboFSM.MOVE_BACKWARD;
-					//default:
-					setVelocity(0.0, 0.0);
 			}
 		}
 	}
@@ -818,7 +548,7 @@ public class Grasping implements NodeMain {
 
 				// if object is lost, go back to VSSEARCH
 
-				blobTrack.desiredFixationDistance *= 0.75;
+				blobTrack.desiredFixationDistance *= 0.5;
 				// move robot towards target
 				setVelocity(blobTrack.rotationVelocityCommand, blobTrack.translationVelocityCommand);
 
