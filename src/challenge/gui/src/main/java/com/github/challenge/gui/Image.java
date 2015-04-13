@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.github.rosjava.challenge.vision;
+package com.github.rosjava.challenge.gui;
 
 /**
  * An Image object is a easy-to-use representation of the pixelated image data

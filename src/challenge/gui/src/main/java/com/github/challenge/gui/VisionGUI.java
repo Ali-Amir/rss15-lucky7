@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.github.rosjava.challenge.vision;
+package com.github.rosjava.challenge.gui;
 
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;

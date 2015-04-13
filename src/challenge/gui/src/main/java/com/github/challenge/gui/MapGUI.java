@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.github.rosjava.challenge.navigation;
+package com.github.rosjava.challenge.gui;
 
 import java.awt.*;
 import java.awt.geom.*;
@@ -26,8 +26,6 @@ import org.ros.namespace.GraphName;
 import org.ros.node.topic.Subscriber;
 
 import java.util.*;
-
-import com.github.rosjava.challenge.motion_control.SonarGUI;
 
 
 /**
@@ -79,7 +77,7 @@ public class MapGUI extends SonarGUI {
     guiPolySub = node.newSubscriber("gui/Poly", gui_msgs.GUIPolyMsg._TYPE);
     guiPolySub.addMessageListener(new PolyMessageListener(this));
     guiEraseSub = node.newSubscriber("gui/Erase", gui_msgs.GUIEraseMsg._TYPE);
-    guiEraseSub.addMessageListener(new EraseMessageListener(this));
+    guiEraseSub.addMessageListener(new MapEraseMessageListener(this));
     super.onStart(node);
   }
     

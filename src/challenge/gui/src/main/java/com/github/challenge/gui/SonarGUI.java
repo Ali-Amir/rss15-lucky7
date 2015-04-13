@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.github.rosjava.challenge.motion_control;
+package com.github.rosjava.challenge.gui;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -27,8 +27,6 @@ import java.util.Iterator;
 import java.util.*;
 import org.ros.node.ConnectedNode;
 
-import com.github.rosjava.challenge.vision.VisionGUI;
-import com.github.rosjava.challenge.vision.VisionGUIPanel;
 import org.ros.node.topic.Subscriber;
 
 
@@ -77,7 +75,7 @@ public class SonarGUI extends VisionGUI {
     guiLineSub.addMessageListener(new LineMessageListener(this));
     guiSegmentSub.addMessageListener(new SegmentMessageListener(this));
     guiPointSub.addMessageListener(new PointMessageListener(this));
-    guiEraseSub.addMessageListener(new EraseMessageListener(this));
+    guiEraseSub.addMessageListener(new SonarEraseMessageListener(this));
   }
 
 }

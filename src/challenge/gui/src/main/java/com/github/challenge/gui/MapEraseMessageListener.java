@@ -14,24 +14,27 @@
  * the License.
  */
 
-package com.github.rosjava.challenge.motion_control;
+package com.github.rosjava.challenge.gui;
 
 import org.ros.message.MessageListener;
 import gui_msgs.GUIEraseMsg;
 
-public class EraseMessageListener implements MessageListener<GUIEraseMsg> {
 
-	private SonarGUI gui;
+public class MapEraseMessageListener extends SonarEraseMessageListener
+		implements MessageListener<GUIEraseMsg> {
+
+	MapGUI gui;
 	
-	public EraseMessageListener(SonarGUI sonarGUI) {
-		this.gui = sonarGUI;
+	public MapEraseMessageListener(MapGUI mapGUI) {
+		super(mapGUI);
+		this.gui = mapGUI;
 	}
 
 	@Override
 	public void onNewMessage(GUIEraseMsg arg0) {
-		gui.panel.eraseLine();
-		gui.panel.erasePoints();
-		gui.panel.eraseSegments();
+		gui.panel.eraseRects();
+		gui.panel.erasePolys();
+		super.onNewMessage(arg0);
 	}
 
 }

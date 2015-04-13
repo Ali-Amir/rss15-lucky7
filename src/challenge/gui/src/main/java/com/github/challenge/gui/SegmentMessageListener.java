@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.github.rosjava.challenge.motion_control;
+package com.github.rosjava.challenge.gui;
 
 import java.awt.Color;
 

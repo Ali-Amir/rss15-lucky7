@@ -30,6 +30,7 @@ import org.ros.node.topic.Publisher;
 import org.ros.namespace.GraphName;
 
 import com.github.rosjava.challenge.vision.*;
+import com.github.rosjava.challenge.gui.MapGUIPanel;
 
 /**
  * <p>The 2D {@link #worldRect}, {@link PolygonObstacle} {@link #obstacles},

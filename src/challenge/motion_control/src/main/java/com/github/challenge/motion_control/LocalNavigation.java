@@ -36,6 +36,8 @@ import rss_msgs.BumpMsg;
 import rss_msgs.SonarMsg;
 import rss_msgs.MotionMsg;
 
+import com.github.rosjava.challenge.gui.SonarGUIPanel;
+
 
 public class LocalNavigation extends AbstractNodeMain {
 

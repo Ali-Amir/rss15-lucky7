@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.github.rosjava.challenge.vision;
+package com.github.rosjava.challenge.gui;
 
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;

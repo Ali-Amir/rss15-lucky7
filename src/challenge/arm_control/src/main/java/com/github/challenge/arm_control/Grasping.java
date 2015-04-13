@@ -31,7 +31,7 @@ import rss_msgs.MotionMsg;
 import rss_msgs.OdometryMsg;
 
 import com.github.rosjava.challenge.vision.BlobTracking;
-import com.github.rosjava.challenge.vision.Image;
+import com.github.rosjava.challenge.gui.Image;
 
 /* This uses two modes: with vision, without.
  * Without-vision will grasp upon breakbeam and dump the object in the back

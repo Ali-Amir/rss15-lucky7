@@ -14,15 +14,13 @@
  * the License.
  */
 
-package com.github.rosjava.challenge.navigation;
+package com.github.rosjava.challenge.gui;
 
 import java.awt.*;
 import java.awt.geom.*;
 import javax.swing.*;
 
 import java.util.*;
-
-import com.github.rosjava.challenge.motion_control.SonarGUIPanel;
 
 
 /**

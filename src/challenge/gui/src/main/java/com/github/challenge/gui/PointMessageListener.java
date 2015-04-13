@@ -14,28 +14,33 @@
  * the License.
  */
 
-package com.github.rosjava.challenge.navigation;
+package com.github.rosjava.challenge.gui;
+
+import java.awt.Color;
 
 import org.ros.message.MessageListener;
-import gui_msgs.GUIEraseMsg;
+import gui_msgs.GUIPointMsg;
 
-import com.github.rosjava.challenge.motion_control.SonarGUI;
+public class PointMessageListener implements MessageListener<GUIPointMsg> {
 
-public class EraseMessageListener extends com.github.rosjava.challenge.motion_control.EraseMessageListener
-		implements MessageListener<GUIEraseMsg> {
+	private SonarGUI gui;
 
-	MapGUI gui;
-	
-	public EraseMessageListener(MapGUI mapGUI) {
-		super(mapGUI);
-		this.gui = mapGUI;
+	public PointMessageListener(SonarGUI sonarGUI) {
+		this.gui = sonarGUI;
 	}
 
 	@Override
-	public void onNewMessage(GUIEraseMsg arg0) {
-		gui.panel.eraseRects();
-		gui.panel.erasePolys();
-		super.onNewMessage(arg0);
+	public void onNewMessage(GUIPointMsg msg) {
+		int r = (int) msg.getColor().getR();
+		int g = (int) msg.getColor().getG();
+		int b = (int) msg.getColor().getB();
+
+		if (r<0 || g < 0 || b < 0){
+			gui.panel.addPoint(msg.getX(), msg.getY(), (int) msg.getShape());
+		} else{
+			Color c = new Color(r, g, b);
+			gui.panel.addPoint(msg.getX(), msg.getY(), (int) msg.getShape(), c);
+		}
 	}
 
 }

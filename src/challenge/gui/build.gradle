@@ -29,12 +29,9 @@ mainClassName = 'org.ros.RosRun'
 dependencies {
   /* An external maven artifact dependency */
   compile 'org.ros.rosjava_core:rosjava:[0.2,0.3)'
+  compile project(':rss_msgs')
+  compile project(':gui_msgs')
   /* Example of a local subproject dependency */ 
   /* compile project(':sibling_gradle_project') */
-  compile project(':rss_msgs')
-  compile project(':vision')
-  compile project(':gui')
-  //compile project(':gui_msgs')
-  compile 'org.ros.rosjava_messages:std_msgs:0.5.9'
 }
 
