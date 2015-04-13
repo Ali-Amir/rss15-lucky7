@@ -1,0 +1,41 @@
+/*
+ * Copyright (C) 2014 Ali-Amir Aldan.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package com.github.rosjava.challenge.navigation;
+
+import org.ros.message.MessageListener;
+import gui_msgs.GUIEraseMsg;
+
+import com.github.rosjava.challenge.motion_control.SonarGUI;
+
+public class EraseMessageListener extends com.github.rosjava.challenge.motion_control.EraseMessageListener
+		implements MessageListener<GUIEraseMsg> {
+
+	MapGUI gui;
+	
+	public EraseMessageListener(MapGUI mapGUI) {
+		super(mapGUI);
+		this.gui = mapGUI;
+	}
+
+	@Override
+	public void onNewMessage(GUIEraseMsg arg0) {
+		gui.panel.eraseRects();
+		gui.panel.erasePolys();
+		super.onNewMessage(arg0);
+	}
+
+}

@@ -1,4 +1,0 @@
-<launch>
-	<include file="$(find motion_control)/launch/sonarGUI.launch" />
-	<node name="nav" pkg="rosjava_bootstrap" type="run.py" args="motion_control LocalNavigation.LocalNavigation" machine="workstation" />
-</launch>
