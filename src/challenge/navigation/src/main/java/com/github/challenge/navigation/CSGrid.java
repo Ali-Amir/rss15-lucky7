@@ -24,7 +24,7 @@ import java.util.*;
  *
  * @author vona
  **/
-public class Grid implements Iterable<Grid.Cell> {
+public class CSGrid {
 
   public class Cell {
 
@@ -37,6 +37,11 @@ public class Grid implements Iterable<Grid.Cell> {
      * <p>This cell's column.</p>
      **/
     int c;
+
+    /**
+     * <p>This cell's angle position.</p>
+     **/
+    int angleId;
 
     /**
      * <p>The bounds of this cell in world coords.</p>
@@ -54,6 +59,9 @@ public class Grid implements Iterable<Grid.Cell> {
      **/
     boolean free = true;
 
+    public double x;
+    public double y;
+
 
     /**
      * <p>The next cell along the shortest path to the goal, if any, iff {@link
@@ -66,9 +74,12 @@ public class Grid implements Iterable<Grid.Cell> {
     /**
      * <p>Create a new cell.</p>
      **/
-    Cell(int r, int c, double x, double y, double width, double height) {
+    Cell(int r, int c, int angleId, double x, double y, double width, double height) {
       this.r = r;
       this.c = c;
+      this.angleId = angleId;
+      this.x = x;
+      this.y = y;
       rect.x = x;
       rect.y = y;
       rect.width = width;
@@ -122,7 +133,7 @@ public class Grid implements Iterable<Grid.Cell> {
      * <p>Return a human-readable string representation of this cell.</p>
      **/
     public String toString() {
-      return "(" + r + ", " + c + ") x=" +
+      return "(" + r + ", " + c + ", " + angleId + ") x=" +
         rect.x + ", y=" + rect.y +
         ", width=" + rect.width + ", height=" + rect.height +
         ", dist=" + minDistanceToGoal;
@@ -140,6 +151,11 @@ public class Grid implements Iterable<Grid.Cell> {
   protected double resolution;
 
   /**
+   * <p> Number of divisions in the angle space.</p>
+   **/
+  protected int angleDiv;
+
+  /**
    * <p>Number of rows in the grid.</p>
    **/
   protected int rows;
@@ -152,7 +168,7 @@ public class Grid implements Iterable<Grid.Cell> {
   /**
    * <p>The grid cells.</p>
    **/
-  protected Cell[][] cell;
+  protected Cell[][][] cell;
 
   /**
    * <p>Create a new grid.</p>
@@ -160,22 +176,35 @@ public class Grid implements Iterable<Grid.Cell> {
    * @param worldBounds the world boundary
    * @param resolution the grid resolution
    **/
-  public Grid(Rectangle2D.Double worldBounds, double resolution) {
+  public CSGrid(Rectangle2D.Double worldBounds, int angleDivisions, double resolution) {
 
     this.worldBounds = worldBounds;
     this.resolution = resolution;
+    this.angleDiv = angleDivisions;
     
-    rows = (int) Math.ceil(worldBounds.height/resolution);
-    cols = (int) Math.ceil(worldBounds.width/resolution);
+    // Double the size of the grid to enable rotations.
+    rows = (int) Math.ceil(worldBounds.height*2.0/resolution);
+    cols = (int) Math.ceil(worldBounds.width*2.0/resolution);
 
-    cell = new Cell[rows][cols];
+    cell = new Cell[angleDiv][rows][cols];
 
-    for (int r = 0; r < rows; r++)
-      for (int c = 0; c < cols; c++)
-        cell[r][c] =
-          new Cell(r, c,
-                   worldBounds.x + c*resolution, worldBounds.y + r*resolution,
-                   resolution, resolution);
+    double worldCenterX = worldBounds.x + worldBounds.width/2.0;
+    double worldCenterY = worldBounds.y + worldBounds.height/2.0;
+    for (int angleId = 0; angleId < angleDiv; ++angleId) {
+      double ux = Math.cos(2.0*Math.PI*angleId/angleDiv);
+      double uy = Math.sin(2.0*Math.PI*angleId/angleDiv);
+      double vx = Math.cos(2.0*Math.PI*angleId/angleDiv+Math.PI/2.0);
+      double vy = Math.sin(2.0*Math.PI*angleId/angleDiv+Math.PI/2.0);
+      for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+          int dr = (rows >> 1) - r, dc = (cols >> 1) - c;
+          cell[angleId][r][c] =
+            new Cell(r, c, angleId,
+                     worldCenterX + (dc*ux + dr*vx)*resolution, worldCenterY + (dc*uy + dr*vy)*resolution,
+                     resolution, resolution);
+        }
+      }
+    }
   }
 
   /**
@@ -186,15 +215,17 @@ public class Grid implements Iterable<Grid.Cell> {
    *
    * @return the number of cells marked
    **/
-  public int markObstacle(PolygonObstacle obstacle) {
+  public int markObstacle(CSObstacle obstacle) {
 
     int n = 0;
 
-    for (int r = 0; r < rows; r++) {
-      for (int c = 0; c < cols; c++) {
-        if (obstacle.intersects(cell[r][c].rect)) {
-          cell[r][c].free = false;
-          n++;
+    for (int angleId = 0; angleId < angleDiv; ++angleId) {
+      for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+          if (obstacle.intersects(cell[angleId][r][c].rect, angleId)) {
+            cell[angleId][r][c].free = false;
+            ++n;
+          }
         }
       }
     }
@@ -216,6 +247,24 @@ public class Grid implements Iterable<Grid.Cell> {
    **/
   public double computeShortestPaths(Point2D.Double goalPoint) {
 
+    List<Cell> goalCells = getCell(goalPoint);
+
+    if (goalCells == null || goalCells.size() == 0)
+      return Double.POSITIVE_INFINITY;
+
+    LinkedList<Cell> queue = new LinkedList<Cell>();
+    LinkedList<Cell> neighbors = new LinkedList<Cell>();
+
+    for (Cell goal : goalCells) {
+      goal.minDistanceToGoal = 0.0;
+      queue.add(goal);
+    }
+
+    return runBfs(queue, neighbors);
+  }
+
+  public double computeShortestPaths(CSCoord goalPoint) {
+
     Cell goalCell = getCell(goalPoint);
 
     if (goalCell == null)
@@ -223,17 +272,20 @@ public class Grid implements Iterable<Grid.Cell> {
    
     goalCell.minDistanceToGoal = 0.0;
 
-    double maxDist = 0.0;
-
     LinkedList<Cell> queue = new LinkedList<Cell>();
     LinkedList<Cell> neighbors = new LinkedList<Cell>();
 
     queue.add(goalCell);
+    return runBfs(queue, neighbors);
+  }
+
+  public double runBfs(LinkedList<Cell> queue, LinkedList<Cell> neighbors) {
+    double maxDist = 0.0;
 
     while (!queue.isEmpty()) {
       Cell cell = queue.removeFirst();
       neighbors.clear();
-      for (Cell neighbor : collect8Neighbors(cell, neighbors)) {
+      for (Cell neighbor : collectNeighbors(cell, neighbors)) {
         if (neighbor.free && Double.isInfinite(neighbor.minDistanceToGoal)) {
           neighbor.minDistanceToGoal = cell.minDistanceToGoal + resolution;
           neighbor.toGoalNext = cell;
@@ -248,50 +300,6 @@ public class Grid implements Iterable<Grid.Cell> {
   }
 
 
-
- /**
-   * <p>Collect all the (Manhattan) neighbors of <code>cell</code>.</p>
-   *
-   * @param c the cell
-   * @param neighbors the neighbors are collected here
-   * @return a ref to <code>neighbors</code>
-   **/ 
-  protected List<Cell> collect8Neighbors(Cell c, List<Cell> neighbors) {
-
-    //below
-    if (c.r > 0)
-      neighbors.add(cell[c.r-1][c.c]);
-
-    //above
-    if (c.r < rows-1)
-      neighbors.add(cell[c.r+1][c.c]);
-
-    //left
-    if (c.c > 0)
-      neighbors.add(cell[c.r][c.c-1]);
-
-    //right
-    if (c.c < cols-1)
-      neighbors.add(cell[c.r][c.c+1]);
-
-    //below left
-    if (c.r > 0 && c.c > 0)
-      neighbors.add(cell[c.r-1][c.c-1]);
-
-    //below right
-    if (c.r > 0 && c.c < cols-1)
-      neighbors.add(cell[c.r-1][c.c+1]);
-    //above left
-    if (c.r < rows-1 && c.c > 0)
-      neighbors.add(cell[c.r+1][c.c-1]);
-
-    //above right
-    if (c.r < rows-1 && c.c < cols-1)
-      neighbors.add(cell[c.r+1][c.c+1]);
-    return neighbors;
-  }
-
-
   /**
    * <p>Collect all the (Manhattan) neighbors of <code>cell</code>.</p>
    *
@@ -299,24 +307,33 @@ public class Grid implements Iterable<Grid.Cell> {
    * @param neighbors the neighbors are collected here
    * @return a ref to <code>neighbors</code>
    **/ 
-  protected List<Cell> collect4Neighbors(Cell c, List<Cell> neighbors) {
+  protected List<Cell> collectNeighbors(Cell c, List<Cell> neighbors) {
 
     //below
     if (c.r > 0)
-      neighbors.add(cell[c.r-1][c.c]);
+      neighbors.add(cell[c.angleId][c.r-1][c.c]);
 
     //above
     if (c.r < rows-1)
-      neighbors.add(cell[c.r+1][c.c]);
+      neighbors.add(cell[c.angleId][c.r+1][c.c]);
 
     //left
     if (c.c > 0)
-      neighbors.add(cell[c.r][c.c-1]);
+      neighbors.add(cell[c.angleId][c.r][c.c-1]);
 
     //right
 
     if (c.c < cols-1)
-      neighbors.add(cell[c.r][c.c+1]);
+      neighbors.add(cell[c.angleId][c.r][c.c+1]);
+
+    for (int i = 0; i < angleDiv; ++i) {
+      if (i != c.angleId) {
+        Cell verticalNeighbor = getCell(new CSCoord(c.x, c.y, i));
+        if (verticalNeighbor != null) {
+          neighbors.add(verticalNeighbor);
+        }
+      }
+    }
 
     return neighbors;
   }
@@ -329,63 +346,70 @@ public class Grid implements Iterable<Grid.Cell> {
    *
    * @return the cell containing <code>point</code>, or null if out of bounds
    **/
-  public Cell getCell(Point2D.Double point) {
+  public Cell getCell(CSCoord point) {
 
-    if (!worldBounds.contains(point.x, point.y))
+    if (!worldBounds.contains(point.coord())) {
       return null;
-
-    int r = (int) Math.floor((point.y-worldBounds.y)/resolution);
-    int c = (int) Math.floor((point.x-worldBounds.x)/resolution);
-
-    return cell[r][c];
-  }
-
-  /**
-   * <p>Get a {@link Grid.GridIterator} over {@link #cell}.</p>
-   **/
-  public Iterator<Cell> iterator() {
-    return new GridIterator();
-  }
-
-  /**
-   * <p>Get the number of cells in this Grid.</p>
-   *
-   * @return the number of cells in this Grid
-   **/
-  public int numCells() {
-    return rows*cols;
-  }
-
-  /**
-   * <p>An iterator over {@link Grid#cell}.</p>
-   *
-   * <p>Iterates in a row raster from left to right starting at the lower
-   * left.</p>
-   **/
-  protected class GridIterator implements Iterator<Cell> {
-
-    int r = 0;
-    int c = 0;
-
-    public Cell next() {
-
-      Cell ret = cell[r][c];
-
-      c++;
-      if (c == cols) {
-        c = 0;
-        r++;
-      }
-
-      return ret;
     }
 
-    public boolean hasNext() {
-      return (r < rows);
+    double worldCenterX = worldBounds.x + worldBounds.width/2.0;
+    double worldCenterY = worldBounds.y + worldBounds.height/2.0;
+    int angleId = point.thetaInd;
+
+    double ux = Math.cos(2.0*Math.PI*angleId/angleDiv);
+    double uy = Math.sin(2.0*Math.PI*angleId/angleDiv);
+    double vx = Math.cos(2.0*Math.PI*angleId/angleDiv+Math.PI/2.0);
+    double vy = Math.sin(2.0*Math.PI*angleId/angleDiv+Math.PI/2.0);
+
+    // Solve system of linear equations:
+    // dc*ux + dr*vx = varX
+    // dc*uy + dr*vy = varY
+    double varX = (point.x()-worldCenterX)/resolution;
+    double varY = (point.y()-worldCenterY)/resolution;
+    double detA = (ux*vy - uy*vx);
+
+    int dc = (int)((varX*vy - varY*vx)/detA);
+    int dr = (int)((ux*varY - uy*varX)/detA);
+
+    int actualC = Math.max(0, Math.min(cols-1, (cols>>1) - dc));
+    int actualR = Math.max(0, Math.min(rows-1, (rows>>1) - dr));
+
+    return cell[angleId][actualR][actualC];
+  }
+
+  public LinkedList<Cell> getCell(Point2D.Double point) {
+
+    if (!worldBounds.contains(point)) {
+      return null;
     }
 
-    public void remove() {
-      throw new UnsupportedOperationException();
+    double worldCenterX = worldBounds.x + worldBounds.width/2.0;
+    double worldCenterY = worldBounds.y + worldBounds.height/2.0;
+
+    LinkedList<Cell> result = new LinkedList<Cell>();
+
+    for (int angleId = 0; angleId < angleDiv; ++angleId) {
+      double ux = Math.cos(2.0*Math.PI*angleId/angleDiv);
+      double uy = Math.sin(2.0*Math.PI*angleId/angleDiv);
+      double vx = Math.cos(2.0*Math.PI*angleId/angleDiv+Math.PI/2.0);
+      double vy = Math.sin(2.0*Math.PI*angleId/angleDiv+Math.PI/2.0);
+
+      // Solve system of linear equations:
+      // dc*ux + dr*vx = varX
+      // dc*uy + dr*vy = varY
+      double varX = (point.getX()-worldCenterX)/resolution;
+      double varY = (point.getY()-worldCenterY)/resolution;
+      double detA = (ux*vy - uy*vx);
+
+      int dc = (int)((varX*vy - varY*vx)/detA);
+      int dr = (int)((ux*varY - uy*varX)/detA);
+
+      int actualC = Math.max(0, Math.min(cols-1, (cols>>1) - dc));
+      int actualR = Math.max(0, Math.min(rows-1, (rows>>1) - dr));
+
+      result.add(cell[angleId][actualR][actualC]);
     }
+
+    return result;
   }
 }

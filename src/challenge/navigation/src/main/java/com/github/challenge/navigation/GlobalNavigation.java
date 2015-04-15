@@ -102,9 +102,9 @@ public class GlobalNavigation extends AbstractNodeMain {
       System.out.println("I'm going to break after");
       publishPolygonObstacle(noThetaObst);
       System.out.println("Starting MotionPlanning");
-      motionPlanner = new MotionPlanner(polygonMap.getWorldRect(), resolution, noThetaObst);
+      //motionPlanner = new MotionPlanner(polygonMap.getWorldRect(), resolution, noThetaObst); TODO
       System.out.println("Starting Pathmaking");
-      path = motionPlanner.computePath(polygonMap.getRobotStart(), polygonMap.getRobotGoal());
+      //path = motionPlanner.computePath(polygonMap.getRobotStart(), polygonMap.getRobotGoal()); TODO
       System.out.println("Finished Pathmaking");
 
       PolygonObstacle ppath = createPathPolygon(path);
