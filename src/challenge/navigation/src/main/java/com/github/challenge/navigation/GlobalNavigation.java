@@ -38,6 +38,7 @@ import rss_msgs.BumpMsg;
 import rss_msgs.MotionMsg;
 import rss_msgs.OdometryMsg;
 import rss_msgs.SonarMsg;
+import rss_msgs.RobotLocation;
 
 import com.github.rosjava.challenge.motion_control.Robot;
 import com.github.rosjava.challenge.motion_control.SonarGUIPanel;

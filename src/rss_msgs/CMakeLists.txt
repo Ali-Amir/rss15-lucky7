@@ -9,7 +9,25 @@ project(rss_msgs)
 # Catkin
 ##############################################################################
 
-find_package(catkin REQUIRED rosjava_build_tools)
+find_package(catkin REQUIRED rosjava_build_tools gencpp genmsg message_generation)
+
+add_message_files(
+  DIRECTORY msg
+  FILES
+  AnalogStatusMsg.msg
+  ArmMsg.msg
+  BreakBeamMsg.msg
+  BumpMsg.msg
+  DigitalStatusMsg.msg
+  EncoderMsg.msg
+  MotionMsg.msg
+  OdometryMsg.msg
+  ResetMsg.msg
+  SonarMsg.msg
+  RobotLocation.msg
+)
+
+generate_messages()
 
 # Set the gradle targets you want catkin's make to run by default, e.g.
 #   catkin_rosjava_setup(installApp)
@@ -19,16 +37,6 @@ catkin_rosjava_setup()
 
 catkin_package(
   CATKIN_DEPENDS message_runtime
-)
-
-add_message_files(
-  FILES
-  *.msg
-)
-
-generate_messages(
-  DEPENDENCIES
-  std_msgs
 )
 
 ##############################################################################
