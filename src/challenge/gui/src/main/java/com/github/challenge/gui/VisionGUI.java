@@ -41,6 +41,7 @@ public class VisionGUI extends AbstractNodeMain {
 	protected boolean firstUpdate = true;
 
 
+  /*
 	public VisionGUI(int poseSaveInterval, double maxTV, double maxRV) {
     panel = new VisionGUIPanel(poseSaveInterval, maxTV, maxRV);
   }
@@ -50,8 +51,9 @@ public class VisionGUI extends AbstractNodeMain {
 	}
 
 	public VisionGUI() {
-		panel = new VisionGUIPanel();
+		//panel = new VisionGUIPanel();
 	}
+  */
 
 
 	/**
@@ -59,6 +61,10 @@ public class VisionGUI extends AbstractNodeMain {
 	 **/
 	@Override
 	public void onStart(ConnectedNode node) {
+    if (panel == null) {
+      panel = new VisionGUIPanel();
+    }
+
 		this.node = node;
 
 		final boolean reverseRGB = node.getParameterTree().getBoolean("reverse_rgb", false);

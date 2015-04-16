@@ -1,0 +1,9 @@
+<launch>
+  <machine name="workstation" address="localhost"/>
+  
+  <node name="gui" pkg="challenge" type="navigation" args="com.github.rosjava.challenge.gui.MapGUI" machine="workstation" output="screen"/>
+  <node name="nav" pkg="challenge" type="navigation" args="com.github.rosjava.challenge.navigation.GlobalNavigation" machine="workstation" output="screen">
+    <param name="mapFileName" value="$(env CHALLENGE)/maps/global-nav-maze-2011-hard.map" />
+  </node>
+
+</launch>

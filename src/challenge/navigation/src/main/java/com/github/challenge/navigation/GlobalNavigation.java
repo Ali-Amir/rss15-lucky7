@@ -66,9 +66,12 @@ public class GlobalNavigation extends AbstractNodeMain {
   public void onStart(ConnectedNode node) {
     
     guiRectPub = node.newPublisher("gui/Rect", GUIRectMsg._TYPE);
+    //guiRectPub.setQueueLimit(0);
     guiPolyPub = node.newPublisher("gui/Poly", GUIPolyMsg._TYPE);
+    //guiPolyPub.setQueueLimit(0);
     guiErasePub = node.newPublisher("gui/Erase", GUIEraseMsg._TYPE);
     guiPointPub = node.newPublisher("gui/Point", GUIPointMsg._TYPE);
+    //guiPointPub.setQueueLimit(0);
 
     motorPub = node.newPublisher("command/Motors", MotionMsg._TYPE);
     robot = new Robot();
@@ -88,8 +91,10 @@ public class GlobalNavigation extends AbstractNodeMain {
       mapObstacles.addAll(polygonMap.getObstacles());
       List<CSObstacle> csObstacles = CSTools.getCSTransform(mapObstacles);
 
+      /*
       RandomNet net = new RandomNet(polygonMap.getWorldRect(), csObstacles, 100);
       displayRandomNet(net);
+      */
 
       List<PolygonObstacle> noThetaObst = new ArrayList<PolygonObstacle>();
       for (CSObstacle obst : csObstacles) {
@@ -97,14 +102,13 @@ public class GlobalNavigation extends AbstractNodeMain {
       }
       for (PolygonObstacle obstacle : noThetaObst) {
         obstacle.color = new Color(255, 0, 0);
-        System.out.println(obstacle);
       }
       System.out.println("I'm going to break after");
       publishPolygonObstacle(noThetaObst);
       System.out.println("Starting MotionPlanning");
-      //motionPlanner = new MotionPlanner(polygonMap.getWorldRect(), resolution, noThetaObst); TODO
+      motionPlanner = new MotionPlanner(polygonMap.getWorldRect(), CSObstacle.ANGLE_DIVISIONS, resolution, csObstacles);
       System.out.println("Starting Pathmaking");
-      //path = motionPlanner.computePath(polygonMap.getRobotStart(), polygonMap.getRobotGoal()); TODO
+      path = motionPlanner.computePath(new CSCoord(polygonMap.getRobotStart(), 0), new CSCoord(polygonMap.getRobotGoal(), 0));
       System.out.println("Finished Pathmaking");
 
       PolygonObstacle ppath = createPathPolygon(path);
@@ -181,7 +185,7 @@ public class GlobalNavigation extends AbstractNodeMain {
     }
   }
   
-  private void publishPolygonObstacle(PolygonObstacle obstacle) {
+  synchronized private void publishPolygonObstacle(PolygonObstacle obstacle) {
       GUIPolyMsg polyMsg = guiPolyPub.newMessage();
            
       List<Point2D.Double> vertices = obstacle.getVertices();

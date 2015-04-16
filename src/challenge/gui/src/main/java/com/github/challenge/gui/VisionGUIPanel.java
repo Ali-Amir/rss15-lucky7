@@ -45,6 +45,11 @@ import java.awt.image.MemoryImageSource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.*;
+
+import java.awt.*;
+import java.awt.geom.*;
+import javax.swing.*;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -52,6 +57,8 @@ import javax.swing.JToolTip;
 import javax.swing.SwingUtilities;
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.event.MouseInputListener;
+
+import java.util.List;
 
 import org.ros.node.topic.Publisher;
 import org.ros.node.ConnectedNode;
@@ -243,6 +250,16 @@ public class VisionGUIPanel extends JPanel {
    * <p>Default color for the newest {@link VisionGUIPanel.Pose}.</p>
    **/
   public static final Color NEW_POSE_COLOR = Color.GREEN;
+
+  /**
+   * <p>Default color for {@link MapGUI.Rect}s.</p>
+   **/
+  public static final Color DEFAULT_RECT_COLOR = Color.RED;
+
+  /**
+   * <p>The current {@link MapGUI.Rect} color.</p>
+   **/
+  protected Color rectColor = dupColor(DEFAULT_RECT_COLOR);
 
   /**
    * <p>Factor by which to accelerate pan if SHIFT is down.</p>
@@ -1711,6 +1728,75 @@ public class VisionGUIPanel extends JPanel {
    * <p>Hook to append to the end of {@link #testGraphics}.</p>
    **/
   protected void testGraphicsHook() throws InterruptedException {
+  }
+
+  /**
+   * Dump methods for compatibility
+   **/
+  protected void eraseSegments() {
+    System.out.println("Here1");
+  }
+
+  protected void erasePoints() {
+    System.out.println("Here1");
+  }
+
+  protected void eraseLine() {
+    System.out.println("Here+");
+  }
+
+  protected void addPoint(double x, double y, int shape) {
+    System.out.println("Here-");
+  }
+
+  protected void addSegment(double x1, double y1, double x2, double y2) {
+    System.out.println("Here0");
+  }
+
+  protected void setLine(double a, double b, double c) {
+    System.out.println("Here9");
+  }
+
+  protected void addPoint(double x, double y, int shape, Color c) {
+    System.out.println("Here8");
+  }
+
+  protected void addSegment(double x1, double y1, double x2, double y2, Color c) {
+    System.out.println("Here7");
+  }
+
+  protected void setLine(double a, double b, double c, Color col) {
+    System.out.println("Here6");
+  }
+
+  public void addPoly(List<Point2D.Double> a,boolean b,boolean c,Color d) {
+    System.out.println("Here5");
+  }
+
+  protected void eraseRects() {
+    System.out.println("Here4");
+  }
+
+  protected void erasePolys() {
+    System.out.println("Here3");
+  }
+
+  protected void addRect(double f,double e,double d,double c,boolean b,Color a) {
+    System.out.println("Here2");
+  }
+
+  /**
+   * <p>Make a copy of a color.</p>
+   *
+   * @param c the color to copy
+   * @return an independent copy of c, or null if c was null
+   **/
+  public static Color dupColor(Color c) {
+
+    if (c == null)
+      return null;
+    
+    return new Color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
   }
 
 }

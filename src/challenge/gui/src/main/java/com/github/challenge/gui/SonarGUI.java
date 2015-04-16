@@ -46,18 +46,20 @@ public class SonarGUI extends VisionGUI {
   public Subscriber<gui_msgs.GUIPointMsg> guiPointSub;
   public Subscriber<gui_msgs.GUIEraseMsg> guiEraseSub;
 
-  public SonarGUIPanel panel;
-
+  /*
 	public SonarGUI(int poseSaveInterval, double maxTV, double maxRV) {
+    super();
     panel = new SonarGUIPanel(poseSaveInterval, maxTV, maxRV);
   }
 
 	public SonarGUI(int poseSaveInterval) {
+    super();
 		panel = new SonarGUIPanel(poseSaveInterval);
 	}
+  */
 
 	public SonarGUI() {
-		panel = new SonarGUIPanel();
+		//panel = new SonarGUIPanel();
 	}
 
   /**
@@ -66,6 +68,10 @@ public class SonarGUI extends VisionGUI {
    **/
   @Override
   public void onStart(ConnectedNode node) {
+    if (panel == null) {
+      panel = new SonarGUIPanel();
+    }
+
     super.onStart(node);
     guiLineSub = node.newSubscriber("gui/Line", gui_msgs.GUILineMsg._TYPE);
     guiSegmentSub = node.newSubscriber("gui/Segment", gui_msgs.GUISegmentMsg._TYPE);

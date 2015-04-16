@@ -62,11 +62,6 @@ public class MapGUIPanel extends SonarGUIPanel {
   public static final float POLY_LINE_WIDTH = 1.5f;
 
   /**
-   * <p>Default color for {@link MapGUI.Rect}s.</p>
-   **/
-  public static final Color DEFAULT_RECT_COLOR = Color.RED;
-
-  /**
    * <p>Default color for {@link MapGUI.Poly}s.</p>
    **/
   public static final Color DEFAULT_POLY_COLOR = Color.RED;
@@ -80,11 +75,6 @@ public class MapGUIPanel extends SonarGUIPanel {
    * <p>Whether to paint the polys.</p>
    **/
   protected boolean polysEnabled = true;
-
-  /**
-   * <p>The current {@link MapGUI.Rect} color.</p>
-   **/
-  protected Color rectColor = dupColor(DEFAULT_RECT_COLOR);
 
   /**
    * <p>The current {@link MapGUI.Poly} color.</p>
@@ -278,21 +268,21 @@ public class MapGUIPanel extends SonarGUIPanel {
    * <p>See <code>LocalNavigation.SonarGUI(int, double, double)</code>.</p>
    **/
   public MapGUIPanel(int poseSaveInterval, double maxTV, double maxRV) {
-    super(poseSaveInterval, maxTV, maxRV);
+    //super(poseSaveInterval, maxTV, maxRV);
   }
 
   /**
    * <p>See <code>LocalNavigation.SonarGUI(int)</code>.</p>
    **/
   public MapGUIPanel(int poseSaveInterval) {
-    super(poseSaveInterval);
+    //super(poseSaveInterval);
   }
 
   /**
    * <p>See <code>LocalNavigation.SonarGUI()</code>.</p>
    **/
   public MapGUIPanel() {
-    super();
+    //super();
   }
 
   /**

@@ -30,6 +30,11 @@ public class CSCoord {
     thetaInd = _thetaInd;
   }
 
+  CSCoord(Point2D.Double p, int _thetaInd) {
+    coord = p;
+    thetaInd = _thetaInd;
+  }
+
   double x() {
     return coord.getX();
   }
