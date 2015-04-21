@@ -91,12 +91,20 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 
+set(CGAL_LIBRARIES "/usr/lib/libCGAL.so")
+
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_executable(navigation src/server.cpp)
-target_link_libraries(navigation ${catkin_LIBRARIES})
+add_executable(navigation src/server.cpp
+                          src/navigation.cpp
+                          src/obstacle_map.cpp
+                          src/cspace_tools.cpp
+                          src/grid.cpp)
+
+target_link_libraries(navigation ${catkin_LIBRARIES} ${CGAL_LIBRARIES})
 add_dependencies(navigation rss_msgs_gencpp)
 add_dependencies(navigation ${catkin_EXPORTED_TARGETS})
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 ## Declare a cpp library
 # add_library(navigation

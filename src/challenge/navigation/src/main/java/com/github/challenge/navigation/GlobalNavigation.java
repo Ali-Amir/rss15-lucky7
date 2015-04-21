@@ -95,7 +95,6 @@ public class GlobalNavigation extends AbstractNodeMain {
       /*
       RandomNet net = new RandomNet(polygonMap.getWorldRect(), csObstacles, 100);
       displayRandomNet(net);
-      */
 
       List<PolygonObstacle> noThetaObst = new ArrayList<PolygonObstacle>();
       for (CSObstacle obst : csObstacles) {
@@ -127,6 +126,7 @@ public class GlobalNavigation extends AbstractNodeMain {
 	    });
       // pass parameter polygonObstacle
       nav.updatePath(ppath);
+      */
     }
     catch (Exception e) {
       System.out.println("GlobalNavigation, error loading PolygonMap from file: " + e.toString());
