@@ -11,7 +11,7 @@ using namespace gui_msgs;
 using namespace cspace;
 using namespace std;
 
-typedef CGAL::Simple_cartesian<double> K;
+typedef cgal_kernel K;
 typedef K::Point_2 Point_2;
 typedef K::Point_3 Point_3;
 
@@ -29,16 +29,22 @@ Navigation::Navigation() {
 
   // Load map file location and initialize the map-handler class instance.
   string mapfile_location;
-  assert(n.getParam("~/mapFileName", mapfile_location));
+  assert(n.getParam("/nav/mapFileName", mapfile_location));
   ROS_INFO("Got mapFileName: %s", mapfile_location.c_str());
   _obs_map = make_shared<ObstacleMap>(mapfile_location);
   ROS_INFO("Initialized obstacle map.");
 
   // Initialize the grid graph.
-  _world.reset(new Grid(_obs_map));
+  _world.reset(new Grid(_obs_map)); // RandomNet?
   ROS_INFO("Initialized world grid.");
 
   // TODO: Add localization subscriber.
+  // TODO: remove
+  boost::shared_ptr<RobotLocation> loc(new RobotLocation());
+  loc->x = CGAL::to_double(_obs_map->_robot_goal.x());
+  loc->y = CGAL::to_double(_obs_map->_robot_goal.y());
+  loc->theta = 0.0;
+  moveRobotTo(loc);
 }
 
 void Navigation::updateRobotLocation(const RobotLocation::ConstPtr &loc) {
@@ -49,30 +55,37 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
   ROS_INFO("Got a moveRobotTo command at navigation module.");
 
   _world->ComputePathsToGoal(Point_2(target->x, target->y));
+  ROS_INFO("Computed all paths. Now getting the specific one.");
   Grid::CellId cur_cell_id;
   assert(_world->GetCellId(
         Point_3(_cur_loc.x, _cur_loc.y,
                 ObstacleMap::RadToRotation(_cur_loc.theta)),
         &cur_cell_id));
-  shared_ptr<const Grid::Cell> cur_cell(_world->GetCell(cur_cell_id));
-  assert(cur_cell->HasPathToGoal());
+  const Grid::Cell *cur_cell(_world->GetCell(cur_cell_id));
+  ROS_ASSERT(cur_cell->HasPathToGoal());
+
+  ROS_INFO("Current location: %.3lf %.3lf target: %.3lf %.3lf. Path length: %.3lf", _cur_loc.x, _cur_loc.y, target->x, target->y, cur_cell->min_dist_to_goal);
 
   vector<Point_3> path;
-  for (; cur_cell->to_goal_next != nullptr;) {
+  for (; cur_cell->to_goal_next != nullptr; cur_cell = cur_cell->to_goal_next) {
+    ROS_INFO("Point: %.3lf %.3lf angle: %.3lf", cur_cell->xc, cur_cell->yc, ObstacleMap::IdToRotation(cur_cell->rotId));
     path.push_back(Point_3(cur_cell->xc, cur_cell->yc,
                            ObstacleMap::IdToRotation(cur_cell->rotId)));
   }
+  path.push_back(Point_3(cur_cell->xc, cur_cell->yc,
+                         ObstacleMap::IdToRotation(cur_cell->rotId)));
   // TODO: Smoothen the path, etc.
+  ROS_INFO("Publishing the path of size: %d", int(path.size()));
 
   GUIPolyMsg path_poly;
   path_poly.numVertices = path.size();
   for (const Point_3 &p : path) {
-    path_poly.x.push_back(p.x());
-    path_poly.y.push_back(p.y());
+    path_poly.x.push_back(CGAL::to_double(p.x()));
+    path_poly.y.push_back(CGAL::to_double(p.y()));
   }
   path_poly.c.r = 255;
-  path_poly.c.g = 255;
-  path_poly.c.b = 255;
+  path_poly.c.g = 0;
+  path_poly.c.b = 0;
   _guipoly_pub.publish(path_poly);
 }
 

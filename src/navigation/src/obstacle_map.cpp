@@ -1,19 +1,16 @@
 #include "obstacle_map.h"
 
-#include "cspace_tools.h"
-
 #include <CGAL/algorithm.h>
 #include <CGAL/convex_hull_3.h>
 #include <CGAL/Polyhedron_3.h>
 
-#include <cassert>
 #include <sstream>
 
 using namespace std;
 
 namespace cspace {
 
-typedef CGAL::Simple_cartesian<double> K;
+typedef cgal_kernel K;
 typedef K::Segment_3 Segment_3;
 typedef K::Point_2 Point_2;
 typedef K::Point_3 Point_3;
@@ -48,6 +45,8 @@ void ObstacleMap::BuildMapFromFile(const string &mapfile_location) {
  * Parses the input file containing map information.
  **/
 void ObstacleMap::ParseFromFile(const string &mapfile_location) {
+  ROS_INFO("ObstacleMap: Parsing from file: %s", mapfile_location.c_str());
+
   ifstream mapstream;
   mapstream.open(mapfile_location, ifstream::in);
   ParsePoint(mapstream, &_robot_start);
@@ -62,6 +61,40 @@ void ObstacleMap::ParseFromFile(const string &mapfile_location) {
     }
     _raw_obstacles.push_back(poly);
   }
+  {
+    Polygon_2 upper_wall;
+    upper_wall.insert(upper_wall.vertices_end(),
+                      Point_2(_world_rect.xmin(), _world_rect.ymax()));
+    upper_wall.insert(upper_wall.vertices_end(),
+                      Point_2(_world_rect.xmax(), _world_rect.ymax()));
+    _raw_obstacles.push_back(upper_wall);
+  }
+  {
+    Polygon_2 lower_wall;
+    lower_wall.insert(lower_wall.vertices_end(),
+                      Point_2(_world_rect.xmin(), _world_rect.ymin()));
+    lower_wall.insert(lower_wall.vertices_end(),
+                      Point_2(_world_rect.xmax(), _world_rect.ymin()));
+    _raw_obstacles.push_back(lower_wall);
+  }
+  {
+    Polygon_2 left_wall;
+    left_wall.insert(left_wall.vertices_end(),
+                      Point_2(_world_rect.xmin(), _world_rect.ymin()));
+    left_wall.insert(left_wall.vertices_end(),
+                      Point_2(_world_rect.xmin(), _world_rect.ymax()));
+    _raw_obstacles.push_back(left_wall);
+  }
+  {
+    Polygon_2 right_wall;
+    right_wall.insert(right_wall.vertices_end(),
+                      Point_2(_world_rect.xmax(), _world_rect.ymin()));
+    right_wall.insert(right_wall.vertices_end(),
+                      Point_2(_world_rect.xmax(), _world_rect.ymax()));
+    _raw_obstacles.push_back(right_wall);
+  }
+
+  ROS_INFO("ObstacleMap: Parsing done!");
 }
 
 /***
@@ -81,9 +114,13 @@ void ObstacleMap::ParsePoint(ifstream &stream, Point_2 *point) {
  * Parses world boundary rectangle from input stream.
  **/
 void ObstacleMap::ParseRect(ifstream &stream, Iso_rectangle_2 *rect) {
-  Point_2 corner, size;
-  ParsePoint(stream, &corner);
-  ParsePoint(stream, &size);
+  char buff[1024];
+  stream.getline(buff, 1024);
+  stringstream line;
+  line << string(buff);
+  double x, y, size_x, size_y;
+  line >> x >> y >> size_x >> size_y;
+  Point_2 corner(x, y), size(size_x, size_y);
   *rect = Iso_rectangle_2(corner, corner+Vector_2(size.x(), size.y()));
 }
 
@@ -106,50 +143,75 @@ bool ObstacleMap::ParseObstacle(ifstream &stream, Polygon_2 *poly) {
     poly->insert(poly->vertices_end(), Point_2(x, y));
   }
 
-  assert(!poly->is_empty());
+  if (poly->is_empty()) {
+    return false;
+  }
 
   return true;
+}
+
+bool ObstacleMap::IsInsideObstacle(const Point_2 &point) {
+  for (const Polygon_2 &poly : _raw_obstacles) {
+    if (poly.bounded_side(point) == CGAL::ON_BOUNDED_SIDE) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /***
  * Builds the CSpace representation given raw obstacles in 2D.
  **/
 void ObstacleMap::BuildCSpace() {
+  double start_time_sec = ros::Time::now().toSec();
+
+  ROS_INFO("ObstacleMap: Building CSpace");
   _obstacles_tree.clear();
+  ROS_INFO("ObstacleMap: Cleared obstacle tree");
   for (Polygon_2 raw_poly : _raw_obstacles) {
+    ROS_INFO_ONCE("ObstacleMap: Adding a raw obstacle");
+
     vector<Point_3> points;
     for (int rotInd = 0; rotInd < ANGLE_DIVISIONS; ++rotInd) {
-      Polygon_2 csobstacle2d; 
-      GetCSpaceObstacle2d(raw_poly, rotInd, &csobstacle2d);
-      for (int i = 0; i < csobstacle2d.size(); ++i) {
-        points.push_back(Point_3(csobstacle2d[i].x(),
-                         csobstacle2d[i].y(),
-                         IdToRotation(rotInd)*360.0/ANGLE_DIVISIONS));
+      shared_ptr<Polygon_2> csobstacle2d(new Polygon_2()); 
+      GetCSpaceObstacle2d(raw_poly, rotInd, csobstacle2d.get());
+      _lvl_obstacles[rotInd].push_back(csobstacle2d);
+      for (int i = 0; i < csobstacle2d->size(); ++i) {
+        points.push_back(Point_3((*csobstacle2d)[i].x(),
+                                 (*csobstacle2d)[i].y(),
+                                 IdToRotation(rotInd)));
       }
     }
 
-    Polyhedron_3 polyhedron;
-    CGAL::convex_hull_3(points.begin(), points.end(), polyhedron);
-    _obstacles_tree.insert(polyhedron.facets_begin(), polyhedron.facets_end());
+    ROS_INFO_ONCE("ObstacleMap: Added the points of a polyhedron."
+                  "Now constructing!");
+    shared_ptr<Polyhedron_3> polyhedron(new Polyhedron_3());
+    CGAL::convex_hull_3(points.begin(), points.end(), *polyhedron);
+    _obstacles_tree.insert(polyhedron->facets_begin(), polyhedron->facets_end());
+    _obs_polyhedra.push_back(polyhedron);
   }
+  ROS_INFO("ObstacleMap: Adding obstacles took: %.3lf sec",
+      ros::Time::now().toSec()-start_time_sec);
   // Make distance queries faster by doing precomputation.
+  ROS_INFO("ObstacleMap: Accelerating distance queries!");
   _obstacles_tree.accelerate_distance_queries();
+  ROS_INFO("ObstacleMap: Done Building CSpace!");
 }
 
 double ObstacleMap::GetWorldWidth() {
-  return _world_rect.xmax()-_world_rect.xmin();
+  return CGAL::to_double(_world_rect.xmax()-_world_rect.xmin());
 }
 
 double ObstacleMap::GetWorldHeight() {
-  return _world_rect.ymax()-_world_rect.ymin();
+  return CGAL::to_double(_world_rect.ymax()-_world_rect.ymin());
 }
 
 double ObstacleMap::GetWorldCenterX() {
-  return (_world_rect.xmin()+_world_rect.xmax())*0.5;
+  return CGAL::to_double(_world_rect.xmin()+_world_rect.xmax())*0.5;
 }
 
 double ObstacleMap::GetWorldCenterY() {
-  return (_world_rect.ymin()+_world_rect.ymax())*0.5;
+  return CGAL::to_double(_world_rect.ymin()+_world_rect.ymax())*0.5;
 }
 
 bool ObstacleMap::WorldContains(const Point_2& point) {
@@ -187,7 +249,7 @@ double ObstacleMap::RadToRotation(double rad) {
 }
 
 double ObstacleMap::DistanceToClosestObstacle(const Point_3 &point) {
-  return sqrt(_obstacles_tree.squared_distance(point));
+  return sqrt(CGAL::to_double(_obstacles_tree.squared_distance(point)));
 }
 
 bool ObstacleMap::IsInsideObstacle(const Point_3 &point) {
@@ -195,6 +257,15 @@ bool ObstacleMap::IsInsideObstacle(const Point_3 &point) {
                                    (*_point_gen)->z()));
   (*_point_gen)++;
   return !(_obstacles_tree.number_of_intersected_primitives(ray_query)&1);
+}
+
+bool ObstacleMap::IsInsideObstacle(const Point_2 &point, const int rotInd) {
+  for (auto poly_ptr : _lvl_obstacles[rotInd]) {
+    if (poly_ptr->bounded_side(point) == CGAL::ON_BOUNDED_SIDE) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool ObstacleMap::IsObstacleFree(const Point_3 &point, const double radius) {

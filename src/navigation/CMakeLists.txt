@@ -99,12 +99,15 @@ add_executable(navigation src/server.cpp
                           src/navigation.cpp
                           src/obstacle_map.cpp
                           src/cspace_tools.cpp
+                          #src/random_net.cpp
                           src/grid.cpp)
 
-target_link_libraries(navigation ${catkin_LIBRARIES} ${CGAL_LIBRARIES})
-add_dependencies(navigation rss_msgs_gencpp)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lCGAL -std=c++11 -frounding-math -lgmp -lglpk -lCGAL_Core -O3")
+target_link_libraries(navigation ${catkin_LIBRARIES} ${CGAL_LIBRARIES}
+                        /usr/lib/x86_64-linux-gnu/libgmp.so
+                        /usr/lib/x86_64-linux-gnu/libmpfr.so)
+add_dependencies(navigation rss_msgs_gencpp gui_msgs_gencpp)
 add_dependencies(navigation ${catkin_EXPORTED_TARGETS})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 ## Declare a cpp library
 # add_library(navigation

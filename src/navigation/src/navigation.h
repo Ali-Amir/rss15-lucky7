@@ -1,9 +1,9 @@
 #ifndef __NAVIGATION_NAVIGATION_H__
 #define __NAVIGATION_NAVIGATION_H__
 
-#include "ros/ros.h"
+#include <ros/ros.h>
 
-#include "rss_msgs/RobotLocation.h"
+#include <rss_msgs/RobotLocation.h>
 
 #include "obstacle_map.h"
 #include "grid.h"

@@ -4,6 +4,7 @@
 #include "ros/ros.h"
 
 #include "obstacle_map.h"
+#include "cspace_tools.h"
 
 #include <limits>
 #include <memory>
@@ -75,16 +76,16 @@ class Grid {
   };
 
   double ComputePathsToGoal(
-      const CGAL::Simple_cartesian<double>::Point_2 &point);
+      const cgal_kernel::Point_2 &point);
   double ComputePathsToGoal(
-      const CGAL::Simple_cartesian<double>::Point_3 &point);
+      const cgal_kernel::Point_3 &point);
   double ComputePathsToGoal(
-      const std::vector<CGAL::Simple_cartesian<double>::Point_3> &point);
+      const std::vector<cgal_kernel::Point_3> &point);
 
   double RunBfs(std::vector<CellId> start_ids);
   void CollectNeighbors(const CellId &ver, std::vector<CellId> *neighbors);
 
-  bool GetCellId(const CGAL::Simple_cartesian<double>::Point_3 &point,
+  bool GetCellId(const cgal_kernel::Point_3 &point,
                  CellId *cell_id);
   const Cell* GetCell(const CellId &cell_id) {
     return _cells + cell_id.GetIndex();
