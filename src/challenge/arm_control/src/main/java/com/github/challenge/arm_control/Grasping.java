@@ -151,7 +151,7 @@ public class Grasping extends AbstractNodeMain {
 	/**
 	 * <p> Indicate whether the block is collected or not <\p>
 	 */
-	boolean blockCollected = false;
+	boolean blockCollected = true;
 
 	/**
 	 * <p>Starting pose of robot before moving<\p>
@@ -318,10 +318,10 @@ public class Grasping extends AbstractNodeMain {
 					break;
 				}
 				case COLLECTING: {
-					if (bumpPressed){
-						blockCollected = true;
-						//code here to announce the block has been collected.
-					}
+					// if (bumpPressed){
+					// 	blockCollected = true;
+					// 	//code here to announce the block has been collected.
+					// }
 					System.out.println("COLLECTING");
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() && blockCollected) {
 						System.out.println("BLOCK IS COLLECTED");
