@@ -22,37 +22,37 @@ import java.awt.Color;
 
 public class MotionPlanner {
 
-  public Grid grid;
+  public CSGrid grid;
 
   Point2D.Double currPoint;
   Point2D.Double addPoint;
   Point2D.Double checkPoint;
 
 
-  MotionPlanner(Rectangle2D.Double worldBounds, double resolution, List<PolygonObstacle> obstacles) {
-    grid = new Grid(worldBounds, resolution);
+  MotionPlanner(Rectangle2D.Double worldBounds, int angleDiv, double resolution, List<CSObstacle> obstacles) {
+    grid = new CSGrid(worldBounds, angleDiv, resolution);
 
-    for (PolygonObstacle obstacle: obstacles){
+    for (CSObstacle obstacle: obstacles){
       grid.markObstacle(obstacle);
     }
   }
 
-  List<Point2D.Double> computePath(Point2D.Double robotPoint, Point2D.Double goalPoint){
+  List<Point2D.Double> computePath(CSCoord robotPoint, CSCoord goalPoint){
     List<Point2D.Double> path = new ArrayList<Point2D.Double>();
     List<Point2D.Double> shortPath = new ArrayList<Point2D.Double>();
-    Grid.Cell goalCell = grid.getCell(goalPoint);
-    Grid.Cell robotCell = grid.getCell(robotPoint);
+    CSGrid.Cell goalCell = grid.getCell(goalPoint);
+    CSGrid.Cell robotCell = grid.getCell(robotPoint);
     
     double maxDist = grid.computeShortestPaths(goalPoint);
    
     if (grid.getCell(robotPoint).toGoalNext==null){
-    	System.out.println("if-2");
+    	System.out.println("No path!!!");
       return path;
     } else {
       if (grid.getCell(robotPoint).toGoalNext!=null){
 
-        Grid.Cell currentCell = robotCell;
-        while (!currentCell.getRect().contains(goalPoint)){
+        CSGrid.Cell currentCell = robotCell;
+        while (!currentCell.getRect().contains(goalPoint.coord())){
           path.add(currentCell.makeCenterPoint());
           currentCell = currentCell.toGoalNext;
         }
@@ -60,9 +60,8 @@ public class MotionPlanner {
       } else {
         System.out.println("ERROR!: No path calculated.");
       }
-    shortPath = shortenPath(path);
-    return shortPath;
-    //return path;
+      shortPath = shortenPath(path);
+      return shortPath;
     }
   }
   
@@ -109,20 +108,26 @@ public class MotionPlanner {
   boolean isVisible(Point2D.Double currPoint, Point2D.Double checkPoint){
     double dx = checkPoint.x-currPoint.x;
     double dy = checkPoint.y-currPoint.y;
-	System.out.println("dx: " + dx+", dy: "+dy);
 
-    for (double j=0.0;j<100.0;j++){
+    System.out.println("Enteredd");
+    double oldX = currPoint.x, oldY = currPoint.y;
+    for (double j=1.0;j<100.0;j++){
       double newX = currPoint.x+j/100.0*dx;
       double newY = currPoint.y+j/100.0*dy;
-      Point2D.Double newPoint = new Point2D.Double(newX, newY);
-      Grid.Cell newCell = grid.getCell(newPoint);
 
-      if (!newCell.free){
-       // System.out.println("isVisible, NewCell: " +newCell.free);
+      double alfa = Math.atan2((newY-oldY), (newX-oldX));
+      if (alfa < 0.0) {
+        alfa += Math.PI;
+      }
+      int alfaInd = (int)((alfa/Math.PI/2.0)*CSObstacle.ANGLE_DIVISIONS);
+
+      System.out.println("AlfaInd=" + alfaInd);
+      Point2D.Double newPoint = new Point2D.Double(newX, newY);
+      CSGrid.Cell newCell = grid.getCell(new CSCoord(newPoint, alfaInd));
+
+      if (newCell == null || !newCell.free){
         return false;
       }
-else { //System.out.println("isVisible, NewCell: " + newCell.free);
-}
     }
     return true;
 

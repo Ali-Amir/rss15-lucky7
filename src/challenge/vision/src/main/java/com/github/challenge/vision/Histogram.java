@@ -18,6 +18,7 @@ package com.github.rosjava.challenge.vision;
 
 import java.awt.Color;
 
+import com.github.rosjava.challenge.gui.Image;
 
 /**
  * Histogram functions for generating, normalizing, and overlaying

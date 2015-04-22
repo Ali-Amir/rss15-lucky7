@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.github.rosjava.challenge.navigation;
+package com.github.rosjava.challenge.gui;
 
 import java.awt.Color;
 

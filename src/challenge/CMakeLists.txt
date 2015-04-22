@@ -12,7 +12,10 @@ project(challenge)
 find_package(catkin REQUIRED COMPONENTS
   rosjava_build_tools
   message_generation
+  roslaunch
 )
+
+roslaunch_add_file_check(launch)
 
 # Set the gradle targets you want catkin's make to run by default, e.g.
 #   catkin_rosjava_setup(installApp)

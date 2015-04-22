@@ -24,6 +24,9 @@ import gui_msgs.GUILineMsg;
 import org.ros.node.topic.Publisher;
 import org.ros.node.ConnectedNode;
 
+import com.github.rosjava.challenge.gui.SonarGUIPanel;
+
+
 public class WallModel {
   protected int sum = 0;
   protected double xsum = 0;

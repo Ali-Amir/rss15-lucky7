@@ -33,6 +33,7 @@ dependencies {
   /* compile project(':sibling_gradle_project') */
   compile project(':rss_msgs')
   compile project(':vision')
+  compile project(':gui')
   //compile project(':gui_msgs')
   compile 'org.ros.rosjava_messages:std_msgs:0.5.9'
 }

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.github.rosjava.challenge.navigation;
+package com.github.rosjava.challenge.gui;
 
 import java.awt.*;
 import java.awt.geom.*;
@@ -26,8 +26,6 @@ import org.ros.namespace.GraphName;
 import org.ros.node.topic.Subscriber;
 
 import java.util.*;
-
-import com.github.rosjava.challenge.motion_control.SonarGUI;
 
 
 /**
@@ -41,29 +39,34 @@ import com.github.rosjava.challenge.motion_control.SonarGUI;
  **/
 public class MapGUI extends SonarGUI {
   
-  MapGUIPanel panel;
-
   /**
    * <p>Consruct a new MapGUI.</p>
    *
    * <p>See <code>LocalNavigation.SonarGUI(int, double, double)</code>.</p>
    **/
+  /*
   public MapGUI(int poseSaveInterval, double maxTV, double maxRV) {
+    super();
     panel = new MapGUIPanel(poseSaveInterval, maxTV, maxRV);
   }
+  */
 
   /**
    * <p>See <code>LocalNavigation.SonarGUI(int)</code>.</p>
    **/
+  /*
   public MapGUI(int poseSaveInterval) {
+    super();
     panel = new MapGUIPanel(poseSaveInterval);
   }
+  */
 
   /**
    * <p>See <code>LocalNavigation.SonarGUI()</code>.</p>
    **/
   public MapGUI() {
-    panel = new MapGUIPanel();
+    //super();
+    //panel = new MapGUIPanel();
   }
 
   private Subscriber<gui_msgs.GUIRectMsg> guiRectSub;
@@ -74,12 +77,16 @@ public class MapGUI extends SonarGUI {
    * Hook called by ROS to start the gui
    **/
   public void onStart(ConnectedNode node) {
+    if (panel == null) {
+      panel = new MapGUIPanel();
+    }
+
     guiRectSub = node.newSubscriber("gui/Rect", gui_msgs.GUIRectMsg._TYPE);
-    guiRectSub.addMessageListener(new RectMessageListener(this));
+    guiRectSub.addMessageListener(new RectMessageListener(this), 1000);
     guiPolySub = node.newSubscriber("gui/Poly", gui_msgs.GUIPolyMsg._TYPE);
-    guiPolySub.addMessageListener(new PolyMessageListener(this));
+    guiPolySub.addMessageListener(new PolyMessageListener(this), 1000);
     guiEraseSub = node.newSubscriber("gui/Erase", gui_msgs.GUIEraseMsg._TYPE);
-    guiEraseSub.addMessageListener(new EraseMessageListener(this));
+    guiEraseSub.addMessageListener(new MapEraseMessageListener(this));
     super.onStart(node);
   }
     

@@ -27,6 +27,9 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
+import com.github.rosjava.challenge.gui.Image;
+import com.github.rosjava.challenge.gui.VisionGUI;
+
 /**
  * 
  * @author previous TA's, prentice, vona

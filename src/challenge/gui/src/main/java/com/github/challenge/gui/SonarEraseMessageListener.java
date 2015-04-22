@@ -14,33 +14,24 @@
  * the License.
  */
 
-package com.github.rosjava.challenge.motion_control;
-
-import java.awt.Color;
+package com.github.rosjava.challenge.gui;
 
 import org.ros.message.MessageListener;
-import gui_msgs.GUIPointMsg;
+import gui_msgs.GUIEraseMsg;
 
-public class PointMessageListener implements MessageListener<GUIPointMsg> {
+public class SonarEraseMessageListener implements MessageListener<GUIEraseMsg> {
 
 	private SonarGUI gui;
-
-	public PointMessageListener(SonarGUI sonarGUI) {
+	
+	public SonarEraseMessageListener(SonarGUI sonarGUI) {
 		this.gui = sonarGUI;
 	}
 
 	@Override
-	public void onNewMessage(GUIPointMsg msg) {
-		int r = (int) msg.getColor().getR();
-		int g = (int) msg.getColor().getG();
-		int b = (int) msg.getColor().getB();
-
-		if (r<0 || g < 0 || b < 0){
-			gui.panel.addPoint(msg.getX(), msg.getY(), (int) msg.getShape());
-		} else{
-			Color c = new Color(r, g, b);
-			gui.panel.addPoint(msg.getX(), msg.getY(), (int) msg.getShape(), c);
-		}
+	public void onNewMessage(GUIEraseMsg arg0) {
+		gui.panel.eraseLine();
+		gui.panel.erasePoints();
+		gui.panel.eraseSegments();
 	}
 
 }

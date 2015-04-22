@@ -22,6 +22,8 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import com.github.rosjava.challenge.gui.Image;
+
 /**
  * <p>Class for testing the histogram without the robot</p>
  *

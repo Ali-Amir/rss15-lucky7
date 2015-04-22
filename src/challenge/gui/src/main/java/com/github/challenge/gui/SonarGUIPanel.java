@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.github.rosjava.challenge.motion_control;
+package com.github.rosjava.challenge.gui;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -27,8 +27,6 @@ import java.util.Iterator;
 import java.util.*;
 import org.ros.node.ConnectedNode;
 
-import com.github.rosjava.challenge.vision.VisionGUI;
-import com.github.rosjava.challenge.vision.VisionGUIPanel;
 import org.ros.node.topic.Subscriber;
 
 
@@ -448,20 +446,6 @@ public class SonarGUIPanel extends VisionGUIPanel {
    **/
   public SonarGUIPanel() {
     super(60);
-  }
-
-  /**
-   * <p>Make a copy of a color.</p>
-   *
-   * @param c the color to copy
-   * @return an independent copy of c, or null if c was null
-   **/
-  public static Color dupColor(Color c) {
-
-    if (c == null)
-      return null;
-    
-    return new Color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
   }
 
   /**

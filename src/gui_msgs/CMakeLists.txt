@@ -9,7 +9,25 @@ project(gui_msgs)
 # Catkin
 ##############################################################################
 
-find_package(catkin REQUIRED rosjava_build_tools)
+find_package(catkin REQUIRED rosjava_build_tools std_msgs gencpp genmsg message_generation)
+
+add_message_files(
+  DIRECTORY msg
+  FILES
+  ColorMsg.msg
+  GUIEraseMsg.msg
+  GUILineMsg.msg
+  GUIPointMsg.msg
+  GUIPolyMsg.msg
+  GUIRectMsg.msg
+  GUISegmentMsg.msg
+)
+
+# Set the gradle targets you want catkin's make to run by default, e.g.
+#   catkin_rosjava_setup(installApp)
+# Note that the catkin_create_rosjava_xxx scripts will usually automatically
+# add tasks to this for you when you create subprojects.
+generate_messages(DEPENDENCIES std_msgs)
 
 # Set the gradle targets you want catkin's make to run by default, e.g.
 #   catkin_rosjava_setup(installApp)
@@ -17,7 +35,9 @@ find_package(catkin REQUIRED rosjava_build_tools)
 # add tasks to this for you when you create subprojects.
 catkin_rosjava_setup()
 
-catkin_package()
+catkin_package(
+  CATKIN_DEPENDS message_runtime
+)
 
 ##############################################################################
 # Installation
