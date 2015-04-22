@@ -14,6 +14,7 @@ using namespace std;
 typedef cgal_kernel K;
 typedef K::Point_2 Point_2;
 typedef K::Point_3 Point_3;
+typedef CGAL::Polygon_2<K> Polygon_2;
 
 namespace navigation {
 
@@ -52,6 +53,21 @@ void Navigation::updateRobotLocation(const RobotLocation::ConstPtr &loc) {
 }
 
 void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
+  const auto &polys = _obs_map->_lvl_obstacles[0];
+  for (const shared_ptr<Polygon_2> &poly : polys) {
+    GUIPolyMsg new_poly;
+    new_poly.numVertices = poly->size();
+    for (int i = 0; i < poly->size(); ++i) {
+      new_poly.x.push_back(CGAL::to_double((*poly)[i].x()));
+      new_poly.y.push_back(CGAL::to_double((*poly)[i].y()));
+    }
+    new_poly.c.r = 255;
+    new_poly.c.g = 0;
+    new_poly.c.b = 0;
+    new_poly.closed = 1;
+    _guipoly_pub.publish(new_poly);
+  }
+  double cur_time = ros::Time::now().toSec();
   ROS_INFO("Got a moveRobotTo command at navigation module.");
 
   _world->ComputePathsToGoal(Point_2(target->x, target->y));
@@ -62,6 +78,7 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
                 ObstacleMap::RadToRotation(_cur_loc.theta)),
         &cur_cell_id));
   const Grid::Cell *cur_cell(_world->GetCell(cur_cell_id));
+  ROS_INFO("Search took: %.3lf sec.", ros::Time::now().toSec()-cur_time);
   ROS_ASSERT(cur_cell->HasPathToGoal());
 
   ROS_INFO("Current location: %.3lf %.3lf target: %.3lf %.3lf. Path length: %.3lf", _cur_loc.x, _cur_loc.y, target->x, target->y, cur_cell->min_dist_to_goal);

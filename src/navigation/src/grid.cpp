@@ -102,6 +102,9 @@ double Grid::RunBfs(vector<CellId> start_ids) {
   ROS_INFO("Starting bfs");
   for (const CellId &cell_id : start_ids) {
     assert(cell_id.r < ROWS && cell_id.c < COLS && cell_id.rotId < ObstacleMap::ANGLE_DIVISIONS);
+    if (!_cells[cell_id.GetIndex()].is_free) {
+      continue;
+    }
     /*
     ROS_INFO("Marking cell number: %d/%d", cell_id.GetIndex(), ROWS*COLS*ObstacleMap::ANGLE_DIVISIONS);
     ROS_INFO("Cell is: r:%d/%d c:%d/%d rotId:%d/%d", cell_id.r, ROWS, cell_id.c, COLS, cell_id.rotId, ObstacleMap::ANGLE_DIVISIONS);
@@ -113,9 +116,11 @@ double Grid::RunBfs(vector<CellId> start_ids) {
   }
 
   ROS_INFO("Doing bfs!");
+  int num_visited = 0;
   double max_dist = 0.0;
   vector<CellId> neighbor_ids;
   while (!queue.empty()) {
+    ++num_visited;
     CellId cur_cell_id = queue.front();
     queue.pop();
     assert(cur_cell_id.GetIndex() < ROWS*COLS*ObstacleMap::ANGLE_DIVISIONS);
@@ -136,13 +141,14 @@ double Grid::RunBfs(vector<CellId> start_ids) {
       }
     }
   }
-  ROS_INFO("Done doing bfs!");
+  ROS_INFO("Done doing bfs! Visited: %d/%d cells.", num_visited, ROWS*COLS*ObstacleMap::ANGLE_DIVISIONS);
   return max_dist;
 }
 
 void Grid::CollectNeighbors(const CellId &ver, vector<CellId> *neighbors) {
   neighbors->clear();
 
+  /*
   //below
   if (ver.r > 0)
     neighbors->push_back(CellId(ver.r-1, ver.c, ver.rotId));
@@ -150,6 +156,7 @@ void Grid::CollectNeighbors(const CellId &ver, vector<CellId> *neighbors) {
   //above
   if (ver.r < ROWS-1)
     neighbors->push_back(CellId(ver.r+1, ver.c, ver.rotId));
+    */
 
   //left
   if (ver.c > 0)
@@ -159,17 +166,29 @@ void Grid::CollectNeighbors(const CellId &ver, vector<CellId> *neighbors) {
   if (ver.c < COLS-1)
     neighbors->push_back(CellId(ver.r, ver.c+1, ver.rotId));
 
+  CellId lvl_cell;
+  int next_lvl;
   if (ver.rotId + 1 < ObstacleMap::ANGLE_DIVISIONS) {
-    neighbors->push_back(CellId(ver.r, ver.c, ver.rotId+1));
+    next_lvl = ver.rotId + 1;
   } else {
-    neighbors->push_back(CellId(ver.r, ver.c, 0));
+    next_lvl = 0;
   }
+  GetCellId(Point_3(_cells[ver.GetIndex()].xc,
+                    _cells[ver.GetIndex()].yc,
+                    ObstacleMap::IdToRotation(next_lvl)),
+            &lvl_cell);
+  neighbors->push_back(lvl_cell);
 
   if (ver.rotId > 0) {
-    neighbors->push_back(CellId(ver.r, ver.c, ver.rotId-1));
+    next_lvl = ver.rotId - 1;
   } else {
-    neighbors->push_back(CellId(ver.r, ver.c, ObstacleMap::ANGLE_DIVISIONS-1));
+    next_lvl = ObstacleMap::ANGLE_DIVISIONS-1;
   }
+  GetCellId(Point_3(_cells[ver.GetIndex()].xc,
+                    _cells[ver.GetIndex()].yc,
+                    ObstacleMap::IdToRotation(next_lvl)),
+            &lvl_cell);
+  neighbors->push_back(lvl_cell);
 }
 
 bool Grid::GetCellId(const Point_3 &point, CellId *cell_id) {
@@ -200,6 +219,7 @@ bool Grid::GetCellId(const Point_3 &point, CellId *cell_id) {
   int actualR = max(0, min(ROWS-1, (ROWS>>1) - dr));
 
   *cell_id = CellId(actualR, actualC, rotId);
+  //ROS_INFO_STREAM("Point: " << CGAL::to_double(point.x()) << "," << CGAL::to_double(point.y()) << "  got: " << _cells[cell_id->GetIndex()].xc << "," << _cells[cell_id->GetIndex()].yc);
   return true;
 }
 

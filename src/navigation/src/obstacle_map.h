@@ -78,6 +78,7 @@ class ObstacleMap {
     CGAL::Random_points_on_sphere_3<
       cgal_kernel::Point_3>> _point_gen;
   std::vector<std::shared_ptr<CGAL::Polyhedron_3<cgal_kernel>>> _obs_polyhedra;
+ public:
   std::vector<std::shared_ptr<CGAL::Polygon_2<cgal_kernel>>>
       _lvl_obstacles[ANGLE_DIVISIONS];
 

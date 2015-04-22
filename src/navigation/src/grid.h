@@ -14,8 +14,8 @@ namespace cspace {
 
 class Grid {
  public:
-  static const int ROWS = 400;
-  static const int COLS = 400;
+  static const int ROWS = 300;
+  static const int COLS = 300;
   static int BFS_COLOR;
 
   Grid(const std::shared_ptr<ObstacleMap> &obs_map);
