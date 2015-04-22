@@ -149,6 +149,11 @@ public class Grasping extends AbstractNodeMain {
 	boolean startingMove = true;
 
 	/**
+	 * <p> Indicate whether the block is collected or not <\p>
+	 */
+	boolean blockCollected = false;
+
+	/**
 	 * <p>Starting pose of robot before moving<\p>
 	 */
 	Point2D.Double startPoint;
@@ -162,6 +167,8 @@ public class Grasping extends AbstractNodeMain {
 	 * <p>Distance to transport object (m)<\p>
 	 */
 	static final double TRANSPORT_DISTANCE = 0.5;
+	static final double APPROACH_DISTANCE = 0.45;
+
 
 	/**
 	 * <p>Translational velocity while moving (m/s).</p>
@@ -267,15 +274,15 @@ public class Grasping extends AbstractNodeMain {
 	/**
 	 * <p>Handle an ArmMessage<\p>
 	 */
-  int counter = 0;
+  	int counter = 0;
 	public void handle(ArmMsg msg) {
 		wristControl.update(msg.pwms[WRIST_INDEX]);
 		shoulderControl.update(msg.pwms[SHOULDER_INDEX]);
 
-    ++counter;
-    if (counter % 1 != 0) {
-      return;
-    }
+	    ++counter;
+	    if (counter % 1 != 0) {
+	      return;
+	    }
 
 		armTheta[WRIST_INDEX] = wristControl.step(msg);
 		armTheta[SHOULDER_INDEX] = shoulderControl.step(msg);
@@ -310,9 +317,28 @@ public class Grasping extends AbstractNodeMain {
 					}
 					break;
 				}
+				case COLLECTING: {
+					System.out.println("COLLECTING");
+					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() && blockCollected) {
+						System.out.println("BLOCK IS COLLECTED");
+						fsmState = RoboFSM.MOVE_FORWARD;
+						//fsmState = RoboFSM.BLIND_APPROACH;
+					}
+					break;
+				}
+
+				case RELEASING: {
+					System.out.println("RELEASING");
+					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
+						System.out.println("BLOCK IS RELEASED");
+						fsmState = RoboFSM.MOVE_BACKWARD;
+						//fsmState = RoboFSM.BLIND_APPROACH;
+					}
+					break;
+				}
 			}
 
-		} // if Part 3b	
+		} 
   }
 
 
@@ -356,6 +382,7 @@ public class Grasping extends AbstractNodeMain {
 						setVelocity(0.0, 0.0);
 						//					Robot.setVelocity(0.0, 0.0);
 						//fsmState = RoboFSM.LOWER_OBJECT; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+						fsmState = RoboFSM.RELEASING; 
 					}
 					break;
 				}
@@ -383,7 +410,45 @@ public class Grasping extends AbstractNodeMain {
 						startingMove = true;
 						setVelocity(0.0, 0.0);
 						System.out.println("Completed Object Transport");
+						fsmState = RoboFSM.SET_ARM_TO_GATE;
 						//fsmState = RoboFSM.SET_ARM_FOR_GRASP; !!!!!!!!!!!
+					}
+					break;
+				}
+
+				case VISUAL_SERVO_APPROACH: {
+					System.out.println("VISUAL_SERVO APPROACH");
+					// TODO
+					//if (Math.abs(blobTrack.target
+					// check distance to target and decrease standoff
+
+					// if object is lost, go back to VSSEARCH
+
+					//this is just a placeholder for moving forward.
+					System.out.println("*** MOVE_FORWARD *** " + startingMove);
+					if(startingMove) {
+						startPoint = new Point2D.Double();
+						startPoint.x = msg.getX();
+						startPoint.y = msg.getY();
+						startTheta = msg.getTheta();
+						targetPoint = new Point2D.Double();
+						targetPoint.x = startPoint.x +
+						TRANSPORT_DISTANCE*Math.cos(startTheta);
+						targetPoint.y = startPoint.y +
+						TRANSPORT_DISTANCE*Math.sin(startTheta);
+						targetTheta = startTheta;
+						startingMove = false;
+					}
+
+					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
+							targetPoint.y, DIR_FORWARD)) {
+						System.out.println("We are within range of target");
+						// TBD
+						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
+						startingMove = true;
+						setVelocity(0.0, 0.0);
+						//					Robot.setVelocity(0.0, 0.0);
+						fsmState = RoboFSM.COLLECTING; 
 					}
 					break;
 				}
@@ -538,8 +603,8 @@ public class Grasping extends AbstractNodeMain {
 				System.out.println("  range, bearing:" + blobTrack.targetRange + ", " +
 						(blobTrack.targetBearing*180.0/Math.PI));
 
-				if (Math.abs(blobTrack.targetRange-SEARCH_STANDOFF) < EPS_SEARCH_STANDOFF) {
-					fsmState = RoboFSM.SET_ARM_FOR_GRASP;
+				if (Math.abs(blobTrack.rotationVelocityCommand)<0.001 && Math.abs(blobTrack.targetRange-SEARCH_STANDOFF) < EPS_SEARCH_STANDOFF) {
+					fsmState = RoboFSM.SET_ARM_TO_COLLECT;
 					setVelocity(0.0, 0.0);
 				} else {
 					// move robot towards target
@@ -548,20 +613,6 @@ public class Grasping extends AbstractNodeMain {
 					setVelocity(blobTrack.rotationVelocityCommand, blobTrack.translationVelocityCommand);
 
 				}
-				break;
-			}
-			case VISUAL_SERVO_APPROACH: {
-				System.out.println("VISUAL_SERVO APPROACH");
-				// TODO
-				//if (Math.abs(blobTrack.target
-				// check distance to target and decrease standoff
-
-				// if object is lost, go back to VSSEARCH
-
-				blobTrack.desiredFixationDistance *= 0.5;
-				// move robot towards target
-				setVelocity(blobTrack.rotationVelocityCommand, blobTrack.translationVelocityCommand);
-
 				break;
 			}
 		}
@@ -763,281 +814,6 @@ public class Grasping extends AbstractNodeMain {
 
 	}
 
-
-	/**
-	 * GRIPPER CONTROLLER
-	 */
-	private class GripperController extends JointController{
-
-		// GRIPPER STATES
-		static final int GRIPPER_OPEN = 0;
-		static final int GRIPPER_CLOSED = 1;
-		static final int GRIPPER_OPENING = 2;
-		static final int GRIPPER_CLOSING = 3;
-    static final int GRIPPER_INITIALIZE = 4;
-
-		// Measured points for calibration
-		static final double servoPwmMin = 380;//calibration : Gripper open
-		static final double thetaAtPwmMin = Math.PI/3.0;
-		static final double servoPwmMax = 700;//calibration : Gripper closed
-		static final double thetaAtPwmMax = 0;
-
-		static final double maxThetaChange = 0.05;
-
-		static final int currentAverageWindow = 3; // control-ticks
-		static final double currentThresholdTime = 0.25; // seconds
-		static final double currentThresholdValue = 0.50; // volts
-
-		static final int gripperCurrentIdx = 1; //index
-		static final double breakBeamThresholdTime = 0.5; // seconds
-		static final double breakBeamThresholdValue = 0.5; // boolean
-
-		double poseRelease = pwmToTheta(380); // radians
-		double posePreshape = pwmToTheta(380); // radians
-		double poseClosed = pwmToTheta(700);  // radians, such that break beam is active
-
-		public GripperController() {
-			super(servoPwmMin, servoPwmMax, thetaAtPwmMin, thetaAtPwmMax,
-					maxThetaChange);
-		}
-
-
-		/* Return the desired gripper pose
-		 * This implements a simple set of behaviors which are driven by the
-		 * "state" of the world instead of internally held state. That is, the
-		 * current pose is determined by the current sensor values and the current
-		 * arm pose. We cheat a bit; because we don't actually have sensor feedback
-		 * of the joint pose, so the physical pose of the arm/gripper can't
-		 * maintain the state for us. Instead we use the commanded joint angle.
-		 */
-
-		@Override public void printState() {
-			System.err.println("Gripper: Bump: "+bumpPressed);
-			// + " Gripping: "+isGripping);
-			super.printState();
-		}
-
-		public long step(ArmMsg msg) {
-			if(LAB_PART == PART_2A) {return step_Part2a();}
-			else if(LAB_PART == PART_3A) {return step_Part3a(msg);}
-			else if(LAB_PART == PART_3B) {return step_Part3b(msg);}
-			else {return step_Part3b(msg);}
-		}
-
-		public long step_Part3b(ArmMsg msg) {
-			long returnVal = super.step();
-			switch (fsmState) {
-
-				case INITIALIZE_ARM: {
-					returnVal = super.step(posePreshape);
-					if (isAtDesired()) {
-						System.out.println("   - Gripper initialized");
-					}
-					break;
-				}
-
-				case SET_ARM_FOR_GRASP: {
-          System.out.println("SET ARM FOR GRASP Gripper theta=" + posePreshape);
-					returnVal = super.step(posePreshape);
-
-					if (isAtDesired()) {
-						System.out.println("  - Gripper is ready for grasp");
-					}
-					break;
-				}
-
-				case BLIND_APPROACH: {
-					System.out.println("BLIND_APPROACH - Gripper");
-					if(bumpPressed) {
-						System.out.println("  - GRIPPER BEAM BROKEN");
-						fsmState = RoboFSM.GRASP_OBJECT;
-					}
-					break;
-				}
-
-				case VISUAL_SERVO_APPROACH: {
-					System.out.println("VISUAL_SERVO_APPROACH - Gripper");
-					if(bumpPressed) {
-						System.out.println("  - GRIPPER BEAM BROKEN");
-						fsmState = RoboFSM.GRASP_OBJECT;
-					}
-					break;
-				}
-
-				case WAIT_FOR_BREAKBEAM: {
-					System.out.println("WAITING_FOR_BREAKBEAM");
-					if(bumpPressed) {
-						System.out.println("  - GRIPPER BEAM IS BROKEN");
-						fsmState = RoboFSM.GRASP_OBJECT;
-					}
-					break;
-				}
-
-				case GRASP_OBJECT: {
-					returnVal = super.step(poseClosed);
-					if(isAtDesired()) {
-						fsmState = RoboFSM.LIFT_OBJECT;
-					}
-					break;
-				}
-
-				case LIFT_OBJECT: {
-          setVelocity(0,0);
-					if(!bumpPressed) {
-						fsmState = RoboFSM.DROPPED_OBJECT;
-					}
-					break;
-				}
-
-				case DROPPED_OBJECT: {
-					System.out.println("DROPPED OBJECT");
-					// if object dropped, reset_arm
-					fsmState = RoboFSM.SET_ARM_FOR_GRASP;
-					break;
-				}
-
-				case MOVE_FORWARD: {
-					if(!bumpPressed) {
-						fsmState = RoboFSM.DROPPED_OBJECT;
-					}
-					break;
-				}
-
-				case RELEASE_OBJECT: {
-					System.out.println("RELEASING OBJECT");
-					returnVal = super.step(poseRelease);
-
-					if (isAtDesired()) {
-						fsmState = RoboFSM.MOVE_BACKWARD;
-					}
-					break;
-				}
-
-			}
-
-			return returnVal;
-		}
-
-		public long step_Part3a(ArmMsg msg) {
-			long returnVal = super.step();
-			switch (fsmState) {
-
-				case INITIALIZE_ARM: {
-					returnVal = super.step(posePreshape);
-					if (isAtDesired()) {
-						System.out.println("   - Gripper initialized");
-					}
-					break;
-				}
-
-				case SET_ARM_FOR_GRASP: {
-					returnVal = super.step(posePreshape);
-
-					if (isAtDesired()) {
-						System.out.println("  - Gripper is ready for grasp");
-					}
-					break;
-				}
-
-				case WAIT_FOR_BREAKBEAM: {
-					System.out.println("WAITING_FOR_BREAKBEAM");
-					if(bumpPressed) {
-						System.out.println("  - GRIPPER BEAM IS BROKEN");
-						fsmState = RoboFSM.GRASP_OBJECT;
-					}
-					break;
-				}
-
-				case GRASP_OBJECT: {
-					returnVal = super.step(poseClosed);
-					if(isAtDesired()) {
-						fsmState = RoboFSM.LIFT_OBJECT;
-					}
-					break;
-				}
-
-				case LIFT_OBJECT: {
-          setVelocity(0,0);
-					if(!bumpPressed) {
-						fsmState = RoboFSM.DROPPED_OBJECT;
-					}
-					break;
-				}
-
-				case DROPPED_OBJECT: {
-					System.out.println("DROPPED OBJECT");
-					// if object dropped, reset_arm
-					fsmState = RoboFSM.SET_ARM_FOR_GRASP;
-					break;
-				}
-
-				case MOVE_FORWARD: {
-					if(!bumpPressed) {
-						fsmState = RoboFSM.DROPPED_OBJECT;
-					}
-					break;
-				}
-
-				case RELEASE_OBJECT: {
-					System.out.println("RELEASING OBJECT");
-					returnVal = super.step(poseRelease);
-
-					if (isAtDesired()) {
-						fsmState = RoboFSM.MOVE_BACKWARD;
-					}
-					break;
-				}
-
-			}
-
-			return returnVal;
-		}
-
-		/**
-		 * <p>Step procedure for FSM in Part 2a<\p>
-		 */
-		public long step_Part2a() {
-			long returnVal = 0;
-
-		    if (state == GRIPPER_INITIALIZE) {
-		        returnVal = super.step(poseClosed);
-		    }
-			// if state is gripper opening, continue opening until theta is met
-			else if (state == GRIPPER_OPENING) {
-				returnVal = super.step(poseRelease);
-
-				if (isAtDesired()) {
-					state = GRIPPER_OPEN;
-				}
-			}
-			// if gripper state is closing, continue closing until theta is met
-			else if (state == GRIPPER_CLOSING) {
-				returnVal = super.step(poseClosed);
-
-				if (isAtDesired()) {
-					state = GRIPPER_CLOSED;
-				}
-			}
-	        else if (state == GRIPPER_CLOSED) {
-	        	returnVal = super.step(poseClosed);
-	        }
-
-			// if gripper state is open, begin closing
-			else if (state == GRIPPER_OPEN) {
-				state = GRIPPER_CLOSING;
-			}
-
-			// if gripper state is open, begin closing
-			else if (state == GRIPPER_CLOSED) {
-				state = GRIPPER_CLOSING;
-			}
-
-			return returnVal;
-		}
-
-	}
-
-
 	/**
 	 *
 	 */
@@ -1048,18 +824,18 @@ public class Grasping extends AbstractNodeMain {
 		static final int SHOULDER_EXTENDED = 1;
 		static final int SHOULDER_RETRACTING = 2;
 		static final int SHOULDER_EXTENDING = 3;
-    static final int SHOULDER_INITIALIZE = 4;
-    static final int SHOULDER_FINALIZE = 4;
+    	static final int SHOULDER_INITIALIZE = 4;
+  	  	static final int SHOULDER_FINALIZE = 4;
 
 		/*
     static final double servoPwmMin = 5637;
     static final double servoPwmMax = 19379;
     static final double pwmAtThetaZero = 11627;
 		 */
-		static final double servoPwmMin = 900;
-		static final double thetaAtPwmMin = 60*Math.PI/180;
-		static final double servoPwmMax = 1900;
-		static final double thetaAtPwmMax = -90*Math.PI/180;
+		static final double servoPwmMin = 500;
+		static final double thetaAtPwmMin = -90*Math.PI/180;
+		static final double servoPwmMax = 2200;
+		static final double thetaAtPwmMax = 90*Math.PI/180;
 
 		//static final double thetaPerPwmTick = (Math.PI) /
 		//  (17265-pwmAtThetaZero); // calibration
@@ -1069,11 +845,13 @@ public class Grasping extends AbstractNodeMain {
 		static final double maxThetaChange = 0.03;
 
 		//final double poseReleasing = thetaMax;    //radians
-		final double poseRetracted = pwmToTheta(1900);                           //radians
+		final double poseRetracted = pwmToTheta(2200);                           //radians
 		//final double poseGrasp =
-		final double poseExtended = pwmToTheta(1600);
+		final double poseParallel = pwmToTheta(1450);
 
-		final double poseGrasping = pwmToTheta(900);                           //radians
+		final double poseCollecting = pwmToTheta(1100);
+
+		final double poseGating = pwmToTheta(500);                   //radians
 
 		public ShoulderController() {
 			super(servoPwmMin, servoPwmMax, thetaAtPwmMin, thetaAtPwmMax,
@@ -1088,49 +866,52 @@ public class Grasping extends AbstractNodeMain {
 		}
 
 		public long step(ArmMsg msg) {
-			if(LAB_PART == PART_2A) {return step_Part2a();}
-			else if(LAB_PART == PART_3A) {return step_Part3a(msg);}
-			else if(LAB_PART == PART_3B) {return step_Part3b(msg);}
-			else {return step_Part3b(msg);}
+			if(SERVO_MODE == FIRST_MODE) {return step_FIRST(msg);}
+			else {return step_FIRST(msg);}
 		}
 
-		public long step_Part3b(ArmMsg msg) {
+		public long step_FIRST(ArmMsg msg) {
 			long returnVal;
 
 			switch (fsmState) {
 
 				case INITIALIZE_ARM: {
-					returnVal = super.step(poseRetracted);
+					returnVal = super.step(poseGating);
 					if (isAtDesired()) {
 						System.out.println("  - Shoulder is initialized");
 					}
 					break;
 				}
 
-				case SET_ARM_FOR_GRASP: {
-					returnVal = super.step(poseGrasping);
+				case SET_ARM_TO_COLLECT: {
+					returnVal = super.step(poseCollecting);
 					if(isAtDesired()) {
 						System.out.println("  - Shoulder is at desired");
 					}
 					break;
 				}
 
-				case LIFT_OBJECT: {
-					System.out.println("*** LIFT OBJECT ***");
-          setVelocity(0,0);
-					returnVal = super.step(poseRetracted);
-					if (!bumpPressed){
-						fsmState = RoboFSM.DROPPED_OBJECT;
+				case SET_ARM_TO_GATE: {
+					returnVal = super.step(poseGating);
+					if(isAtDesired()) {
+						System.out.println("  - Shoulder is at desired");
 					}
+					break;
+				}
+
+				case COLLECTING: {
+					System.out.println("*** COLLECTING OBJECT ***");
+          			setVelocity(0,0);
+					returnVal = super.step(poseGating);
 					if (isAtDesired()) {
 						fsmState = RoboFSM.MOVE_FORWARD;
 					}
 					break;
 				}
 
-				case LOWER_OBJECT: {
+				case RELEASING: {
 					System.out.println("*** LOWER OBJECT ***");
-					returnVal = super.step(poseGrasping);
+					returnVal = super.step(poseRetracted);
 					//setDesired(poseExtended);
 					//returnVal = lowerShoulder(msg, returnVal);
 					break;
@@ -1144,97 +925,7 @@ public class Grasping extends AbstractNodeMain {
 			return returnVal;
 		}
 
-		public long step_Part3a(ArmMsg msg) {
-			long returnVal;
 
-			switch (fsmState) {
-
-				case INITIALIZE_ARM: {
-					returnVal = super.step(poseRetracted);
-					if (isAtDesired()) {
-						System.out.println("  - Shoulder is initialized");
-					}
-					break;
-				}
-
-				case SET_ARM_FOR_GRASP: {
-					returnVal = super.step(poseGrasping);
-					if(isAtDesired()) {
-						System.out.println("  - Shoulder is at desired");
-					}
-					break;
-				}
-
-				case LIFT_OBJECT: {
-					System.out.println("*** LIFT OBJECT ***");
-					returnVal = super.step((thetaMax+thetaMin)/2.0);
-					if (!bumpPressed){
-						fsmState = RoboFSM.DROPPED_OBJECT;
-					}
-					if (isAtDesired()) {
-						fsmState = RoboFSM.MOVE_FORWARD;
-					}
-					break;
-				}
-
-				case LOWER_OBJECT: {
-					System.out.println("*** LOWER OBJECT ***");
-					returnVal = super.step(poseGrasping);
-					if (!bumpPressed){
-						fsmState = RoboFSM.DROPPED_OBJECT;
-					}
-					if (isAtDesired()) {
-						fsmState = RoboFSM.RELEASE_OBJECT;
-					}
-					break;
-				}
-
-				default : {
-					returnVal = super.step();
-				}
-			}
-
-			return returnVal;
-		}
-
-		/**
-		 * <p>Step procedure for FSM in Part 2a<\p>
-		 */
-		public long step_Part2a(){
-			long returnVal = 0;
-
-            if (state == SHOULDER_INITIALIZE) {
-        		returnVal = super.step((thetaMax+thetaMin)/2.0);
-
-        	} 
-
-        	else if (state == SHOULDER_FINALIZE) {
-        		returnVal = super.step(thetaMax);
-
-        	}
-        	else if (state == SHOULDER_EXTENDING) {
-				returnVal = super.step(poseExtended);
-
-				if (isAtDesired()) {
-					state = SHOULDER_EXTENDED;
-				}
-			} else if (state == SHOULDER_RETRACTING) {
-				returnVal = super.step(poseRetracted);
-
-				if (isAtDesired()) {
-					state = SHOULDER_RETRACTED;
-				}
-			}
-
-			else if (state == SHOULDER_EXTENDED) {
-				state = SHOULDER_RETRACTING;
-			}
-			else if (state == SHOULDER_RETRACTED) {
-				state = SHOULDER_EXTENDING;
-			}
-
-			return returnVal;
-		}
 
 	}
 
@@ -1250,18 +941,18 @@ public class Grasping extends AbstractNodeMain {
 		static final int WRIST_EXTENDED = 1;
 		static final int WRIST_RETRACTING = 2;
 		static final int WRIST_EXTENDING = 3;
-    static final int WRIST_INITIALIZE = 4;
+    	static final int WRIST_INITIALIZE = 4;
 
-		static final double servoPwmMin = 800;
+		static final double servoPwmMin = 450;
 		static final double thetaAtPwmMin = 90.0*Math.PI/180;//-110*Math.PI/180;
-		static final double servoPwmMax = 1600;
-		static final double thetaAtPwmMax = 0;
+		static final double servoPwmMax = 2400;
+		static final double thetaAtPwmMax = -105.0*Math.PI/180;
 
 		static final double maxThetaChange = .05;    //Rad/sec
 
 		double poseExtended = pwmToTheta(800);//thetaMin;
-		double poseRetracted = pwmToTheta(800);//thetaMax;
-		double poseGrasp = pwmToTheta(1000);
+		double poseCollecting = pwmToTheta(2400);//thetaMax;
+		double poseGating = pwmToTheta(2200);
 		//double poseReleasing = thetaMin;  //radians
 
 		public WristController() {
@@ -1277,41 +968,59 @@ public class Grasping extends AbstractNodeMain {
 		}
 
 		public long step(ArmMsg msg) {
-			if(LAB_PART == PART_2A) {return step_Part2a();}
-			else if(LAB_PART == PART_3A) {return step_Part3a(msg);}
-			else if(LAB_PART == PART_3B) {return step_Part3b(msg);}
-			else {return step_Part3b(msg);}
+			if(SERVO_MODE == FIRST_MODE) {return step_FIRST(msg);}
+			else {return step_FIRST(msg);}
 		}
 
 
-		public long step_Part3b(ArmMsg msg) {
+		public long step_FIRST(ArmMsg msg) {
 			long returnVal;
 
 			switch (fsmState) {
 
 				case INITIALIZE_ARM: {
-					returnVal = super.step(poseRetracted);
+					returnVal = super.step(poseGating);
 					if (isAtDesired()) {
 						System.out.println("  - Wrist is initialized");
 					}
 					break;
 				}
 
-				case SET_ARM_FOR_GRASP: {
-					returnVal = super.step(poseGrasp);
+				case SET_ARM_TO_COLLECT: {
+					returnVal = super.step(poseCollecting);
 
 					if(isAtDesired()) {
-						System.out.println("  - Wrist is ready for grasp");
+						System.out.println("  - Wrist is ready to collect");
 					}
 
 					break;
 				}
 
-				case LOWER_OBJECT: {
-					returnVal = super.step(poseGrasp);
-					if ( isAtDesired() ) {
-						System.out.println("  - Wrist is lowered");
+				case SET_ARM_TO_GATE: {
+					returnVal = super.step(poseGating);
+
+					if(isAtDesired()) {
+						System.out.println("  - Wrist is in gating position");
 					}
+
+					break;
+				}
+
+				case COLLECTING: {
+					returnVal = super.step(poseGating);
+					if(isAtDesired()) {
+						System.out.println("  - Wrist is in gating position");
+					}
+
+					break;
+				}
+
+				case RELEASING: {
+					returnVal = super.step(poseGating);
+					if(isAtDesired()) {
+						System.out.println("  - Wrist is in gating position");
+					}
+
 					break;
 				}
 
@@ -1323,77 +1032,6 @@ public class Grasping extends AbstractNodeMain {
 
 			return returnVal;
 		}
-
-		public long step_Part3a(ArmMsg msg) {
-			long returnVal;
-
-			switch (fsmState) {
-
-				case INITIALIZE_ARM: {
-					returnVal = super.step(poseRetracted);
-					if (isAtDesired()) {
-						System.out.println("  - Wrist is initialized");
-					}
-					break;
-				}
-
-				case SET_ARM_FOR_GRASP: {
-					returnVal = super.step(poseGrasp);
-
-					if(isAtDesired()) {
-						System.out.println("  - Wrist is ready for grasp");
-					}
-
-					break;
-				}
-
-				case LOWER_OBJECT: {
-					returnVal = super.step(poseGrasp);
-					if ( isAtDesired() ) {
-						System.out.println("  - Wrist is lowered");
-					}
-					break;
-				}
-
-				default: {
-					returnVal = super.step();
-					break;
-				}
-			}
-
-			return returnVal;
-		}
-
-
-		/**
-		 * <p>Step procedure for FSM in Part 2a<\p>
-		 */
-		public long step_Part2a() {
-			long returnVal = 0;
-
-		    if (state == WRIST_INITIALIZE) {
-		        returnVal = super.step((thetaMax+thetaMin)/2.0);
-		    } else if (state == WRIST_EXTENDING) {
-				returnVal = super.step(poseExtended);
-				if (isAtDesired()) {
-					state = WRIST_EXTENDED;
-				}
-			} else if (state == WRIST_RETRACTING) {
-				returnVal = super.step(poseRetracted);
-
-				if (isAtDesired()) {
-					state = WRIST_RETRACTED;
-				}
-			} else if (state == WRIST_EXTENDED) {
-				state = WRIST_RETRACTING;
-			}
-			else if (state == WRIST_RETRACTED) {
-				state = WRIST_EXTENDING;
-			}
-
-			return returnVal;
-		}
-
 	}
 
 	@SuppressWarnings("unused")
