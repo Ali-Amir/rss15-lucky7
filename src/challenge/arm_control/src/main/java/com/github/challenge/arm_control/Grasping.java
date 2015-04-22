@@ -318,6 +318,10 @@ public class Grasping extends AbstractNodeMain {
 					break;
 				}
 				case COLLECTING: {
+					if (bumpPressed){
+						blockCollected = true;
+						//code here to announce the block has been collected.
+					}
 					System.out.println("COLLECTING");
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() && blockCollected) {
 						System.out.println("BLOCK IS COLLECTED");
@@ -433,9 +437,9 @@ public class Grasping extends AbstractNodeMain {
 						startTheta = msg.getTheta();
 						targetPoint = new Point2D.Double();
 						targetPoint.x = startPoint.x +
-						TRANSPORT_DISTANCE*Math.cos(startTheta);
+						APPROACH_DISTANCE*Math.cos(startTheta);
 						targetPoint.y = startPoint.y +
-						TRANSPORT_DISTANCE*Math.sin(startTheta);
+						APPROACH_DISTANCE*Math.sin(startTheta);
 						targetTheta = startTheta;
 						startingMove = false;
 					}
