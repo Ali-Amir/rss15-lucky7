@@ -76,7 +76,8 @@ enum RoboFSM {
 	 */
 	MOVE_BACKWARD,
 	VISUAL_SERVO_APPROACH,
-	VISUAL_SERVO_SEARCH
+	VISUAL_SERVO_SEARCH,
+  RELEASING
 }
 
 public class Grasping extends AbstractNodeMain {
@@ -276,8 +277,8 @@ public class Grasping extends AbstractNodeMain {
 	 */
   	int counter = 0;
 	public void handle(ArmMsg msg) {
-		wristControl.update(msg.pwms[WRIST_INDEX]);
-		shoulderControl.update(msg.pwms[SHOULDER_INDEX]);
+		wristControl.update(msg.getPwms()[WRIST_INDEX]);
+		shoulderControl.update(msg.getPwms()[SHOULDER_INDEX]);
 
 	    ++counter;
 	    if (counter % 1 != 0) {
@@ -288,8 +289,8 @@ public class Grasping extends AbstractNodeMain {
 		armTheta[SHOULDER_INDEX] = shoulderControl.step(msg);
 
   		// Send arm pose to the Orc
-		ArmMsg armMsg = new ArmMsg();
-		armMsg.pwms = armTheta;
+		ArmMsg armMsg = armPub.newMessage();
+		armMsg.setPwms(armTheta);
 		armPub.publish(armMsg);
 
 		if (SERVO_MODE == FIRST_MODE) {
@@ -1041,7 +1042,6 @@ public class Grasping extends AbstractNodeMain {
 	@SuppressWarnings("unused")
 	private void printControllerState() {
 		System.err.println("---- CONTROLLER STATE ----");
-		gripperControl.printState();
 		shoulderControl.printState();
 		wristControl.printState();
 	}
