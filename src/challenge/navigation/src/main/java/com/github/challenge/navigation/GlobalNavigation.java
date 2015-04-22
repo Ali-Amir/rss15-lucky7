@@ -41,7 +41,7 @@ import rss_msgs.SonarMsg;
 import rss_msgs.RobotLocation;
 
 import com.github.rosjava.challenge.motion_control.Robot;
-import com.github.rosjava.challenge.motion_control.SonarGUIPanel;
+import com.github.rosjava.challenge.gui.SonarGUIPanel;
 import com.github.rosjava.challenge.motion_control.StateHandler;
 
 public class GlobalNavigation extends AbstractNodeMain {
