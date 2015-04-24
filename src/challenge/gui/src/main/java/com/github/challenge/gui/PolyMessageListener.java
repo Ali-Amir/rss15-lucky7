@@ -42,7 +42,8 @@ public class PolyMessageListener implements MessageListener<GUIPolyMsg> {
 		boolean closed = msg.getClosed() == 1;
 		boolean filled = msg.getFilled() == 1;
 		Color c = new Color((int)msg.getC().getR(), (int)msg.getC().getG(), (int)msg.getC().getB()); //gui.makeRandomColor();
-		gui.panel.addPoly(vertices, closed, filled, c);
+    while (gui.panel == null);
+    gui.panel.addPoly(vertices, closed, filled, c);
 	}
 
 }

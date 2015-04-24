@@ -77,16 +77,15 @@ public class MapGUI extends SonarGUI {
    * Hook called by ROS to start the gui
    **/
   public void onStart(ConnectedNode node) {
-    if (panel == null) {
-      panel = new MapGUIPanel();
-    }
-
     guiRectSub = node.newSubscriber("gui/Rect", gui_msgs.GUIRectMsg._TYPE);
     guiRectSub.addMessageListener(new RectMessageListener(this), 1000);
     guiPolySub = node.newSubscriber("gui/Poly", gui_msgs.GUIPolyMsg._TYPE);
     guiPolySub.addMessageListener(new PolyMessageListener(this), 1000);
     guiEraseSub = node.newSubscriber("gui/Erase", gui_msgs.GUIEraseMsg._TYPE);
     guiEraseSub.addMessageListener(new MapEraseMessageListener(this));
+    if (panel == null) {
+      panel = new MapGUIPanel();
+    }
     super.onStart(node);
   }
     

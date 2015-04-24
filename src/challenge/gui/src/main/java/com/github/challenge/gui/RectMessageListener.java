@@ -34,6 +34,7 @@ public class RectMessageListener implements MessageListener<GUIRectMsg> {
 	public void onNewMessage(GUIRectMsg message) {
 		boolean filled = message.getFilled() == 1;
 		Color color = getColorFromMsg(message.getC());
+    while (gui.panel == null);
 		gui.panel.addRect(message.getX(), message.getY(), message.getWidth(), message.getHeight(),
 	              filled, color);
 		

@@ -85,7 +85,7 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
 
   vector<Point_3> path;
   for (; cur_cell->to_goal_next != nullptr; cur_cell = cur_cell->to_goal_next) {
-    ROS_INFO("Point: %.3lf %.3lf angle: %.3lf", cur_cell->xc, cur_cell->yc, ObstacleMap::IdToRotation(cur_cell->rotId));
+    //ROS_INFO("Point: %.3lf %.3lf angle: %.3lf", cur_cell->xc, cur_cell->yc, ObstacleMap::IdToRotation(cur_cell->rotId));
     path.push_back(Point_3(cur_cell->xc, cur_cell->yc,
                            ObstacleMap::IdToRotation(cur_cell->rotId)));
   }

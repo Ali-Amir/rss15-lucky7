@@ -14,8 +14,9 @@ namespace cspace {
 
 class Grid {
  public:
-  static const int ROWS = 300;
-  static const int COLS = 300;
+  static const int ROWS = 600;
+  static const int COLS = 600;
+  static const int ANGLE_DIVISIONS = ObstacleMap::ANGLE_DIVISIONS;
   static int BFS_COLOR;
 
   Grid(const std::shared_ptr<ObstacleMap> &obs_map);
@@ -69,6 +70,10 @@ class Grid {
       r(r_), c(c_), rotId(rotId_), xc(xc_), yc(yc_), half_width(half_width_),
       half_height(half_height_) {
     }
+
+    int GetIndex() const {
+      return CellId::GetCellId(r, c, rotId);
+    }
     
     bool HasPathToGoal() const {
       return is_free && color == Grid::BFS_COLOR;
@@ -88,7 +93,10 @@ class Grid {
   bool GetCellId(const cgal_kernel::Point_3 &point,
                  CellId *cell_id);
   const Cell* GetCell(const CellId &cell_id) {
-    return _cells + cell_id.GetIndex();
+    if (_compressed_id.count(cell_id.GetIndex())) {
+      return _cells + _compressed_id[cell_id.GetIndex()];
+    }
+    return nullptr;
   }
 
  private:
@@ -97,7 +105,9 @@ class Grid {
   double _resolutionX;
   double _resolutionY;
   std::vector<CellId> _previous_start_ids;
-  std::vector<CellId> _free_cells;
+  std::vector<Cell> _free_cells;
+  std::map<int,int> _compressed_id;
+  std::vector<std::vector<int>> _edge;
 };
 
 } // namespace cspace 

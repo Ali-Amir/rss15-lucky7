@@ -67,12 +67,9 @@ public class GlobalNavigation extends AbstractNodeMain {
   public void onStart(ConnectedNode node) {
     
     guiRectPub = node.newPublisher("gui/Rect", GUIRectMsg._TYPE);
-    //guiRectPub.setQueueLimit(0);
     guiPolyPub = node.newPublisher("gui/Poly", GUIPolyMsg._TYPE);
-    //guiPolyPub.setQueueLimit(0);
     guiErasePub = node.newPublisher("gui/Erase", GUIEraseMsg._TYPE);
     guiPointPub = node.newPublisher("gui/Point", GUIPointMsg._TYPE);
-    //guiPointPub.setQueueLimit(0);
 
     motorPub = node.newPublisher("command/Motors", MotionMsg._TYPE);
     robot = new Robot();
@@ -84,7 +81,7 @@ public class GlobalNavigation extends AbstractNodeMain {
 	  String mapFileName = paramTree.getString(node.resolveName("~/mapFileName"));
 
     try {
-      Thread.sleep(10000); //Wait 10 seconds to let MapGUI initialize, otherwise it won't listen to messages on time
+      Thread.sleep(2000); //Wait 2 seconds to let MapGUI initialize, otherwise it won't listen to messages on time
       polygonMap = new PolygonMap(mapFileName);      
       displayMap(polygonMap);
       

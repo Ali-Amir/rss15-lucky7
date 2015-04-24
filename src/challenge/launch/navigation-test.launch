@@ -6,6 +6,8 @@
     <param name="mapFileName" value="$(env CHALLENGE)/maps/global-nav-maze-2011-hard.map" />
   </node>
   <node name="nav" pkg="navigation" type="navigation" args="" machine="workstation" output="screen">
+    <param name="calculateFromScratch" value="no" />
+    <param name="precalcPath" value="$(env CHALLENGE)/maps/global-nav-maze-2011-hard.dec" />
     <param name="mapFileName" value="$(env CHALLENGE)/maps/global-nav-maze-2011-hard.map" />
   </node>
 
