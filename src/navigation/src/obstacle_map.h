@@ -35,6 +35,7 @@ class ObstacleMap {
   static double IdToRotation(int id);
   static double IdToRad(int id);
   static double RadToRotation(double rad);
+  static double RotationToRad(double rot);
   bool IsObstacleFree(const cgal_kernel::Point_3 &point,
                       const double radius);
   bool IsInsideObstacle(const cgal_kernel::Point_2 &point);

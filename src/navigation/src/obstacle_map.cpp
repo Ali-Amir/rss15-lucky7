@@ -248,6 +248,10 @@ double ObstacleMap::RadToRotation(double rad) {
   return rad/2/M_PI*360.0;
 }
 
+double ObstacleMap::RotationToRad(double rotation) {
+  return rotation/180.0*M_PI;
+}
+
 double ObstacleMap::DistanceToClosestObstacle(const Point_3 &point) {
   return sqrt(CGAL::to_double(_obstacles_tree.squared_distance(point)));
 }

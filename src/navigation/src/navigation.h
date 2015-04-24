@@ -14,6 +14,8 @@ namespace navigation {
 
 class Navigation {
  public:
+  static const int GRANULARITY = 600;
+
   Navigation();
 
   /**
@@ -27,6 +29,11 @@ class Navigation {
   void moveRobotTo(const rss_msgs::RobotLocation::ConstPtr& msg);
 
  private:
+  void SmoothePath(const std::vector<cgal_kernel::Point_3> &path,
+                   std::vector<cgal_kernel::Point_3> *spath);
+
+
+ private:
   ros::Publisher _guierase_pub;
   ros::Publisher _guipoint_pub;
   ros::Publisher _guipoly_pub;
@@ -36,6 +43,8 @@ class Navigation {
   rss_msgs::RobotLocation _cur_loc;
  
 };
+
+double NormalizeRad(double rad);
 
 } // namespace navigation
 
