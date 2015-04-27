@@ -1,3 +1,4 @@
 devel/
 src/challenge/.gradle/
 **/build/
+**/.DS_Store
