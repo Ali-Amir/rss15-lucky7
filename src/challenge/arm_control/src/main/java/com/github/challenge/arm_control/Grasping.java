@@ -280,8 +280,8 @@ public class Grasping extends AbstractNodeMain {
 
 				int offset = 20;
 
-				for (y = 0; y<message.getHeight();y++){
-					for (x=0; x<message.getWidth(); x++){
+				for (int y = 0; y<message.getHeight();y++){
+					for (int x=0; x<message.getWidth(); x++){
 
 						int new_x = x - 20;
 						if (new_x<0){
