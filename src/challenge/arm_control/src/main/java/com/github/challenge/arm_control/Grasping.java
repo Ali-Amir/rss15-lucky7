@@ -258,11 +258,20 @@ public class Grasping extends AbstractNodeMain {
 		odoSub = node.newSubscriber("rss/odometry", OdometryMsg._TYPE);
 		odoSub.addMessageListener(new OdometryListener(this));
 
+        final boolean reverseRGB = node.getParameterTree().getBoolean("reverse_rgb", false);
+
 		vidSub = node.newSubscriber("/rss/video", sensor_msgs.Image._TYPE);
 		vidSub.addMessageListener(new MessageListener<sensor_msgs.Image>() {
 			@Override
 			public void onNewMessage(sensor_msgs.Image message) {
-				byte[] rgbData = Image.RGB2BGR(message.getData().array(),  (int)message.getWidth(), (int)message.getHeight());
+				byte[] rgbData;
+				if (reverseRGB) {
+					rgbData = Image.RGB2BGR(message.getData().array(),
+							(int) message.getWidth(), (int) message.getHeight());
+				}
+				else {
+					rgbData = message.getData().array();
+				}
 				handle(rgbData, (int)message.getWidth(), (int)message.getHeight());
 			}
 		});
@@ -544,11 +553,11 @@ public class Grasping extends AbstractNodeMain {
 	 * @param a received camera message
 	 */
 	public synchronized void handle(byte[] rawImage, int width, int height) {
-    ++videoCounter;
-    if (videoCounter % 12 != 0) {
-      return;
-    }
-    System.out.println("======================================+ASD=================");
+        ++videoCounter;
+        if (videoCounter % 12 != 0) {
+          return;
+        }
+        System.out.println("======================================+ASD=================");
 		// on first camera message, create new BlobTracking instance
 		if ( blobTrack == null ) {
 			System.out.println("Blobtracking");
@@ -571,8 +580,15 @@ public class Grasping extends AbstractNodeMain {
 		}
 
 		Image src = new Image(rawImage, width, height);
+        /*
+        for (int i = 0; i < height/2; ++i) {
+            for (int j = 0; j < width/2; ++j) {
+                src.setPixel(j, i, (byte)0, (byte)0, (byte)255);
+            }
+        }
+        */
 		Image dest = new Image(rawImage, width, height);
-		blobTrack.apply(src, dest);
+		//blobTrack.apply(src, dest);
 
 		sensor_msgs.Image pubImage = vidPub.newMessage();
 		pubImage.setWidth(width);

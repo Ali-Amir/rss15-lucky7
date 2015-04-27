@@ -129,6 +129,7 @@ public class Image{
 	 */
 	public Image(byte[] src, int width, int height) {
 		if (src.length != width*height*3) {
+            System.out.println("length=" + src.length + "  width=" + width + " " + " height=" + height);
 			throw new IllegalArgumentException(
 			"Length does not match width and height.");
 		}

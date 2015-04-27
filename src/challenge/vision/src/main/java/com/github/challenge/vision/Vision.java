@@ -96,9 +96,8 @@ public class Vision extends AbstractNodeMain implements Runnable {
 			}
 
 			Image dest = new Image(src);
-            Sytem.out.println("Got the image!");
 
-			//blobTrack.apply(src, dest);
+			blobTrack.apply(src, dest);
 
 			// update newly formed vision message
             gui.panel.setVisionImage(dest.toArray(), width, height);
