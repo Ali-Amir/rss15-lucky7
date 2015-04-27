@@ -128,12 +128,16 @@ public class Image{
 	 * @param height image height
 	 */
 	public Image(byte[] src, int width, int height) {
-		if (src.length != width*height*3) {
+		if (src.length < width*height*3) {
             System.out.println("length=" + src.length + "  width=" + width + " " + " height=" + height);
 			throw new IllegalArgumentException(
 			"Length does not match width and height.");
 		}
-		pixels = src;
+        pixels = new byte[width*height*3];
+        for (int i = 0; i < pixels.length; ++i) {
+            pixels[i] = src[i];
+        }
+		//pixels = src;
 		this.width = width;
 		this.height = height;
 	}
