@@ -265,14 +265,41 @@ public class Grasping extends AbstractNodeMain {
 			@Override
 			public void onNewMessage(sensor_msgs.Image message) {
 				byte[] rgbData;
+
+
+
 				if (reverseRGB) {
 					rgbData = Image.RGB2BGR(message.getData().array(),
 							(int) message.getWidth(), (int) message.getHeight());
 				}
 				else {
+					System.out.println "not reverse RGB"
 					rgbData = message.getData().array();
 				}
-				handle(rgbData, (int)message.getWidth(), (int)message.getHeight());
+
+				byte[] newData = new byte[width*height*3];
+
+				offset = 20;
+
+				for (y = 0; y<message.getHeight();y++){
+					for (x=0; x<message.getWidth(); x++){
+
+						new_x = x - 20;
+						if (new_x<0){
+							new_x = new_x + message.getWidth()
+						}
+						old_index = (y*message.getWidth() + x) * 3; 
+						new_index = (y*message.getWidth() + new_x)*3;
+
+						newData[new_index] = rgbData[old_index]
+						newData[new_index+1] = rgbData[old_index+1]
+						newData[new_index+1] = rgbData[old_index+1]
+
+
+					}
+				}
+
+				handle(newData, (int)message.getWidth(), (int)message.getHeight());
 			}
 		});
 	}
