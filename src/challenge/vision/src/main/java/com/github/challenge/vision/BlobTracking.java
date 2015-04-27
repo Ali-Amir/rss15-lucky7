@@ -1,26 +1,9 @@
-/*
- * Copyright (C) 2014 Ali-Amir Aldan.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
-package com.github.rosjava.challenge.vision;
+package VisualServo;
 
 import java.awt.Color;
-import com.github.rosjava.challenge.gui.Image;
 
 /**
- * BlobTracking performs image processing and tracking for the Vision 
+ * BlobTracking performs image processing and tracking for the VisualServo
  * module.  BlobTracking filters raw pixels from an image and classifies blobs,
  * generating a higher-level vision image.
  *
@@ -41,20 +24,20 @@ public class BlobTracking {
 	protected int imageConnected[] = null; //(Solution)
 	protected float imageHsb[] = null; //(Solution)
 	// (Solution)
-	public double targetHueLevel; // (Solution)
-	public double targetRadius; // (Solution)
-	public double hueThreshold; // (Solution)
-	public double saturationLevel; // (Solution)
-	public double blobSizeThreshold; // (Solution)
-	public double desiredFixationDistance; // (Solution)
-	public double translationErrorTolerance; // (Solution)
-	public double rotationErrorTolerance; // (Solution)
-	public boolean useGaussianBlur; // (Solution)
-	public boolean approximateGaussian; // (Solution)
-	public double translationVelocityGain; // (Solution)
-	public double translationVelocityMax; // (Solution)
-	public double rotationVelocityGain; // (Solution)
-	public double rotationVelocityMax; // (Solution)
+	public double targetHueLevel=0.0; // (Solution)
+	public double targetRadius=28; // (Solution)
+	public double hueThreshold=0.05; // (Solution)
+	public double saturationLevel=0.6; // (Solution)
+	public double blobSizeThreshold=400.0/128.0/128.0; // (Solution)
+	public double desiredFixationDistance=0.4; // (Solution)
+	public double translationErrorTolerance=0.05; // (Solution)
+	public double rotationErrorTolerance=Math.PI/180.0*5.0; // (Solution)
+	public boolean useGaussianBlur=false; // (Solution)
+	public boolean approximateGaussian=false; // (Solution)
+	public double translationVelocityGain=0.8; // (Solution)
+	public double translationVelocityMax=0.1; // (Solution)
+	public double rotationVelocityGain=0.9; // (Solution)
+	public double rotationVelocityMax=Math.PI/10.0; // (Solution)
 	// (Solution)
 	/** //(Solution)
 	 * <p>Focal plane distance, experimentally determined, in pixels.</p> //(Solution)
@@ -102,38 +85,83 @@ public class BlobTracking {
 	 * <p>Apply connected components analysis to pick out the largest blob. Then // (Solution)
 	 * build stats on this blob.</p> // (Solution)
 	 **/ // (Solution)
-	protected void blobPresent(int[] threshIm, int[] connIm, int[] blobIm) { // (Solution)
-		// (Solution)
-		connComp.doLabel(threshIm, connIm, width, height); // (Solution)
-		// (Solution)
-		int colorMax = connComp.getColorMax(); // (Solution)
-		int countMax = connComp.getCountMax(); // (Solution)
-		// System.out.println("Count max -- num pixels is :  " + countMax);// (Solution)
-		// System.out.println("Fraction of num pixels is  " + ((float)countMax) / (width*height));// (Solution)
-		// (Solution)
-		if (countMax > blobSizeThreshold * height * width) { // (Solution)
-			int sx = 0; // (Solution)
-			int sy = 0; // (Solution)
-			targetArea = countMax; // (Solution)
-			int destIndex = 0; // (Solution)
-			for (int y = 0; y < height; y++) { // (Solution)
-				for (int x = 0; x < width; x++) { // (Solution)
-					if (connIm[destIndex] == colorMax) { // (Solution)
-						sx += x; // (Solution)
-						sy += y; // (Solution)
-						blobIm[destIndex++] = 255; // (Solution)
-					} else { // (Solution)
-						blobIm[destIndex++] = 0; // (Solution)
-					} // (Solution)
-				} // (Solution)
-			} // (Solution)
-			centroidX = sx / (double) countMax; // (Solution)
-			centroidY = sy / (double) countMax; // (Solution)
-			targetDetected = true; // (Solution)
-		} // (Solution)
-		else { // (Solution)
-			targetDetected = false; // (Solution)
-		} // (Solution)
+	protected synchronized void blobPresent(int[] threshIm, int[] connIm, int[] blobIm) { // (Solution)
+    int arraySize = width*height;
+    connIm = connComp.doLabel(threshIm, connIm, width, height);
+
+    int numLabels = connComp.getNumberOfLabels();
+    int[] labelArea = new int[numLabels];
+    int[] minX = new int[numLabels];
+    int[] maxX = new int[numLabels];
+    int[] minY = new int[numLabels];
+    int[] maxY = new int[numLabels];
+    int[] sumX = new int[numLabels];
+    int[] sumY = new int[numLabels];
+
+    for (int i = 0; i < numLabels; ++i) {
+      minX[i] = width;
+      minY[i] = height;
+    }
+    for (int i = 0; i < arraySize; ++i) {
+      int x = i % width;
+      int y = i / width;
+      if (connIm[i] != 0) {
+        int l = connIm[i]-1;
+        ++labelArea[l];
+
+        minX[l] = Math.min(minX[l], x);
+        maxX[l] = Math.max(maxX[l], x);
+        minY[l] = Math.min(minY[l], y);
+        maxY[l] = Math.max(maxY[l], y);
+        sumX[l] += x;
+        sumY[l] += y;
+      }
+    }
+
+    targetDetected = false;
+    boolean foundAtLeastOne = false;
+    for (int i = 0; i < numLabels; ++i) {
+      int b_w = maxX[i] - minX[i] + 1;
+      int b_h = maxY[i] - minY[i] + 1;
+      int r = (b_w + b_h) / 4;
+      double minArea = Math.min(Math.PI*r*r, labelArea[i]*1.0);
+      double maxArea = Math.max(Math.PI*r*r, labelArea[i]*1.0);
+      double aspectRatio = 1.0*b_w/b_h;
+      if (r > 5) {
+        System.out.println("HERE: r="+ r + " minx=" + minX[i] + " maxx=" + maxX[i]
+                            + " miny=" + minY[i] + " maxy=" + maxY[i]);
+      }
+      if (Math.abs(1.0 - aspectRatio) < 0.2 && r > 5) {
+        int xC = (minX[i] + maxX[i]) / 2;
+        int yC = (minY[i] + maxY[i]) / 2;
+
+        // Set internal variables
+        targetDetected = true;
+        targetArea = b_w*b_h;
+        centroidX = xC;
+        centroidY = yC;
+
+        int destIndex = 0;
+        for (int j = 0; j < arraySize; ++j) {
+          if (connIm[j]-1 == i) {
+            blobIm[destIndex++] = 255;
+          } else {
+            blobIm[destIndex++] = 0;
+          }
+        }
+        /*
+        System.out.println("Centroid coordinates: " + xC + ", " + yC);
+        System.out.println("Area: " + b_w*b_h);
+        System.out.println("");
+        */
+        break;
+      }
+      /*
+      if (r > 10 && minArea / maxArea > 0.80) {
+        return true;
+      }
+      */
+    }
 	} // (Solution)
 
 	// (Solution)
@@ -168,10 +196,21 @@ public class BlobTracking {
 	 * </pre></p> //(Solution)
 	 **/ //(Solution)
 	public void blobFix() { //(Solution)
+    double px = centroidX;
+    double py = centroidY;
+    double area = targetArea;
+
+    double dForward_cm = -0.8587*py + 123.57;
+    double dLateralLeft_cm = -0.3968*px + 31.91;
+
+    targetRange = dForward_cm/100.0;
+    targetBearing = Math.atan2(dLateralLeft_cm, dForward_cm); 
+  /*
 		double deltaX = centroidX - width / 2.0; //(Solution)
 		targetRange = //(Solution)
 			focalPlaneDistance * targetRadius / Math.sqrt(targetArea / Math.PI); //(Solution)
 		targetBearing = Math.atan2(deltaX, focalPlaneDistance); //(Solution)
+  */
 	} //(Solution)
 
 	//(Solution)
@@ -207,7 +246,7 @@ public class BlobTracking {
 			rotationVelocityCommand = // (Solution)
 				Math.max(-rotationVelocityMax, //(Solution)
 						Math.min(rotationVelocityMax, //(Solution)
-								-rotationError * rotationVelocityGain)); //(Solution)
+								rotationError * rotationVelocityGain)); //(Solution)
 	} //(Solution)
 
 	//(Solution)
@@ -270,9 +309,9 @@ public class BlobTracking {
 		for (int y = 0; y < height; y++) { //(Solution)
 			for (int x = 0; x < width; x++) { //(Solution)
 				int pix = image.getPixel(x, y); // (Solution)
-				int r = Image.pixelRed(pix)&0xFF; // (Solution)
-				int g = Image.pixelGreen(pix)&0xFF; // (Solution)
-				int b = Image.pixelBlue(pix)&0xFF; // (Solution)
+				int r = Image.pixelRed(pix); // (Solution)
+				int g = Image.pixelGreen(pix); // (Solution)
+				int b = Image.pixelBlue(pix); // (Solution)
 				float[] hsb = Color.RGBtoHSB(r, g, b, null); // (Solution)
 				if (x > 3.0 * width / 8.0 && x < 5.0 * width / 8.0 //(Solution)
 						&& y > 3.0 * height / 8.0 && y < 5.0 * height / 8.0) { //(Solution)
@@ -331,6 +370,7 @@ public class BlobTracking {
 		//double avg_h = 0.0; // (Solution)
 		//double avg_s = 0.0; // (Solution)
 		// (Solution)
+        int cnt = 0;
 		for (int y = 0; y < height; y++) { // (Solution)
 			for (int x = 0; x < width; x++) { // (Solution)
 				int pix = src.getPixel(x, y); // (Solution)
@@ -350,13 +390,15 @@ public class BlobTracking {
 				// (Solution)
 				// classify pixel based on saturation level (Solution)
 				// and hue distance (Solution)
-				if (hsb[1] > saturationLevel && hdist < hueThreshold) { // (Solution)
+				if (hsb[1] > saturationLevel && hdist < hueThreshold && hsb[2] > 0.3) { // (Solution)
+          ++cnt;
 					mask[maskIndex++] = 255; // (Solution)
 				} else { // (Solution)
 					mask[maskIndex++] = 0; // (Solution)
 				} // (Solution)
 			} // (Solution)
 		} // (Solution)
+    //System.out.println("There are " + cnt + " red pixels. Width="+width + " height=" + height);
 		// (Solution)
 		// avg_h /= width * height; // (Solution)
 		// avg_s /= width * height; // (Solution)
@@ -395,6 +437,7 @@ public class BlobTracking {
 		blobPixel(src, blobPixelMask); //(Solution)
 		blobPresent(blobPixelMask, imageConnected, blobMask); //(Solution)
 		if (targetDetected) { // (Solution)
+      System.out.println("Target detected!");
 			blobFix(); // (Solution)
 			computeTranslationVelocityCommand(); // (Solution)
 			computeRotationVelocityCommand(); // (Solution)
@@ -410,12 +453,12 @@ public class BlobTracking {
 		//		translationVelocityCommand + "m/s, " + // (Solution)
 		//		rotationVelocityCommand + "rad/s"); // (Solution)
 		// For a start, just copy src to dest. // (Solution)
-		if (dest != null) { // (Solution)
+		//if (dest != null) { // (Solution)
 			// (Solution)
 			//Histogram.getHistogram(src, dest, true); // (Solution)
-			markBlob(src, dest); // (Solution)
+			markBlob(src, dest); // (Solution) TODO
 			// (Solution)
-		} // (Solution)
+		//} // (Solution)
 		// End Student Code
 	}
 }
