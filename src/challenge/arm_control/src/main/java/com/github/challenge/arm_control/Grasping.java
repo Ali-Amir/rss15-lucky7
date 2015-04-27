@@ -276,7 +276,7 @@ public class Grasping extends AbstractNodeMain {
 					rgbData = message.getData().array();
 				}
 
-				byte[] newData = new byte[width*height*3];
+				byte[] newData = new byte[message.getWidth()*message.getHeight()*3];
 
 				int offset = 20;
 
@@ -285,7 +285,7 @@ public class Grasping extends AbstractNodeMain {
 
 						int new_x = x - 20;
 						if (new_x<0){
-							int new_x = new_x + message.getWidth();
+							new_x = new_x + message.getWidth();
 						}
 						int old_index = (y*message.getWidth() + x) * 3; 
 						int new_index = (y*message.getWidth() + new_x)*3;
