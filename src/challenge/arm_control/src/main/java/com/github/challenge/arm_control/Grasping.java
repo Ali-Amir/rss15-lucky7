@@ -278,7 +278,7 @@ public class Grasping extends AbstractNodeMain {
 
 				byte[] newData = new byte[message.getWidth()*message.getHeight()*3];
 
-				int offset = 24;
+				int offset = 26;
 
 				for (int y = 0; y<message.getHeight();y++){
 					for (int x=0; x<message.getWidth(); x++){
