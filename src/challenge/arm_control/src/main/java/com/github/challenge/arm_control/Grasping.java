@@ -588,7 +588,7 @@ public class Grasping extends AbstractNodeMain {
         }
         */
 		Image dest = new Image(rawImage, width, height);
-		//blobTrack.apply(src, dest);
+		blobTrack.apply(src, dest);
 
 		sensor_msgs.Image pubImage = vidPub.newMessage();
 		pubImage.setWidth(width);
