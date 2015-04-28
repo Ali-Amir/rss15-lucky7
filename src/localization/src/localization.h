@@ -22,6 +22,10 @@ struct Particle {
   Particle() {}
   Particle(double x_, double y_, double t_, double belief_) :
     x(x_), y(y_), t(t_), belief(belief_) {}
+
+  bool operator < (const Particle &a) const {
+    return belief < a.belief;
+  }
 };
 
 class Localization {
@@ -41,6 +45,8 @@ class Localization {
   static constexpr double DISTANCE_TOLERANCE = 0.05;
   // 10 degree heading tolerance
   static constexpr double HEADING_TOLERANCE = 0.17453292519;
+  // TODO: measure the actual value.
+  static constexpr double ODOMETRY_TIMESTEP = 0.1;
 
   void InitializeParticles();
   void PublishLocation();

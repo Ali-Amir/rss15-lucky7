@@ -58,7 +58,7 @@ void Localization::InitializeParticles() {
     double x = xDist(generator);
     double y = yDist(generator);
     double t = tDist(generator);
-    _particles[i] = Particle(x, y, t, 1.0/N);
+    _particles[i] = Particle(x, y, t, -log(1.0*N));
   }
 }
 
@@ -66,14 +66,24 @@ RobotLocation Localization::currentPositionBelief() const {
   double x = 0, y = 0, t = 0;
   double normalizer = 0.0;
   for (auto par : _particles) {
-    x += par.x*par.belief;
-    y += par.y*par.belief;
-    t += par.y*par.belief;
-    normalizer += par.belief;
+    double prob = exp(par.belief);
+    x += par.x*prob;
+    y += par.y*prob;
+    par.t = fmod(par.t, 2*M_PI);
+    if (par.t < 0) {
+      par.t += 2*M_PI;
+    }
+    t += par.t*prob;
+    normalizer += prob;
   }
+
   x /= normalizer;
   y /= normalizer;
   t /= normalizer;
+  t = fmod(t, 2*M_PI);
+  if (t < 0) {
+    t += 2*M_PI;
+  }
 
   RobotLocation currentPosition;
   currentPosition.x = x;
@@ -92,7 +102,7 @@ void Localization::Test() {
            _wall_map->DistanceToWall(K::Ray_2(Point_2(0.0,0.0), K::Direction_2(1.0,1.00001))));
   // Initialize distribution:
   // TODO: REMOVE TEST CODE
-  ros::Duration(2.0).sleep(); // Sleep for 2 sec to allow gui node to initialize.
+  ros::Duration(5.0).sleep(); // Sleep for 5 sec to allow gui node to initialize.
   for (const K::Triangle_2 &tri : _wall_map->_triangles) {
     GUIPolyMsg new_poly;
     new_poly.numVertices = 3;
@@ -108,7 +118,53 @@ void Localization::Test() {
   }
 }
 
+double logGaussian(double x, double mu, double var) {
+  return -0.5*log(2.0*M_PI*var) - (x-mu)*(x-mu)/var/2.0;
+}
+double logGaussian(double x, double y, double mux, double muy, double var) {
+  return -0.5*log(2.0*M_PI*var) - ((x-mux)*(x-mux)+(y-muy)*(y-muy))/var/2.0;
+}
+
 void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
+  double dx = odo->x;
+  double dy = odo->y;
+  double dt = odo->theta;
+
+  double varD = pow(min(0.02, sqrt(dx*dx+dy*dy)), 2.0);
+  double varT = pow(min(0.17453292519, dt), 2.0);
+
+  default_random_engine gen;
+  normal_distribution<double> xyDist(0.0, varD);
+  normal_distribution<double> tDist(0.0, varT);
+
+  set<Particle> new_particles;
+  for (const Particle &par : _particles) {
+    new_particles.insert(Particle(par.x+dx, par.y+dy, par.t+dt,
+          par.belief + logGaussian(0.0, 0.0, 0.0, 0.0, varD) + logGaussian(0.0, 0.0, varT)));
+    // Generate 10 random points to account for noise.
+    for (int i = 0; i < 10; ++i) {
+      double x = xyDist(gen) + par.x+dx;
+      double y = xyDist(gen) + par.y+dy;
+      double t = tDist(gen) + par.t+dt;
+      new_particles.insert(Particle(x, y, t,
+            par.belief + logGaussian(x-par.x-dx, 0.0, y-par.y-dy, 0.0, varD) + logGaussian(t-par.t-dt, 0.0, varT)));
+    }
+  }
+
+  // Substitute old particles with top #N new ones.
+  for (; new_particles.size() > N; new_particles.erase(new_particles.begin()));
+  _particles.clear();
+  copy(new_particles.begin(), new_particles.end(), back_inserter(_particles));
+
+  // Normalize the result
+  double normalizer = 0.0;
+  for (const Particle &par : _particles) {
+    normalizer += exp(par.belief);
+  }
+  for (Particle &par : _particles) {
+    par.belief -= log(normalizer);
+  }
+
   PublishLocation();
 }
 
