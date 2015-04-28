@@ -130,8 +130,8 @@ void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
   double dy = odo->y;
   double dt = odo->theta;
 
-  double varD = pow(min(0.02, sqrt(dx*dx+dy*dy)), 2.0);
-  double varT = pow(min(0.17453292519, dt), 2.0);
+  double varD = pow(min(0.03, 0.01 + sqrt(dx*dx+dy*dy)), 2.0);
+  double varT = pow(min(0.17453292519, 0.17453292519/20.0+fabs(dt)), 2.0);
 
   default_random_engine gen;
   normal_distribution<double> xyDist(0.0, varD);
