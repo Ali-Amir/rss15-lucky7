@@ -8,7 +8,6 @@
 
 using namespace rss_msgs;
 using namespace gui_msgs;
-using namespace cspace;
 using namespace std;
 
 typedef cgal_kernel K;
@@ -24,19 +23,38 @@ Localization::Localization() {
   ros::NodeHandle n;
   // Initialize message publishers.
   _location_pub = n.advertise<GUIEraseMsg>("localization/update", 1000);
+  _guipoly_pub = n.advertise<GUIPolyMsg>("gui/Poly", 1000);
 
   // Load map file location and initialize the map-handler class instance.
   string mapfile_location;
-  assert(n.getParam("/nav/mapFileName", mapfile_location));
+  assert(n.getParam("/loc/mapFileName", mapfile_location));
   ROS_INFO("Got mapFileName: %s", mapfile_location.c_str());
   _wall_map = make_shared<WallMap>(mapfile_location);
   ROS_INFO("Initialized wall map.");
 
   // Initialize distribution:
   // TODO:
+  for (int i = 0; i < 1000000; ++i)
+  for (const K::Triangle_2 &tri : _wall_map->_triangles) {
+    GUIPolyMsg new_poly;
+    new_poly.numVertices = 3;
+    for (int i = 0; i < 3; ++i) {
+      new_poly.x.push_back(CGAL::to_double(tri[i].x()));
+      new_poly.y.push_back(CGAL::to_double(tri[i].y()));
+    }
+    new_poly.c.r = 255;
+    new_poly.c.g = 0;
+    new_poly.c.b = 0;
+    new_poly.closed = 1;
+    _guipoly_pub.publish(new_poly);
+  }
 }
 
 void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
+}
+
+void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
+
 }
 
 /*

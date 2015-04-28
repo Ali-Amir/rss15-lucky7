@@ -95,6 +95,8 @@ set(CGAL_LIBRARIES "/usr/lib/libCGAL.so")
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_executable(localization src/server.cpp
+               src/wall_map.cpp
+               src/localization.cpp
               )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lCGAL -std=c++11 -frounding-math -lgmp -lglpk -lCGAL_Core -O3")

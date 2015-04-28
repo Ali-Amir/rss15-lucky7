@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
   localization::Localization localization;
   ros::Subscriber odometry_sub =
       n.subscribe("/rss/odometry", 1, &localization::Localization::onOdometryUpdate, &localization);
-  ros::Subscriber odometry_sub =
+  ros::Subscriber sonar_sub =
       n.subscribe("/rss/sonars", 1, &localization::Localization::onSonarUpdate, &localization);
   ros::spin();
 

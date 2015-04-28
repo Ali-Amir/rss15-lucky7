@@ -3,17 +3,24 @@
 
 #include <ros/ros.h>
 
-#include <CGAL/AABB_polyhedron_triangle_primitive.h>
-#include <CGAL/AABB_tree.h>
-#include <CGAL/AABB_traits.h>
+#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <CGAL/point_generators_3.h>
 #include <CGAL/Polygon_2.h>
 #include <CGAL/Polyhedron_3.h>
 #include <fstream>
 
-#include "cspace_tools.h"
+typedef CGAL::Exact_predicates_exact_constructions_kernel cgal_kernel_exact;
+typedef CGAL::Exact_predicates_exact_constructions_kernel cgal_kernel;
 
 namespace localization {
+
+struct FaceInfo2 {
+  FaceInfo2() {}
+  int nesting_level;
+  bool in_domain() { 
+    return nesting_level%2 == 1;
+  }
+};
 
 class WallMap {
  public:
@@ -43,8 +50,9 @@ class WallMap {
  private:
   cgal_kernel::Iso_rectangle_2 _world_rect;
   std::vector< CGAL::Polygon_2<cgal_kernel>> _raw_obstacles;
-  std::vector< CGAL::Triangle_2<cgal_kernel>> _triangles;
   std::vector<std::shared_ptr<CGAL::Polyhedron_3<cgal_kernel>>> _obs_polyhedra;
+ public: // TODO
+  std::vector< CGAL::Triangle_2<cgal_kernel>> _triangles;
 
 };
 
