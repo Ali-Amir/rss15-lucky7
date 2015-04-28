@@ -32,9 +32,12 @@ Localization::Localization() {
   _wall_map = make_shared<WallMap>(mapfile_location);
   ROS_INFO("Initialized wall map.");
 
+  // TEST
+  ROS_INFO("Distance to wall from 0.0 0.0 in direction 1.0 0.0: %.3lf",
+           _wall_map->DistanceToWall(K::Ray_2(Point_2(0.0,0.0), K::Direction_2(1.0,1.00001))));
   // Initialize distribution:
-  // TODO:
-  for (int i = 0; i < 1000000; ++i)
+  // TODO: REMOVE TEST CODE
+  for (int i = 0; i < 100000; ++i)
   for (const K::Triangle_2 &tri : _wall_map->_triangles) {
     GUIPolyMsg new_poly;
     new_poly.numVertices = 3;

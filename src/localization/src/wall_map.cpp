@@ -2,6 +2,8 @@
 
 #include <CGAL/algorithm.h>
 #include <CGAL/Constrained_Delaunay_triangulation_2.h>
+#include <CGAL/intersections.h>
+#include <CGAL/squared_distance_2.h>
 #include <CGAL/Triangulation_face_base_with_info_2.h>
 
 #include <sstream>
@@ -11,24 +13,13 @@ using namespace std;
 namespace localization {
 
 typedef cgal_kernel K;
-typedef K::Segment_3 Segment_3;
-typedef K::Point_2 Point_2;
-typedef K::Point_3 Point_3;
-typedef K::Ray_2 Ray_2;
+typedef CGAL::Point_2<K> Point_2;
+typedef CGAL::Ray_2<K> Ray_2;
+typedef CGAL::Segment_2<K> Segment_2;
 typedef K::Iso_rectangle_2 Iso_rectangle_2;
 typedef K::Vector_2 Vector_2;
 typedef CGAL::Direction_3<K> Direction_3;
 typedef CGAL::Polygon_2<K> Polygon_2;
-/*
-typedef CGAL::Triangulation_vertex_base_2<K>                      Vb;
-typedef CGAL::Triangulation_face_base_with_info_2<FaceInfo2,K>    Fbb;
-typedef CGAL::Constrained_triangulation_face_base_2<K,Fbb>        Fb;
-typedef CGAL::Triangulation_data_structure_2<Vb,Fb>               TDS;
-typedef CGAL::Exact_predicates_tag                                Itag;
-typedef CGAL::Constrained_Delaunay_triangulation_2<K, TDS, Itag>  CDT;
-typedef CDT::Point                                                Point;
-typedef CGAL::Polygon_2<K>                                        Polygon_2;
-*/
 
 typedef CGAL::Triangulation_vertex_base_2<K>                     Vb;
 typedef CGAL::Constrained_triangulation_face_base_2<K>           Fb;
@@ -181,58 +172,6 @@ bool WallMap::ParseObstacle(ifstream &stream, Polygon_2 *poly) {
 ////
 // Code from cgal example
 ////
-/*
-void 
-mark_domains(CDT& ct, 
-             CDT::Face_handle start, 
-             int index, 
-             std::list<CDT::Edge>& border )
-{
-  if(start->info().nesting_level != -1){
-    return;
-  }
-  std::list<CDT::Face_handle> queue;
-  queue.push_back(start);
-  while(! queue.empty()){
-    CDT::Face_handle fh = queue.front();
-    queue.pop_front();
-    if(fh->info().nesting_level == -1){
-      fh->info().nesting_level = index;
-      for(int i = 0; i < 3; i++){
-        CDT::Edge e(fh,i);
-        CDT::Face_handle n = fh->neighbor(i);
-        if(n->info().nesting_level == -1){
-          if(ct.is_constrained(e)) border.push_back(e);
-          else queue.push_back(n);
-        }
-      }
-    }
-  }
-}
-//explore set of facets connected with non constrained edges,
-//and attribute to each such set a nesting level.
-//We start from facets incident to the infinite vertex, with a nesting
-//level of 0. Then we recursively consider the non-explored facets incident 
-//to constrained edges bounding the former set and increase the nesting level by 1.
-//Facets in the domain are those with an odd nesting level.
-void
-mark_domains(CDT& cdt)
-{
-  for(CDT::All_faces_iterator it = cdt.all_faces_begin(); it != cdt.all_faces_end(); ++it){
-    it->info().nesting_level = -1;
-  }
-  std::list<CDT::Edge> border;
-  mark_domains(cdt, cdt.infinite_face(), 0, border);
-  while(! border.empty()){
-    CDT::Edge e = border.front();
-    border.pop_front();
-    CDT::Face_handle n = e.first->neighbor(e.second);
-    if(n->info().nesting_level == -1){
-      mark_domains(cdt, n, e.first->info().nesting_level+1, border);
-    }
-  }
-}
-*/
 void insert_polygon(CDT& cdt,const Polygon_2& polygon){
   if ( polygon.is_empty() ) return;
   CDT::Vertex_handle v_prev=cdt.insert(*CGAL::cpp11::prev(polygon.vertices_end()));
@@ -258,9 +197,7 @@ void WallMap::BuildTriangles() {
 
     CDT cdt;
     insert_polygon(cdt, raw_poly);
-    //cdt.insert_constraint(raw_poly.vertices_begin(), raw_poly.vertices_end(), true);
     ROS_ASSERT(cdt.is_valid());
-    //mark_domains(cdt);
     for (CDT::Finite_faces_iterator fit=cdt.finite_faces_begin();
                                     fit!=cdt.finite_faces_end();++fit) {
       _triangles.push_back(cdt.triangle(fit));
@@ -271,9 +208,24 @@ void WallMap::BuildTriangles() {
   ROS_INFO("WallMap: Done Building Triangulation!");
 }
 
-double WallMap::DistanceToWall(const Ray_2 &point) {
-  // TODO
-  return 0.0;
+double WallMap::DistanceToWall(const Ray_2 &ray) {
+  double closest = pow(SONAR_MAX_RANGE, 2.0);
+  int interCount = _triangles.size();
+  for (const auto &tri : _triangles) {
+    ROS_INFO_STREAM("Querying: " << tri << " ray: " << ray);
+    auto result = CGAL::intersection(ray, tri);
+    ROS_INFO_STREAM("Here");
+    if (const Point_2 *ipoint = CGAL::object_cast<Point_2>(&result)) {
+      closest = min(closest, CGAL::to_double(CGAL::squared_distance(ray.source(), *ipoint)));
+    } else if (const Segment_2 *iseg = CGAL::object_cast<Segment_2>(&result)) {
+      closest = min(closest, CGAL::to_double(CGAL::squared_distance(ray.source(), iseg->source())));
+      closest = min(closest, CGAL::to_double(CGAL::squared_distance(ray.source(), iseg->target())));
+    } else {
+      --interCount;
+    }
+  }
+  ROS_ASSERT(interCount > 0);
+  return sqrt(closest);
 }
 
 } // namespace localization 

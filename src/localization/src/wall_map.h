@@ -4,26 +4,21 @@
 #include <ros/ros.h>
 
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+#include <CGAL/Simple_cartesian.h>
 #include <CGAL/point_generators_3.h>
 #include <CGAL/Polygon_2.h>
 #include <CGAL/Polyhedron_3.h>
 #include <fstream>
 
-typedef CGAL::Exact_predicates_exact_constructions_kernel cgal_kernel_exact;
 typedef CGAL::Exact_predicates_exact_constructions_kernel cgal_kernel;
+//typedef CGAL::Simple_cartesian<double> cgal_kernel;
 
 namespace localization {
 
-struct FaceInfo2 {
-  FaceInfo2() {}
-  int nesting_level;
-  bool in_domain() { 
-    return nesting_level%2 == 1;
-  }
-};
-
 class WallMap {
  public:
+  static constexpr double SONAR_MAX_RANGE = 5.0;
+
   WallMap(const std::string &mapfile_location);
 
  public:
