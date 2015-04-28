@@ -50,8 +50,8 @@ void WallMap::ParseFromFile(const string &mapfile_location) {
 
   ifstream mapstream;
   mapstream.open(mapfile_location, ifstream::in);
+  ParsePoint(mapstream, &_robot_start);
   Point_2 tmp_point;
-  ParsePoint(mapstream, &tmp_point);
   ParsePoint(mapstream, &tmp_point);
   Iso_rectangle_2 rect;
   ParseRect(mapstream, &rect);
@@ -212,9 +212,8 @@ double WallMap::DistanceToWall(const Ray_2 &ray) {
   double closest = pow(SONAR_MAX_RANGE, 2.0);
   int interCount = _triangles.size();
   for (const auto &tri : _triangles) {
-    ROS_INFO_STREAM("Querying: " << tri << " ray: " << ray);
+    //ROS_INFO_STREAM("Querying: " << tri << " ray: " << ray);
     auto result = CGAL::intersection(ray, tri);
-    ROS_INFO_STREAM("Here");
     if (const Point_2 *ipoint = CGAL::object_cast<Point_2>(&result)) {
       closest = min(closest, CGAL::to_double(CGAL::squared_distance(ray.source(), *ipoint)));
     } else if (const Segment_2 *iseg = CGAL::object_cast<Segment_2>(&result)) {

@@ -27,6 +27,10 @@ class WallMap {
    **/
   double DistanceToWall(const cgal_kernel::Ray_2 &ray);
 
+  const cgal_kernel::Point_2 GetRobotStart() const {
+    return _robot_start;
+  }
+
  private:
   void BuildMapFromFile(const std::string &mapfile_location); 
   void ParseFromFile(const std::string &mapfile_location);
@@ -46,7 +50,9 @@ class WallMap {
   cgal_kernel::Iso_rectangle_2 _world_rect;
   std::vector< CGAL::Polygon_2<cgal_kernel>> _raw_obstacles;
   std::vector<std::shared_ptr<CGAL::Polyhedron_3<cgal_kernel>>> _obs_polyhedra;
- public: // TODO
+
+ public:
+  cgal_kernel::Point_2 _robot_start;
   std::vector< CGAL::Triangle_2<cgal_kernel>> _triangles;
 
 };

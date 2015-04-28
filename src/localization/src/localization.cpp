@@ -5,6 +5,7 @@
 #include "gui_msgs/GUIPolyMsg.h"
 #include "rss_msgs/MotionMsg.h"
 #include "rss_msgs/RobotLocation.h"
+#include <random>
 
 using namespace rss_msgs;
 using namespace gui_msgs;
@@ -32,12 +33,66 @@ Localization::Localization() {
   _wall_map = make_shared<WallMap>(mapfile_location);
   ROS_INFO("Initialized wall map.");
 
+  InitializeParticles();
+  Test();
+}
+
+// Initialize with N random points generated within a given tolerance (in 3-D
+// space, it's a parallelipiped with sides equal to tolerance values)
+void Localization::InitializeParticles() {
+  _particles.resize(N); 
+
+  double sx = CGAL::to_double(_wall_map->GetRobotStart().x());
+  double dx = DISTANCE_TOLERANCE;
+  double sy = CGAL::to_double(_wall_map->GetRobotStart().y());
+  double dy = DISTANCE_TOLERANCE;
+  double st = 0.0;
+  double dt = HEADING_TOLERANCE;
+
+  default_random_engine generator;
+  uniform_real_distribution<double> xDist(sx-dx, sx+dx);
+  uniform_real_distribution<double> yDist(sy-dy, sy+dy);
+  uniform_real_distribution<double> tDist(st-dt, st+dt);
+
+  for (int i = 0; i < N; ++i) {
+    double x = xDist(generator);
+    double y = yDist(generator);
+    double t = tDist(generator);
+    _particles[i] = Particle(x, y, t, 1.0/N);
+  }
+}
+
+RobotLocation Localization::currentPositionBelief() const {
+  double x = 0, y = 0, t = 0;
+  double normalizer = 0.0;
+  for (auto par : _particles) {
+    x += par.x*par.belief;
+    y += par.y*par.belief;
+    t += par.y*par.belief;
+    normalizer += par.belief;
+  }
+  x /= normalizer;
+  y /= normalizer;
+  t /= normalizer;
+
+  RobotLocation currentPosition;
+  currentPosition.x = x;
+  currentPosition.y = y;
+  currentPosition.theta = t;
+  return currentPosition;
+}
+
+void Localization::PublishLocation() {
+  _location_pub.publish(currentPositionBelief());
+}
+
+void Localization::Test() {
   // TEST
   ROS_INFO("Distance to wall from 0.0 0.0 in direction 1.0 0.0: %.3lf",
            _wall_map->DistanceToWall(K::Ray_2(Point_2(0.0,0.0), K::Direction_2(1.0,1.00001))));
   // Initialize distribution:
   // TODO: REMOVE TEST CODE
-  for (int i = 0; i < 100000; ++i)
+  ros::Duration(2.0).sleep(); // Sleep for 2 sec to allow gui node to initialize.
   for (const K::Triangle_2 &tri : _wall_map->_triangles) {
     GUIPolyMsg new_poly;
     new_poly.numVertices = 3;
@@ -54,10 +109,11 @@ Localization::Localization() {
 }
 
 void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
+  PublishLocation();
 }
 
 void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
-
+  PublishLocation();
 }
 
 /*
