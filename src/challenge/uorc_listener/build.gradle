@@ -33,7 +33,9 @@ dependencies {
   /* Example of a local subproject dependency */ 
   /* compile project(':sibling_gradle_project') */
   compile project(':rss_msgs')
+  compile project(':orc_utils')
   //compile files('../lib/uORCInterface-0.0.jar')
+  /*
   compile files('../lib/orc-0.0.jar')
   compile files('../lib/motorControl-0.0.jar') {
     dependencies {
@@ -43,6 +45,7 @@ dependencies {
   }
   //runtime files('../lib/uORCInterface-0.0.jar')
   runtime files('../lib/orc-0.0.jar')
+  */
 
   compile fileTree('libs')
 }

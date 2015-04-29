@@ -33,6 +33,8 @@ dependencies {
   /* compile project(':sibling_gradle_project') */
   compile project(':rss_msgs')
   //compile files('../lib/uORCInterface-0.0.jar')
+  compile project(':orc_utils')
+  /*
   compile files('../lib/orc-0.0.jar')
   compile files('../lib/motorControl-0.0.jar') {
     dependencies {
@@ -40,8 +42,9 @@ dependencies {
       //compile files('../lib/uORCInterface-0.0.jar')
     }
   }
+  */
   //runtime files('../lib/uORCInterface-0.0.jar')
-  runtime files('../lib/orc-0.0.jar')
+  //runtime files('../lib/orc-0.0.jar')
   runtime files('../lib/motorControl-0.0.jar')
   compile fileTree('libs')
 }
