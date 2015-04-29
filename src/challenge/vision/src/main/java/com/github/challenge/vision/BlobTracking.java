@@ -20,7 +20,10 @@ public class BlobTracking {
 	protected float histogram[][]; //(Solution)
 	// (Solution)
 	protected int blobMask[] = null; //(Solution)
-	protected int blobPixelMask[] = null; //(Solution)
+	protected int blobPixelRedMask[] = null; //(Solution)
+	protected int blobPixelBlueMask[] = null; //(Solution)
+	protected int blobPixelGreenMask[] = null; //(Solution)
+	protected int blobPixelYellowMask[] = null; //(Solution)
 	protected int imageFiltered[] = null; //(Solution)
 	protected int imageConnected[] = null; //(Solution)
 	protected float imageHsb[] = null; //(Solution)
@@ -29,6 +32,8 @@ public class BlobTracking {
 	public double targetBlueHueLevel=0.66; 
 	public double targetGreenHueLevel=0.33; 
 	public double targetYellowHueLevel=0.167;
+
+	public double max_area = -1;
 
 	public double targetRadius=28; // (Solution)
 	public double hueThreshold=0.05; // (Solution)
@@ -79,7 +84,10 @@ public class BlobTracking {
 		// (Solution)
 		// initialize image structures and masks // (Solution)
 		blobMask = new int[width * height]; // (Solution)
-		blobPixelMask = new int[width * height]; // (Solution)
+		blobPixelRedMask = new int[width * height]; // (Solution)
+		blobPixelBlueMask = new int[width * height]; // (Solution)
+		blobPixelGreenMask = new int[width * height]; // (Solution)
+		blobPixelYellowMask = new int[width * height]; // (Solution)
 		imageConnected = new int[width * height]; // (Solution)
 		imageHsb = new float[width * height * 3]; // (Solution)
 	}
@@ -137,29 +145,33 @@ public class BlobTracking {
                             + " miny=" + minY[i] + " maxy=" + maxY[i]);
       }
       if (Math.abs(1.0 - aspectRatio) < 0.2 && r > 5) {
-        int xC = (minX[i] + maxX[i]) / 2;
-        int yC = (minY[i] + maxY[i]) / 2;
+      	if (b_w*b_h>max_area){
+	        int xC = (minX[i] + maxX[i]) / 2;
+	        int yC = (minY[i] + maxY[i]) / 2;
 
-        // Set internal variables
-        targetDetected = true;
-        targetArea = b_w*b_h;
-        centroidX = xC;
-        centroidY = yC;
 
-        int destIndex = 0;
-        for (int j = 0; j < arraySize; ++j) {
-          if (connIm[j]-1 == i) {
-            blobIm[destIndex++] = 255;
-          } else {
-            blobIm[destIndex++] = 0;
-          }
-        }
-        /*
-        System.out.println("Centroid coordinates: " + xC + ", " + yC);
-        System.out.println("Area: " + b_w*b_h);
-        System.out.println("");
-        */
-        break;
+	        // Set internal variables
+	        targetDetected = true;
+	        targetArea = b_w*b_h;
+	        centroidX = xC;
+	        centroidY = yC;
+
+	        int destIndex = 0;
+	        for (int j = 0; j < arraySize; ++j) {
+	          if (connIm[j]-1 == i) {
+	            blobIm[destIndex++] = 255;
+	          } else {
+	            blobIm[destIndex++] = 0;
+	          }
+	        }
+	        /*
+	        System.out.println("Centroid coordinates: " + xC + ", " + yC);
+	        System.out.println("Area: " + b_w*b_h);
+	        System.out.println("");
+	        */
+	    }
+	    break;
+	    
       }
       /*
       if (r > 10 && minArea / maxArea > 0.80) {
@@ -367,7 +379,7 @@ public class BlobTracking {
 	 * @param src source image (float) //(Solution)
 	 * @param src dest image (int) //(Solution)
 	 **/ //(Solution)
-	protected void blobPixel(Image src, int[] mask) { //(Solution)
+	protected void blobPixel(Image src, int[] mask, double targetHueLevel) { //(Solution)
 		//(Solution)
 		int maskIndex = 0; //(Solution)
 		//(Solution)
@@ -386,26 +398,22 @@ public class BlobTracking {
 				//avg_h += pix.getHue(); // (Solution)
 				//avg_s += pix.getSaturation(); // (Solution)
 				// (Solution)
-				double hdist_red = hsb[0] - targetRedHueLevel; // (Solution)
-				if (hdist_red < 0) hdist_red *= -1; // (Solution)
-				// handle colorspace wraparound (Solution)
-				if (hdist_red > 0.5) { // (Solution)
-					hdist_red = 1.0 - hdist_red; // (Solution)
-				} 
+				double hdist = hsb[0] - targetHueLevel; // (Solution)
 
-				double hdist_blue = Math.abs(hsb[0] - targetRedHueLevel); // (Solution)
-				double hdist_green = Math.abs(hsb[0] - targetGreenHueLevel); // (Solution)
-				double hdist_yellow = Math.abs(hsb[0] - targetYellowHueLevel); // (Solution)
-
-				double hdist = Math.min(Math.min(hdist_red,hdist_blue),Math.min(hdist_yellow,hdist_green));
-
+				if (targetHueLevel == 0.0){
+					if (hdist < 0) hdist *= -1; // (Solution)
+					// handle colorspace wraparound (Solution)
+					if (hdist > 0.5) { // (Solution)
+						hdist = 1.0 - hdist; // (Solution)
+					} 
+				}
 
 				// (Solution)
 				// (Solution)
 				// classify pixel based on saturation level (Solution)
 				// and hue distance (Solution)
 				if (hsb[1] > saturationLevel && hdist < hueThreshold && hsb[2] > 0.3) { // (Solution)
-          ++cnt;
+         			++cnt;
 					mask[maskIndex++] = 255; // (Solution)
 				} else { // (Solution)
 					mask[maskIndex++] = 0; // (Solution)
@@ -448,8 +456,18 @@ public class BlobTracking {
 			} // (Solution)
 			src = new Image(destArray, src.getWidth(), src.getHeight()); // (Solution)
 		}
-		blobPixel(src, blobPixelMask); //(Solution)
-		blobPresent(blobPixelMask, imageConnected, blobMask); //(Solution)
+		blobPixel(src, blobPixelRedMask, targetRedHueLevel); //(Solution)
+		blobPixel(src, blobPixelBlueMask, targetBlueHueLevel); //(Solution)
+		blobPixel(src, blobPixelYellowMask, targetYellowHueLevel); //(Solution)
+		blobPixel(src, blobPixelGreenMask, targetGreenHueLevel); //(Solution)
+		max_area = -1;
+
+
+		blobPresent(blobPixelRedMask, imageConnected, blobMask);
+		blobPresent(blobPixelBlueMask, imageConnected, blobMask);
+		blobPresent(blobPixelYellowMask, imageConnected, blobMask);
+		blobPresent(blobPixelGreenMask, imageConnected, blobMask);
+		 //(Solution)
 		if (targetDetected) { // (Solution)
       System.out.println("Target detected!");
 			blobFix(); // (Solution)
