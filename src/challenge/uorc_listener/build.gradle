@@ -28,25 +28,8 @@ mainClassName = 'org.ros.RosRun'
 */
 
 dependencies {
-  /* An external maven artifact dependency */
   compile 'org.ros.rosjava_core:rosjava:[0.2,0.3)'
-  /* Example of a local subproject dependency */ 
-  /* compile project(':sibling_gradle_project') */
   compile project(':rss_msgs')
-  compile project(':orc_utils')
-  //compile files('../lib/uORCInterface-0.0.jar')
-  /*
-  compile files('../lib/orc-0.0.jar')
-  compile files('../lib/motorControl-0.0.jar') {
-    dependencies {
-      //runtime files('../lib/uORCInterface-0.0.jar')
-      //compile files('../lib/uORCInterface-0.0.jar')
-    }
-  }
-  //runtime files('../lib/uORCInterface-0.0.jar')
-  runtime files('../lib/orc-0.0.jar')
-  */
-
-  compile fileTree('libs')
+  compile project(':motor_control')
 }
 
