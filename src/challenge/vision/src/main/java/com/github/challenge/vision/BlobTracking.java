@@ -24,7 +24,11 @@ public class BlobTracking {
 	protected int imageConnected[] = null; //(Solution)
 	protected float imageHsb[] = null; //(Solution)
 	// (Solution)
-	public double targetHueLevel=0.0; // (Solution)
+	public double targetRedHueLevel=0.0; // (Solution)
+	public double targetBlueHueLevel=0.66; 
+	public double targetGreenHueLevel=0.33; 
+	public double targetYellowHueLevel=0.167;
+
 	public double targetRadius=28; // (Solution)
 	public double hueThreshold=0.05; // (Solution)
 	public double saturationLevel=0.6; // (Solution)
@@ -395,7 +399,7 @@ public class BlobTracking {
 					mask[maskIndex++] = 255; // (Solution)
 				} else { // (Solution)
 					mask[maskIndex++] = 0; // (Solution)
-				} // (Solution)
+				} // (Solution)	
 			} // (Solution)
 		} // (Solution)
     //System.out.println("There are " + cnt + " red pixels. Width="+width + " height=" + height);
