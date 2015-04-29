@@ -16,6 +16,7 @@
 
 /* This plugin is necessary for creating installApp tasks (i.e. executables) */
 apply plugin: 'application'
+apply plugin: 'java'
 mainClassName = 'org.ros.RosRun'
 
 /* 
@@ -37,6 +38,7 @@ dependencies {
   compile files('../lib/motorControl-0.0.jar')
   runtime files('../lib/uORCInterface-0.0.jar')
   runtime files('../lib/orc-0.0.jar')
-  runtime files('../lib/motorControl-0.0.jar')
+
+  compile fileTree('libs')
 }
 
