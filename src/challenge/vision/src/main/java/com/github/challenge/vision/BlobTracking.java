@@ -2,7 +2,6 @@ package com.github.rosjava.challenge.vision;
 
 import java.awt.Color;
 import com.github.rosjava.challenge.gui.Image;
-import Math;
 
 /**
  * BlobTracking performs image processing and tracking for the VisualServo
