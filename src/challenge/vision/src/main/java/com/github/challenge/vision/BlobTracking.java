@@ -2,6 +2,7 @@ package com.github.rosjava.challenge.vision;
 
 import java.awt.Color;
 import com.github.rosjava.challenge.gui.Image;
+import Math;
 
 /**
  * BlobTracking performs image processing and tracking for the VisualServo
@@ -386,12 +387,21 @@ public class BlobTracking {
 				//avg_h += pix.getHue(); // (Solution)
 				//avg_s += pix.getSaturation(); // (Solution)
 				// (Solution)
-				double hdist = hsb[0] - targetRedHueLevel; // (Solution)
-				if (hdist < 0) hdist *= -1; // (Solution)
+				double hdist_red = hsb[0] - targetRedHueLevel; // (Solution)
+				if (hdist_red < 0) hdist_red *= -1; // (Solution)
 				// handle colorspace wraparound (Solution)
-				if (hdist > 0.5) { // (Solution)
-					hdist = 1.0 - hdist; // (Solution)
-				} // (Solution)
+				if (hdist_red > 0.5) { // (Solution)
+					hdist_red = 1.0 - hdist_red; // (Solution)
+				} 
+
+				double hdist_blue = Math.abs(hsb[0] - targetRedHueLevel); // (Solution)
+				double hdist_green = Math.abs(hsb[0] - targetGreenHueLevel); // (Solution)
+				double hdist_yellow = Math.abs(hsb[0] - targetYellowHueLevel); // (Solution)
+
+				double hdist = min(min(hdist_red,hdist_blue),min(hdist_yellow,hdist_green));
+
+
+				// (Solution)
 				// (Solution)
 				// classify pixel based on saturation level (Solution)
 				// and hue distance (Solution)
