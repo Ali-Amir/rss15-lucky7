@@ -397,7 +397,7 @@ public class BlobTracking {
 				double hdist_green = Math.abs(hsb[0] - targetGreenHueLevel); // (Solution)
 				double hdist_yellow = Math.abs(hsb[0] - targetYellowHueLevel); // (Solution)
 
-				double hdist = min(min(hdist_red,hdist_blue),min(hdist_yellow,hdist_green));
+				double hdist = Math.min(Math.min(hdist_red,hdist_blue),Math.min(hdist_yellow,hdist_green));
 
 
 				// (Solution)
