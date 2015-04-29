@@ -34,7 +34,12 @@ dependencies {
   compile project(':rss_msgs')
   compile files('../lib/uORCInterface-0.0.jar')
   compile files('../lib/orc-0.0.jar')
-  compile files('../lib/motorControl-0.0.jar')
+  compile files('../lib/motorControl-0.0.jar') {
+    dependencies {
+      runtime files('../lib/uORCInterface-0.0.jar')
+      compile files('../lib/uORCInterface-0.0.jar')
+    }
+  }
   runtime files('../lib/uORCInterface-0.0.jar')
   runtime files('../lib/orc-0.0.jar')
   runtime files('../lib/motorControl-0.0.jar')
