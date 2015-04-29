@@ -31,6 +31,8 @@ public class MotorListener implements MessageListener<MotionMsg> {
     
     left *= 3.5;
     right *= 3.5;
+    left = 200.0;
+    right = 200.0;
     controller.setDesiredAngularVelocity(left, right);
 	
   }   

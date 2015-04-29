@@ -11,6 +11,6 @@
   <node name="blobview" pkg="image_view" type="image_view" args="image:=/rss/blobVideo" machine="workstation" />
   <node name="pub" pkg="challenge" type="uorc_publisher" args="com.github.rosjava.challenge.uorc_publisher.Publisher" machine="workstation" />
   <node name="odo" pkg="challenge" type="odometry" args="com.github.rosjava.challenge.odometry.Odometry" machine="workstation" /> 
-  <node name="lis" pkg="challenge" type="uorc_listener" args="org.github.challenge.uorc_listener.Listener" machine="workstation" /> 
+  <node name="lis" pkg="challenge" type="uorc_listener" args="org.github.challenge.uorc_listener.Listener" machine="workstation" output="screen" /> 
   <node name="grp" pkg="challenge" type="arm_control" args="com.github.rosjava.challenge.arm_control.Grasping" machine="workstation" output="screen"/>
 </launch>

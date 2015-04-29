@@ -301,8 +301,6 @@ public class Grasping extends AbstractNodeMain {
 				handle(newData, (int)message.getWidth(), (int)message.getHeight());
 			}
 		});
-
-		setVelocity(1.0, 1.0);
 	}
 
 	@Override public GraphName getDefaultNodeName() {
