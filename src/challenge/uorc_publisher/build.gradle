@@ -38,5 +38,6 @@ dependencies {
   runtime files('../lib/uORCInterface-0.0.jar')
   runtime files('../lib/orc-0.0.jar')
   runtime files('../lib/motorControl-0.0.jar')
+  compile fileTree('libs')
 }
 
