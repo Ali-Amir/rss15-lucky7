@@ -558,7 +558,11 @@ public class Grasping extends AbstractNodeMain {
 	}
 
 
-	private double target_hue_level = 0.00;
+	private double target_red_hue_level = 0.00;
+	private double target_blue_hue_level = 0.64; 
+	private double target_yellow_hue_level = 0.167;
+	private double target_green_hue_level = 0.42; 
+
 	private double hue_threshold= 0.05;
 	private double saturation_level = 0.6;
 	private double blob_size_threshold = 0.015;
@@ -589,7 +593,11 @@ public class Grasping extends AbstractNodeMain {
 			System.out.println("Blobtracking");
 			blobTrack = new BlobTracking(width, height);
 
-			blobTrack.targetRedHueLevel = target_hue_level;
+			blobTrack.targetRedHueLevel = target_red_hue_level;
+			blobTrack.targetBlueHueLevel = target_blue_hue_level;
+			blobTrack.targetYellowHueLevel = target_yellow_hue_level;
+			blobTrack.targetGreenHueLevel = target_green_hue_level;
+
 			blobTrack.hueThreshold = hue_threshold;
 			blobTrack.saturationLevel = saturation_level;
 			blobTrack.blobSizeThreshold = blob_size_threshold;

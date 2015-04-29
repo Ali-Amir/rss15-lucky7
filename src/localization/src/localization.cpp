@@ -14,12 +14,24 @@ using namespace std;
 typedef cgal_kernel K;
 typedef K::Point_2 Point_2;
 typedef K::Point_3 Point_3;
+typedef K::Ray_2 Ray_2;
+typedef K::Vector_2 Vector_2;
 typedef CGAL::Polygon_2<K> Polygon_2;
 
 namespace localization {
 
 Localization::Localization() {
   ROS_INFO("Initializing localization module");
+
+  // Initializing the sonar locations.
+  SONAR_DIR = {
+    cgal_kernel::Vector_2(0.0, 1.0),
+    cgal_kernel::Vector_2(0.0, 1.0)
+  };
+  SONAR_POS = {
+    cgal_kernel::Vector_2(-0.28, 0.215),
+    cgal_kernel::Vector_2(0.025, 0.215)
+  };
 
   ros::NodeHandle n;
   // Initialize message publishers.
@@ -118,6 +130,17 @@ double logGaussian(double x, double y, double mux, double muy, double var) {
   return -0.5*log(2.0*M_PI*var) - ((x-mux)*(x-mux)+(y-muy)*(y-muy))/var/2.0;
 }
 
+void Localization::NormalizeBeliefs() {
+  // Normalize the result
+  double normalizer = 0.0;
+  for (const Particle &par : _particles) {
+    normalizer += exp(par.belief);
+  }
+  for (Particle &par : _particles) {
+    par.belief -= log(normalizer);
+  }
+}
+
 void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
   double dx = odo->x;
   double dy = odo->y;
@@ -149,20 +172,24 @@ void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
   _particles.clear();
   copy(new_particles.begin(), new_particles.end(), back_inserter(_particles));
 
-  // Normalize the result
-  double normalizer = 0.0;
-  for (const Particle &par : _particles) {
-    normalizer += exp(par.belief);
-  }
-  for (Particle &par : _particles) {
-    par.belief -= log(normalizer);
-  }
-
+  NormalizeBeliefs();
   PublishLocation();
 }
 
+Vector_2 Rotate(Vector_2 vec, double alfa) {
+  return Vector_2(vec.x()*cos(alfa) - vec.y()*sin(alfa),
+                  vec.x()*sin(alfa) + vec.y()*cos(alfa));
+}
+
 void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
-  // TODO: For each particle see the distance for corresponding sonar
+  double varD = 0.01;
+  for (Particle &par : _particles) {
+    Vector_2 dir(Rotate(SONAR_DIR[son->sonarId], par.t));
+    Point_2 sonarLoc(Point_2(par.x, par.y) + Rotate(SONAR_POS[son->sonarId], par.t));
+    double mu = _wall_map->DistanceToWall(Ray_2(sonarLoc, dir));
+    par.belief += logGaussian(son->range, mu, varD);
+  }
+  NormalizeBeliefs();
   PublishLocation();
 }
 
