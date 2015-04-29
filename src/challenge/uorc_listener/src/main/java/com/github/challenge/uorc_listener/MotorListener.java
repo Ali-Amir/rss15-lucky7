@@ -19,9 +19,9 @@ public class MotorListener implements MessageListener<MotionMsg> {
 
     System.out.println("///////New Motor Message Received!/////////");
     System.out.println("Translational Vel :");
-    System.out.println(msg.getTranslationalVelocity);
+    System.out.println(msg.getTranslationalVelocity());
     System.out.println("Rotational Vel :");
-    System.out.println(msg.getRotationalVelocity);
+    System.out.println(msg.getRotationalVelocity());
 	
     double left = msg.getTranslationalVelocity();
     double right = msg.getTranslationalVelocity();
