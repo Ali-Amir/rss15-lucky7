@@ -47,8 +47,11 @@ class Localization {
   static constexpr double HEADING_TOLERANCE = 0.17453292519;
   // TODO: measure the actual value.
   static constexpr double ODOMETRY_TIMESTEP = 0.1;
+  std::vector<cgal_kernel::Vector_2> SONAR_DIR;
+  std::vector<cgal_kernel::Vector_2> SONAR_POS;
 
   void InitializeParticles();
+  void NormalizeBeliefs();
   void PublishLocation();
   void Test();
 
