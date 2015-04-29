@@ -12,6 +12,7 @@ public class SonarPublisher implements Runnable {
 	Orc orc;
 	SRF02 sonar;
 	boolean isFront;
+  int sonarId;
 	Publisher<SonarMsg> pub;
 	final int frontAddr = 0x70;
 	final int backAddr = 0x72;
@@ -33,12 +34,14 @@ public class SonarPublisher implements Runnable {
 		this.isFront = isFront;
 		this.lock = lock;
 		if (isFront){
+      this.sonarId = 1;
 			sonar = new SRF02(orc, frontAddr);
-			pub = node.newPublisher("rss/Sonars/Front", "rss_msgs/SonarMsg");
+			pub = node.newPublisher("rss/sonars", SonarMsg._TYPE_);
 			System.out.println("created front sonar publisher");
 		} else {
+      this.sonarId = 0;
 			sonar = new SRF02(orc, backAddr);
-			pub = node.newPublisher("rss/Sonars/Back", "rss_msgs/SonarMsg");
+			pub = node.newPublisher("rss/sonars", SonarMsg._TYPE_);
 			System.out.println("created back sonar publisher");
 		}
 	}
@@ -55,6 +58,7 @@ public class SonarPublisher implements Runnable {
 				msg.setRange(s);
 			}
 			msg.setIsFront(isFront);
+      msg.setSonarId(sonarId);
 			pub.publish(msg);
 		}
 	}

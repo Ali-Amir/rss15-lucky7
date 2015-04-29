@@ -227,6 +227,7 @@ public class Grasping extends AbstractNodeMain {
         		fsmState = RoboFSM.INITIALIZE_ARM;
 				wristControl.setState(WristController.WRIST_INITIALIZE);
 				shoulderControl.setState(ShoulderController.SHOULDER_INITIALIZE);
+				setVelocity(1.0, 1.0);
 				break;
 			}
 		    case SECOND_MODE: {
