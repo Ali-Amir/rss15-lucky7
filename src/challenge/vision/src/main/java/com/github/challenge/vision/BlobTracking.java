@@ -385,7 +385,7 @@ public class BlobTracking {
 				//avg_h += pix.getHue(); // (Solution)
 				//avg_s += pix.getSaturation(); // (Solution)
 				// (Solution)
-				double hdist = hsb[0] - targetHueLevel; // (Solution)
+				double hdist = hsb[0] - targetRedHueLevel; // (Solution)
 				if (hdist < 0) hdist *= -1; // (Solution)
 				// handle colorspace wraparound (Solution)
 				if (hdist > 0.5) { // (Solution)
