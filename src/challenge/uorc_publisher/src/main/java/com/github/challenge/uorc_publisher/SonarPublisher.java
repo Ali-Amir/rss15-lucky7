@@ -36,12 +36,12 @@ public class SonarPublisher implements Runnable {
 		if (isFront){
       this.sonarId = 1;
 			sonar = new SRF02(orc, frontAddr);
-			pub = node.newPublisher("rss/sonars", SonarMsg._TYPE_);
+			pub = node.newPublisher("rss/sonars", SonarMsg._TYPE);
 			System.out.println("created front sonar publisher");
 		} else {
       this.sonarId = 0;
 			sonar = new SRF02(orc, backAddr);
-			pub = node.newPublisher("rss/sonars", SonarMsg._TYPE_);
+			pub = node.newPublisher("rss/sonars", SonarMsg._TYPE);
 			System.out.println("created back sonar publisher");
 		}
 	}

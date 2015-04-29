@@ -301,6 +301,8 @@ public class Grasping extends AbstractNodeMain {
 				handle(newData, (int)message.getWidth(), (int)message.getHeight());
 			}
 		});
+
+		setVelocity(1.0, 1.0);
 	}
 
 	@Override public GraphName getDefaultNodeName() {
@@ -589,7 +591,7 @@ public class Grasping extends AbstractNodeMain {
 			System.out.println("Blobtracking");
 			blobTrack = new BlobTracking(width, height);
 
-			blobTrack.targetHueLevel = target_hue_level;
+			blobTrack.targetRedHueLevel = target_hue_level;
 			blobTrack.hueThreshold = hue_threshold;
 			blobTrack.saturationLevel = saturation_level;
 			blobTrack.blobSizeThreshold = blob_size_threshold;
@@ -614,7 +616,7 @@ public class Grasping extends AbstractNodeMain {
         }
         */
 		Image dest = new Image(rawImage, width, height);
-		//blobTrack.apply(src, dest);
+		blobTrack.apply(src, dest);
 
 		sensor_msgs.Image pubImage = vidPub.newMessage();
 		pubImage.setWidth(width);
