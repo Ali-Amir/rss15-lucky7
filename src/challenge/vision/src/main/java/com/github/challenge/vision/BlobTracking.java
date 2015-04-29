@@ -379,7 +379,7 @@ public class BlobTracking {
 	 * @param src source image (float) //(Solution)
 	 * @param src dest image (int) //(Solution)
 	 **/ //(Solution)
-	protected void blobPixel(Image src, int[] mask, int targetHueLevel) { //(Solution)
+	protected void blobPixel(Image src, int[] mask, double targetHueLevel) { //(Solution)
 		//(Solution)
 		int maskIndex = 0; //(Solution)
 		//(Solution)
