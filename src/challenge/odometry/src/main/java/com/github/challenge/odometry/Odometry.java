@@ -12,12 +12,12 @@ import org.ros.node.topic.Subscriber;
 public class Odometry extends AbstractNodeMain {
 
 	private int[] prev_ticks; // (left wheel, right wheel, make int[]
-	private static final double WHEEL_RADIUS_IN_M = 0.0625;
-	private static final double ENCODER_RESOLUTION = 2000;
+	private static final double WHEEL_RADIUS_IN_M = 0.0635;
+	private static final double ENCODER_RESOLUTION = 1997.700;
 	private static final double GEAR_RATIO = 65.5;
 	private static final double TICKS_PER_REVOLUTION=ENCODER_RESOLUTION * GEAR_RATIO;
 	private static final double WHEEL_METERS_PER_TICK = WHEEL_RADIUS_IN_M * Math.PI * 2/(TICKS_PER_REVOLUTION);
-	private static final double WHEELBASE = .428;
+	private static final double WHEELBASE = .433;
 	/**
 	 * [x][y][theta]
 	 */
@@ -67,6 +67,9 @@ public class Odometry extends AbstractNodeMain {
 
 	@Override
 	public void onStart(ConnectedNode node) {
+    prev_ticks = null;
+    reset = true;
+
 		pub = node.newPublisher("/rss/odometry", OdometryMsg._TYPE);
     msg = pub.newMessage();
 

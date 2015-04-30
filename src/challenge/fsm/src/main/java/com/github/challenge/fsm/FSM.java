@@ -30,6 +30,8 @@ import rss_msgs.BumpMsg;
 import rss_msgs.MotionMsg;
 import rss_msgs.OdometryMsg;
 import rss_msgs.GraspingMsg;
+import rss_msgs.RobotLocation;
+import rss_msgs.NavStatus;
 
 import com.github.rosjava.challenge.vision.BlobTracking;
 import com.github.rosjava.challenge.gui.Image;
@@ -85,7 +87,7 @@ public class FSM extends AbstractNodeMain {
 	//ALI!
 	//private Subscriber<LocalizationMsg> locSub;
 
-	//private Publisher<NavMsg> navPub;
+	private Publisher<RobotLocation> navPub;
 	private Publisher<GraspingMsg> graspingPub;
 
 	//private Subscriber<NavMsg> navSub;
@@ -177,7 +179,7 @@ public class FSM extends AbstractNodeMain {
 	 * <p> Handle an Grasping Message<\p>
 	 */
 
-	static final int INITIALIZED = -1;
+	static final int GRASPING_INITIALIZED = -1;
 	static final int COLLECTING = 0;
 	static final int ASSEMBLING = 1;
 	static final int OFF = 5;
@@ -249,11 +251,11 @@ public class FSM extends AbstractNodeMain {
 	 * <p> Handle an Navigation Message<\p>
 	 */
 
-	static final int INITIALIZED = 0;
+	static final int NAV_INITIALIZED = 0;
 	static final int IN_PROGRESS = 1;
 	static final int FINISHED = 2;
 
-	public void handle(NavMsg msg){
+	public void handle(NavStatus msg){
 
 		int status = msg.getStatus();
 
@@ -328,10 +330,11 @@ public class FSM extends AbstractNodeMain {
 		motionPub.publish(motionMsg);
 	}
 
-	public void setNavigationPoints(Point2D.Double startPoint, Point2D.Double targetPoint){
-		NavMsg navMsg = navPub.newMessage();
-		navMsg.setStartPoint(startPoint);
-		navMsg.setTargetPoint(targetPoint);
+	public void setNavigationPoints(Point2D.Double targetPoint){
+		RobotLocation navMsg = navPub.newMessage();
+		navMsg.setX(targetPoint.getX());
+		navMsg.setY(targetPoint.getY());
+		navMsg.setTheta(-1.0);
 	 	navPub.publish(navMsg);
 	}
 

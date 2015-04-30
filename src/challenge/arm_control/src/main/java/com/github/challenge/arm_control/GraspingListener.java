@@ -14,16 +14,16 @@
  * the License.
  */
 
-package com.github.rosjava.challenge.fsm;
+package com.github.rosjava.challenge.arm_control;
 
 import org.ros.message.MessageListener;
 import rss_msgs.GraspingMsg;
 
 public class GraspingListener implements MessageListener<GraspingMsg> {
 
-	private FSM object;
+	private Grasping object;
 
-	public GraspingListener(FSM object) {
+	public GraspingListener(Grasping object) {
 		this.object = object;
 	}
 

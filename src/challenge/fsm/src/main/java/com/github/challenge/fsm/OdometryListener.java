@@ -17,19 +17,19 @@
 package com.github.rosjava.challenge.fsm;
 
 import org.ros.message.MessageListener;
-import rss_msgs.GraspingMsg;
+import rss_msgs.OdometryMsg;
 
-public class GraspingListener implements MessageListener<GraspingMsg> {
+public class OdometryListener implements MessageListener<OdometryMsg> {
 
-	private FSM object;
+	private FSM grasp;
 
-	public GraspingListener(FSM object) {
-		this.object = object;
+	public OdometryListener(FSM grasping) {
+		this.grasp = grasping;
 	}
 
 	@Override
-	public void onNewMessage(GraspingMsg msg) {
-    object.handle(msg);
+	public void onNewMessage(OdometryMsg msg) {
+		grasp.handle(msg);
 	}
-}
 
+}

@@ -31,7 +31,7 @@ import rss_msgs.MotionMsg;
 import rss_msgs.OdometryMsg;
 import rss_msgs.GraspingMsg;
 
-import com.github.rosjava.challenge.fsm.GraspingListener;
+//import com.github.rosjava.challenge.fsm.GraspingListener;
 
 import com.github.rosjava.challenge.vision.BlobTracking;
 import com.github.rosjava.challenge.gui.Image;

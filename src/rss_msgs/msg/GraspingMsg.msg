@@ -1,2 +1,2 @@
-int64 servomode
+int32 servomode
 bool collected
