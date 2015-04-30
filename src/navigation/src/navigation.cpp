@@ -46,6 +46,23 @@ Navigation::Navigation() {
   loc->y = CGAL::to_double(_obs_map->_robot_goal.y());
   loc->theta = 0.0;
   moveRobotTo(loc);
+
+  // TODO: remove the test call
+  TestWheelVelocities();
+}
+
+void Navigation::TestWheelVelocities() {
+  double cur_time = ros::Time::now().toSec();
+  while (ros::Time::now().toSec() - cur_time < 3.0) {
+    MotionMsg comm;
+    comm.translationalVelocity = 0.02;
+    comm.rotationalVelocity = 0.0;
+    _motor_pub.publish(comm);
+  }
+  MotionMsg comm;
+  comm.translationalVelocity = 0.0;
+  comm.rotationalVelocity = 0.0;
+  _motor_pub.publish(comm);
 }
 
 void Navigation::updateRobotLocation(const RobotLocation::ConstPtr &loc) {
