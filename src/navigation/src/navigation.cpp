@@ -75,7 +75,7 @@ void Navigation::TestWheelVelocities() {
   double cur_time;
   while ((cur_time = ros::Time::now().toSec()) - start_time < 10.0) {
     MotionMsg comm;
-    comm.translationalVelocity = 0.5;
+    comm.translationalVelocity = 0.2;
     comm.rotationalVelocity = 0.0;
     _motor_pub.publish(comm);
   }
