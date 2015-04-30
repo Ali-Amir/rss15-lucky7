@@ -1,6 +1,5 @@
 #include "localization.h"
 
-#include "gui_msgs/GUIEraseMsg.h"
 #include "gui_msgs/GUIPointMsg.h"
 #include "gui_msgs/GUIPolyMsg.h"
 #include "rss_msgs/MotionMsg.h"
@@ -35,7 +34,7 @@ Localization::Localization() {
 
   ros::NodeHandle n;
   // Initialize message publishers.
-  _location_pub = n.advertise<GUIEraseMsg>("localization/update", 1000);
+  _location_pub = n.advertise<RobotLocation>("localization/update", 1000);
   _guipoly_pub = n.advertise<GUIPolyMsg>("gui/Poly", 1000);
 
   // Load map file location and initialize the map-handler class instance.

@@ -11,5 +11,6 @@ mainClassName = 'org.ros.RosRun'
 */
 
 dependencies {
+  compile files('../lib/orc-0.0.jar')
 }
 
