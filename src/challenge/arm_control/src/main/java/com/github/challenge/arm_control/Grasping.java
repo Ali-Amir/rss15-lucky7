@@ -244,7 +244,7 @@ public class Grasping extends AbstractNodeMain {
 		armPub = node.newPublisher("command/Arm", ArmMsg._TYPE);
 		motionPub = node.newPublisher("command/Motors", MotionMsg._TYPE);
 		vidPub = node.newPublisher("/rss/blobVideo", sensor_msgs.Image._TYPE);
-		graspingPub = node.newPublisher("rss/GraspingStatus", GraspingMsg._TYPE);
+		//graspingPub = node.newPublisher("rss/GraspingStatus", GraspingMsg._TYPE);
 
 		armSub = node.newSubscriber("rss/ArmStatus", ArmMsg._TYPE);
 		armSub.addMessageListener(new ArmListener(this));
@@ -252,8 +252,8 @@ public class Grasping extends AbstractNodeMain {
 		bumpSub.addMessageListener(new BumpListener(this));
 		odoSub = node.newSubscriber("rss/odometry", OdometryMsg._TYPE);
 		odoSub.addMessageListener(new OdometryListener(this));
-		graspingSub = node.newSubscriber("command/Grasping", GraspingMsg._TYPE);
-		graspingSub.addMessageListener(new GraspingListener(this));
+		//graspingSub = node.newSubscriber("command/Grasping", GraspingMsg._TYPE);
+		//graspingSub.addMessageListener(new GraspingListener(this));
 
         final boolean reverseRGB = node.getParameterTree().getBoolean("reverse_rgb", false);
 
