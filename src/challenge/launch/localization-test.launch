@@ -27,6 +27,12 @@
                    machine="workstation"
                    output="log" /> 
 
+  <node name="odo" pkg="challenge"
+                   type="odometry"
+                   args="com.github.rosjava.challenge.odometry.Odometry"
+                   machine="workstation"
+                   output="screen"/> 
+
   <node name="nav" pkg="navigation"
                    type="navigation"
                    args=""

@@ -355,7 +355,7 @@ public class MapGUIPanel extends SonarGUIPanel {
         polyColor = dupColor(color);
 
       if ( polys.add(new Poly(vertices, closed, filled, polyColor)) ) {
-        System.err.println("GUI: added poly with " + vertices.size() + " verts");
+        System.out.println("GUI: added poly with " + vertices.size() + " verts");
         /*
         for (Point2D.Double vertex : vertices)
           System.err.println("  " + vertex);
