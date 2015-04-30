@@ -95,13 +95,9 @@ public class MotionCommander {
     if (currentCommand < commands.length) {
       double transVel = commands[currentCommand].getTranslationalVelocity(
                                                 robot.x, robot.y, robot.theta);
-      transVel = convertTranslationalToAngularVelocity(transVel);
-      // TODO: Scale by conversion factor
-
       double rotVel = commands[currentCommand].getRotationalVelocity(
                                                 robot.x, robot.y, robot.theta);
-      rotVel = convertBaseAngVelToWheelAngVel(rotVel);
-      // TODO: Scale by conversion factor
+      // Note: transVel is in m/s and rotVel in rad/s (base rotation)
 
       MotionMsg motionMsg = motorPub.newMessage();
       motionMsg.setTranslationalVelocity(transVel);
