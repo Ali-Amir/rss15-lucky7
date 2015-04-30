@@ -31,6 +31,8 @@ import rss_msgs.MotionMsg;
 import rss_msgs.OdometryMsg;
 import rss_msgs.GraspingMsg;
 
+import com.github.rosjava.challenge.fsm.GraspingListener;
+
 import com.github.rosjava.challenge.vision.BlobTracking;
 import com.github.rosjava.challenge.gui.Image;
 
@@ -76,7 +78,9 @@ enum RoboFSM {
 
 	VISUAL_SERVO_SEARCH,
 
-  	RELEASING
+  	RELEASING,
+
+  	OFF
 
 }
 
@@ -307,7 +311,7 @@ public class Grasping extends AbstractNodeMain {
 	 */
 
 	public void handle(GraspingMsg msg){
-		SERVO_MODE = msg.getMode();
+		SERVO_MODE = msg.getServomode();
 
 		if (SERVO_MODE == COLLECTING){
 			fsmState = RoboFSM.VISUAL_SERVO_SEARCH;
@@ -911,11 +915,7 @@ public class Grasping extends AbstractNodeMain {
 
 				case COLLECTING: {
 					System.out.println("*** COLLECTING OBJECT ***");
-          			setVelocity(0,0);
 					returnVal = super.step(poseGating);
-					if (isAtDesired()) {
-						fsmState = RoboFSM.MOVE_FORWARD;
-					}
 					break;
 				}
 
