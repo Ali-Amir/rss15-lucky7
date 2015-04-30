@@ -29,6 +29,7 @@ import rss_msgs.ArmMsg;
 import rss_msgs.BumpMsg;
 import rss_msgs.MotionMsg;
 import rss_msgs.OdometryMsg;
+import rss_msgs.GraspingMsg;
 
 import com.github.rosjava.challenge.vision.BlobTracking;
 import com.github.rosjava.challenge.gui.Image;
@@ -70,14 +71,13 @@ enum RoboFSM {
 	/**
 	 * <p>FSM state: object has been dropped<\p>
 	 */
-	MOVE_FORWARD,
-	/**
-	 * <p>FSM state: move backward by set transport distance<\p>
-	 */
-	MOVE_BACKWARD,
+
 	VISUAL_SERVO_APPROACH,
+
 	VISUAL_SERVO_SEARCH,
-  RELEASING
+
+  	RELEASING
+
 }
 
 public class Grasping extends AbstractNodeMain {
@@ -88,8 +88,9 @@ public class Grasping extends AbstractNodeMain {
 	 * lab<\p>
 	 */
 	public int SERVO_MODE;
-	static final int FIRST_MODE = 0;
-	static final int SECOND_MODE = 1;
+	static final int COLLECTING = 0;
+	static final int ASSEMBLING = 1;
+	static final int OFF = 5;
 	/**
 	 * <p>Shoulder joint array index.  Note, current sense is on Orc port 0,
 	 * which we want for shoulder.<\p>
@@ -142,7 +143,7 @@ public class Grasping extends AbstractNodeMain {
 	RoboFSM fsmState;
 
 	static final double EPS_SEARCH_STANDOFF = 0.05; // m
-	static final double SEARCH_STANDOFF = 0.5;
+	static final double SEARCH_STANDOFF = 0.5; // m
 
 	/**
 	 * <p>Indicates first iteration through position controller<\p>
@@ -214,29 +215,17 @@ public class Grasping extends AbstractNodeMain {
 	private double targetTheta;
 	private boolean bumpPressed;
 
+	private Publisher<GraspingMsg> graspingPub;
+	private Subscriber<GraspingMsg> graspingSub;
+
 	/**
 	 * <p>Constructor for Grasping object<\p>
 	 */
 	public Grasping() {
 
-		SERVO_MODE = FIRST_MODE;//PART_2A;
+		SERVO_MODE = OFF;//PART_2A;
 		//System.out.println("FIRST MODE"); 
-
-		switch (SERVO_MODE) {
-			case FIRST_MODE: {
-        		fsmState = RoboFSM.INITIALIZE_ARM;
-				wristControl.setState(WristController.WRIST_INITIALIZE);
-				shoulderControl.setState(ShoulderController.SHOULDER_INITIALIZE);
-				break;
-			}
-		    case SECOND_MODE: {
-		        fsmState = RoboFSM.INITIALIZE_ARM;
-		        break;
-		    }
-			default:
-				break;
-		}
-
+		fsmState = RoboFSM.INITIALIZE_ARM;
 		System.out.println("Grasping class initialized");
 	}
 
@@ -250,6 +239,7 @@ public class Grasping extends AbstractNodeMain {
 		armPub = node.newPublisher("command/Arm", ArmMsg._TYPE);
 		motionPub = node.newPublisher("command/Motors", MotionMsg._TYPE);
 		vidPub = node.newPublisher("/rss/blobVideo", sensor_msgs.Image._TYPE);
+		graspingPub = node.newPublisher("rss/GraspingStatus", ArmMsg._TYPE);
 
 		armSub = node.newSubscriber("rss/ArmStatus", ArmMsg._TYPE);
 		armSub.addMessageListener(new ArmListener(this));
@@ -257,6 +247,8 @@ public class Grasping extends AbstractNodeMain {
 		bumpSub.addMessageListener(new BumpListener(this));
 		odoSub = node.newSubscriber("rss/odometry", OdometryMsg._TYPE);
 		odoSub.addMessageListener(new OdometryListener(this));
+		graspingSub = node.newSubscriber("command/Grasping", GraspingMsg._TYPE);
+		graspingSub.addMessageListener(new GraspingListener(this));
 
         final boolean reverseRGB = node.getParameterTree().getBoolean("reverse_rgb", false);
 
@@ -301,12 +293,22 @@ public class Grasping extends AbstractNodeMain {
 				handle(newData, (int)message.getWidth(), (int)message.getHeight());
 			}
 		});
-
-		setVelocity(1.0, 1.0);
 	}
 
 	@Override public GraphName getDefaultNodeName() {
 		return GraphName.of("rss/grasping");
+	}
+
+	/** 
+	 * <p> Handle a Grasping Message <\p>
+	 */
+
+	public void handle(GraspingMsg msg){
+		SERVO_MODE = msg.getMode();
+
+		if (SERVO_MODE == COLLECTING){
+			fsmState = RoboFSM.VISUAL_SERVO_SEARCH;
+		}
 	}
 
 	/**
@@ -330,7 +332,7 @@ public class Grasping extends AbstractNodeMain {
 		armMsg.setPwms(armTheta);
 		armPub.publish(armMsg);
 
-		if (SERVO_MODE == FIRST_MODE) {
+		if (SERVO_MODE == COLLECTING) {
 
 			switch (fsmState) {
 
@@ -341,7 +343,6 @@ public class Grasping extends AbstractNodeMain {
 						// part 3b
 						//fsmState = RoboFSM.SET_ARM_FOR_GRASP;
 						// Part 4:
-						fsmState = RoboFSM.VISUAL_SERVO_SEARCH;
 					}
 					break;
 				}
@@ -363,7 +364,8 @@ public class Grasping extends AbstractNodeMain {
 					System.out.println("COLLECTING");
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() && blockCollected) {
 						System.out.println("BLOCK IS COLLECTED");
-						fsmState = RoboFSM.MOVE_FORWARD;
+						fsmState = RoboFSM.OFF;
+						setGrasping(OFF);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
@@ -373,7 +375,8 @@ public class Grasping extends AbstractNodeMain {
 					System.out.println("RELEASING");
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("BLOCK IS RELEASED");
-						fsmState = RoboFSM.MOVE_BACKWARD;
+						fsmState = RoboFSM.OFF;
+						setGrasping(OFF);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
@@ -391,70 +394,11 @@ public class Grasping extends AbstractNodeMain {
 		//System.out.println("Odometry Message: (" + msg.getX() + " ," + msg.getY() + ", " + msg.getTheta() + ")");
 
 		// 
-		if (SERVO_MODE == FIRST_MODE) {
+		if (SERVO_MODE == COLLECTING) {
 			switch (fsmState) {
 
 				case INITIALIZE_ARM: {
 					setVelocity(0.0, 0.0);
-					break;
-				}
-
-				case MOVE_FORWARD: {
-					System.out.println("*** MOVE_FORWARD *** " + startingMove);
-					if(startingMove) {
-						startPoint = new Point2D.Double();
-						startPoint.x = msg.getX();
-						startPoint.y = msg.getY();
-						startTheta = msg.getTheta();
-						targetPoint = new Point2D.Double();
-						targetPoint.x = startPoint.x +
-						TRANSPORT_DISTANCE*Math.cos(startTheta);
-						targetPoint.y = startPoint.y +
-						TRANSPORT_DISTANCE*Math.sin(startTheta);
-						targetTheta = startTheta;
-						startingMove = false;
-					}
-
-					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, DIR_FORWARD)) {
-						System.out.println("We are within range of target");
-						// TBD
-						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
-						startingMove = true;
-						setVelocity(0.0, 0.0);
-						//					Robot.setVelocity(0.0, 0.0);
-						//fsmState = RoboFSM.LOWER_OBJECT; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-						fsmState = RoboFSM.RELEASING; 
-					}
-					break;
-				}
-
-				case MOVE_BACKWARD: {
-					System.out.println("*** MOVE_BACKWARD *** " + startingMove);
-					if(startingMove) {
-						startPoint = new Point2D.Double();
-						startPoint.x = msg.getX();
-						startPoint.y = msg.getY();
-						startTheta = msg.getTheta();
-						targetPoint = new Point2D.Double();
-						targetPoint.x = startPoint.x -
-						TRANSPORT_DISTANCE*Math.cos(startTheta);
-						targetPoint.y = startPoint.y -
-						TRANSPORT_DISTANCE*Math.sin(startTheta);
-						targetTheta = startTheta;
-						startingMove = false;
-					}
-
-					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, DIR_BACKWARD)) {
-						System.out.println("We are within range of target");
-
-						startingMove = true;
-						setVelocity(0.0, 0.0);
-						System.out.println("Completed Object Transport");
-						fsmState = RoboFSM.SET_ARM_TO_GATE;
-						//fsmState = RoboFSM.SET_ARM_FOR_GRASP; !!!!!!!!!!!
-					}
 					break;
 				}
 
@@ -503,6 +447,12 @@ public class Grasping extends AbstractNodeMain {
 		motionMsg.setRotationalVelocity(rotVel);
 		motionMsg.setTranslationalVelocity(transVel);
 		motionPub.publish(motionMsg);
+	}
+
+	public void setGrasping(int graspingMode){
+		GraspingMsg graspingMsg = graspingPub.newMessage();
+		graspingMsg.setServoMode(graspingMode)
+		graspingPub.publish(graspingMsg);
 	}
 
 
@@ -624,7 +574,7 @@ public class Grasping extends AbstractNodeMain {
         }
         */
 		Image dest = new Image(rawImage, width, height);
-		//blobTrack.apply(src, dest);
+		// blobTrack.apply(src, dest);
 
 		sensor_msgs.Image pubImage = vidPub.newMessage();
 		pubImage.setWidth(width);
@@ -923,11 +873,11 @@ public class Grasping extends AbstractNodeMain {
 		}
 
 		public long step(ArmMsg msg) {
-			if(SERVO_MODE == FIRST_MODE) {return step_FIRST(msg);}
-			else {return step_FIRST(msg);}
+			if(SERVO_MODE == COLLECTING) {return step_COLLECTING(msg);}
+			else {return (long) 0;}
 		}
 
-		public long step_FIRST(ArmMsg msg) {
+		public long step_COLLECTING(ArmMsg msg) {
 			long returnVal;
 
 			switch (fsmState) {
@@ -1025,12 +975,12 @@ public class Grasping extends AbstractNodeMain {
 		}
 
 		public long step(ArmMsg msg) {
-			if(SERVO_MODE == FIRST_MODE) {return step_FIRST(msg);}
-			else {return step_FIRST(msg);}
+			if(SERVO_MODE == COLLECTING) {return step_COLLECTING(msg);}
+			else {return (long) 0;}
 		}
 
 
-		public long step_FIRST(ArmMsg msg) {
+		public long step_COLLECTING(ArmMsg msg) {
 			long returnVal;
 
 			switch (fsmState) {
@@ -1089,13 +1039,6 @@ public class Grasping extends AbstractNodeMain {
 
 			return returnVal;
 		}
-	}
-
-	@SuppressWarnings("unused")
-	private void printControllerState() {
-		System.err.println("---- CONTROLLER STATE ----");
-		shoulderControl.printState();
-		wristControl.printState();
 	}
 
 
