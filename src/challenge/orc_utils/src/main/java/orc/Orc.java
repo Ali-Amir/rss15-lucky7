@@ -176,7 +176,9 @@ public class Orc
             try {
                 return new OrcStatus(this, this.doCommand(1, null));
             }
-            catch (IOException ex) {}
+            catch (IOException ex) {
+              ex.printStackTrace();
+            }
         }
     }
     
