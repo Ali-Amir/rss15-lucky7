@@ -88,6 +88,7 @@ public class Grasping extends AbstractNodeMain {
 	 * lab<\p>
 	 */
 	public int SERVO_MODE;
+	static final int INITIALIZED = -1;
 	static final int COLLECTING = 0;
 	static final int ASSEMBLING = 1;
 	static final int OFF = 5;
@@ -293,6 +294,8 @@ public class Grasping extends AbstractNodeMain {
 				handle(newData, (int)message.getWidth(), (int)message.getHeight());
 			}
 		});
+
+		setGrasping(INITIALIZED, false);
 	}
 
 	@Override public GraphName getDefaultNodeName() {
@@ -365,7 +368,7 @@ public class Grasping extends AbstractNodeMain {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() && blockCollected) {
 						System.out.println("BLOCK IS COLLECTED");
 						fsmState = RoboFSM.OFF;
-						setGrasping(OFF);
+						setGrasping(OFF, true);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
@@ -376,7 +379,7 @@ public class Grasping extends AbstractNodeMain {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("BLOCK IS RELEASED");
 						fsmState = RoboFSM.OFF;
-						setGrasping(OFF);
+						setGrasping(OFF, false);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
@@ -449,9 +452,10 @@ public class Grasping extends AbstractNodeMain {
 		motionPub.publish(motionMsg);
 	}
 
-	public void setGrasping(int graspingMode){
+	public void setGrasping(int graspingMode, boolean collected){
 		GraspingMsg graspingMsg = graspingPub.newMessage();
-		graspingMsg.setServoMode(graspingMode)
+		graspingMsg.setServomode(graspingMode);
+		graspingMsg.setCollected(collected);
 		graspingPub.publish(graspingMsg);
 	}
 

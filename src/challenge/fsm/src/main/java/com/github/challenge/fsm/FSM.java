@@ -177,6 +177,7 @@ public class FSM extends AbstractNodeMain {
 	 * <p> Handle an Grasping Message<\p>
 	 */
 
+	static final int INITIALIZED = -1;
 	static final int COLLECTING = 0;
 	static final int ASSEMBLING = 1;
 	static final int OFF = 5;
@@ -184,8 +185,8 @@ public class FSM extends AbstractNodeMain {
 	public void handle(GraspingMsg msg){
 
 
-		int mode = msg.getServoMode();
-		boolean collected = msg.getCollectedStatus();
+		int mode = msg.getServomode();
+		boolean collected = msg.getCollected();
 
 
 		switch (fsmState) {
@@ -336,7 +337,7 @@ public class FSM extends AbstractNodeMain {
 
 	public void setGrasping(int graspingMode){
 		GraspingMsg graspingMsg = graspingPub.newMessage();
-		graspingMsg.setServoMode(graspingMode)
+		graspingMsg.setServomode(graspingMode);
 		graspingPub.publish(graspingMsg);
 	}
 
