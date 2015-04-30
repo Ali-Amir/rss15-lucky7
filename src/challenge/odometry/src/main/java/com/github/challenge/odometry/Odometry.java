@@ -50,10 +50,15 @@ public class Odometry extends AbstractNodeMain {
 		double s_right = (ticks[1])*WHEEL_METERS_PER_TICK;
 		double theta = (s_left - s_right)/WHEELBASE;
 
-    double new_theta = (msg.getTheta()-theta) % (2*Math.PI);
+    //double new_theta = (msg.getTheta()-theta) % (2*Math.PI);
+    double new_theta = (-theta) % (2*Math.PI);
     msg.setTheta(new_theta);
+		msg.setX((s_left+s_right)*Math.cos(new_theta)/2.0);
+		msg.setY((s_left+s_right)*Math.sin(new_theta)/2.0);
+    /*
 		msg.setX(msg.getX() + (s_left+s_right)*Math.cos(new_theta)/2.0);
 		msg.setY(msg.getY() + (s_left+s_right)*Math.sin(new_theta)/2.0);
+    */
 
 		prev_ticks[0] = new_ticks[0];
 		prev_ticks[1] = new_ticks[1];
@@ -74,7 +79,7 @@ public class Odometry extends AbstractNodeMain {
 			public void onNewMessage(rss_msgs.OdometryMsg message) {
 				if (message.getX() == 0 && message.getY() == 0 && message.getTheta() == 0) {
 					prev_ticks = null;
-					msg.setX(message.getX()); msg.setY(message.getY()); msg.setTheta(message.getTheta());
+					//msg.setX(message.getX()); msg.setY(message.getY()); msg.setTheta(message.getTheta());
 					reset = true;
 				}
 			}

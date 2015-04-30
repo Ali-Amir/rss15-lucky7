@@ -46,6 +46,7 @@ class Navigation {
 
   double _time;
   double _tmp_time;
+  bool _testLocalization{false};
  
 };
 

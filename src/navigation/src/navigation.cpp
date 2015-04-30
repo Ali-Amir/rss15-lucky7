@@ -64,7 +64,7 @@ Navigation::Navigation() {
     string res;
     if (n.getParam("/nav/testLocalization", res)) {
       if (res == "yes") {
-        TestLocalization();
+        _testLocalization = true;
       }
     }
   }
@@ -86,28 +86,19 @@ void Navigation::TestWheelVelocities() {
   _motor_pub.publish(comm);
 }
 
-void Navigation::TestLocalization() {
-  _tmp_time = ros::Time::now().toSec();
-  double cur_time;
-  while ((cur_time = ros::Time::now().toSec()) - _tmp_time < 10.0) {
+void Navigation::updateRobotLocation(const RobotLocation::ConstPtr &loc) {
+  double cur_time = ros::Time::now().toSec();
+  ROS_INFO("GOT POSITION UPDATE! TIME: %.3lf\n", cur_time-_time);
+  _cur_loc = *loc;
+  if (_testLocalization) {
     MotionMsg comm;
     comm.translationalVelocity = 0.05;
     comm.rotationalVelocity = 0.0;
     _motor_pub.publish(comm);
 
-    ROS_INFO_THROTTLE(1, "Current time: %.3lf  expected position: (%.3lf,0.0,0.0) estimated position: (%.3lf,%.3lf,%.3lf)\n",
-        cur_time-_tmp_time, 0.05*(cur_time-_tmp_time), _cur_loc.x, _cur_loc.y, _cur_loc.theta);
+    ROS_INFO("Current time: %.3lf  expected position: (%.3lf,0.0,0.0) estimated position: (%.3lf,%.3lf,%.3lf)\n",
+        cur_time-_time, 0.05*(cur_time-_time), _cur_loc.x, _cur_loc.y, _cur_loc.theta);
   }
-  ROS_INFO("Time taken: %.3lf\n", cur_time-_tmp_time);
-  MotionMsg comm;
-  comm.translationalVelocity = 0.0;
-  comm.rotationalVelocity = 0.0;
-  _motor_pub.publish(comm);
-}
-
-void Navigation::updateRobotLocation(const RobotLocation::ConstPtr &loc) {
-  ROS_INFO("GOT POSITION UPDATE! TIME: %.3lf\n", ros::Time::now().toSec()-_time);
-  _cur_loc = *loc;
 }
 
 void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {

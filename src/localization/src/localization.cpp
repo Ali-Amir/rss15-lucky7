@@ -19,6 +19,10 @@ typedef CGAL::Polygon_2<K> Polygon_2;
 
 namespace localization {
 
+double curTime() {
+  return ros::Time::now().toSec();
+}
+
 Localization::Localization() {
   ROS_INFO("Initializing localization module");
 
@@ -107,6 +111,7 @@ RobotLocation Localization::currentPositionBelief() const {
 }
 
 void Localization::PublishLocation() {
+  ROS_INFO("Publishing updated location!");
   _location_pub.publish(currentPositionBelief());
 }
 
@@ -154,6 +159,9 @@ void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
   double dy = odo->y;
   double dt = odo->theta;
 
+  double start_time = curTime();
+  ROS_INFO_STREAM("onOdometryUpdate: " << dx << " " << dy << " dt: " << dt);
+
   double varD = pow(min(0.03, 0.01 + sqrt(dx*dx+dy*dy)), 2.0);
   double varT = pow(min(0.17453292519, 0.17453292519/20.0+fabs(dt)), 2.0);
 
@@ -182,6 +190,7 @@ void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
 
   NormalizeBeliefs();
   PublishLocation();
+  ROS_INFO("onOdometryUpdate: time passed %.3lf sec.", curTime()-start_time);
 }
 
 Vector_2 Rotate(Vector_2 vec, double alfa) {
@@ -190,6 +199,9 @@ Vector_2 Rotate(Vector_2 vec, double alfa) {
 }
 
 void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
+  ROS_INFO_STREAM("Got sonar update: " << son->sonarId << " range: " << son->range);
+  return;
+  double start_time = curTime();
   double varD = 0.01;
   for (Particle &par : _particles) {
     Vector_2 dir(Rotate(SONAR_DIR[son->sonarId], par.t));
@@ -199,6 +211,7 @@ void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
   }
   NormalizeBeliefs();
   PublishLocation();
+  ROS_INFO("onSonarUpdate: time passed %.3lf sec.", curTime()-start_time);
 }
 
 double NormalizeRad(double rad) {
