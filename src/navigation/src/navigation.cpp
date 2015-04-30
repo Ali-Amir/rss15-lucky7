@@ -21,6 +21,8 @@ namespace navigation {
 Navigation::Navigation() {
   ROS_INFO("Initializing navigation module");
 
+  _time = ros::Time::now().toSec();
+
   ros::NodeHandle n;
   // Initialize message publishers.
   _guierase_pub = n.advertise<GUIEraseMsg>("gui/Erase", 1000);
@@ -46,10 +48,57 @@ Navigation::Navigation() {
   loc->y = CGAL::to_double(_obs_map->_robot_goal.y());
   loc->theta = 0.0;
   moveRobotTo(loc);
+
+  // TODO: remove the test call
+  // TEST CASE 01
+  {
+    string res;
+    if (n.getParam("/nav/testWheelVelocities", res)) {
+      if (res == "yes") {
+        TestWheelVelocities();
+      }
+    }
+  }
+  // TEST CASE 02
+  {
+    string res;
+    if (n.getParam("/nav/testLocalization", res)) {
+      if (res == "yes") {
+        _testLocalization = true;
+      }
+    }
+  }
+}
+
+void Navigation::TestWheelVelocities() {
+  double start_time = ros::Time::now().toSec();
+  double cur_time;
+  while ((cur_time = ros::Time::now().toSec()) - start_time < 10.0) {
+    MotionMsg comm;
+    comm.translationalVelocity = 0.2;
+    comm.rotationalVelocity = 0.0;
+    _motor_pub.publish(comm);
+  }
+  ROS_INFO("Time taken: %.3lf\n", cur_time-start_time);
+  MotionMsg comm;
+  comm.translationalVelocity = 0.0;
+  comm.rotationalVelocity = 0.0;
+  _motor_pub.publish(comm);
 }
 
 void Navigation::updateRobotLocation(const RobotLocation::ConstPtr &loc) {
+  double cur_time = ros::Time::now().toSec();
+  ROS_INFO("GOT POSITION UPDATE! TIME: %.3lf\n", cur_time-_time);
   _cur_loc = *loc;
+  if (_testLocalization) {
+    MotionMsg comm;
+    comm.translationalVelocity = 0.05;
+    comm.rotationalVelocity = 0.0;
+    _motor_pub.publish(comm);
+
+    ROS_INFO("Current time: %.3lf  expected position: (%.3lf,0.0,0.0) estimated position: (%.3lf,%.3lf,%.3lf)\n",
+        cur_time-_time, 0.05*(cur_time-_time), _cur_loc.x, _cur_loc.y, _cur_loc.theta);
+  }
 }
 
 void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {

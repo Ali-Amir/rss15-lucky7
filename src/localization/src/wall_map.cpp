@@ -211,14 +211,16 @@ void WallMap::BuildTriangles() {
 double WallMap::DistanceToWall(const Ray_2 &ray) {
   double closest = pow(SONAR_MAX_RANGE, 2.0);
   int interCount = _triangles.size();
+  Point_2 ipoint;
+  Segment_2 iseg;
   for (const auto &tri : _triangles) {
     //ROS_INFO_STREAM("Querying: " << tri << " ray: " << ray);
-    auto result = CGAL::intersection(ray, tri);
-    if (const Point_2 *ipoint = CGAL::object_cast<Point_2>(&result)) {
-      closest = min(closest, CGAL::to_double(CGAL::squared_distance(ray.source(), *ipoint)));
-    } else if (const Segment_2 *iseg = CGAL::object_cast<Segment_2>(&result)) {
-      closest = min(closest, CGAL::to_double(CGAL::squared_distance(ray.source(), iseg->source())));
-      closest = min(closest, CGAL::to_double(CGAL::squared_distance(ray.source(), iseg->target())));
+    CGAL::Object result = CGAL::intersection(ray, tri);
+    if (CGAL::assign(ipoint, result)) {//const Point_2 *ipoint = CGAL::object_cast<Point_2>(&result)) {
+      closest = min(closest, CGAL::to_double(CGAL::squared_distance(ray.source(), ipoint)));
+    } else if (CGAL::assign(iseg, result)) {//const Segment_2 *iseg = CGAL::object_cast<Segment_2>(&result)) {
+      closest = min(closest, CGAL::to_double(CGAL::squared_distance(ray.source(), iseg.source())));
+      closest = min(closest, CGAL::to_double(CGAL::squared_distance(ray.source(), iseg.target())));
     } else {
       --interCount;
     }

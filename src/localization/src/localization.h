@@ -53,7 +53,7 @@ class Localization {
   void InitializeParticles();
   void NormalizeBeliefs();
   void PublishLocation();
-  void Test();
+  void TestTriangulation();
 
  private:
   ros::Publisher _guipoly_pub;

@@ -1,6 +1,5 @@
 #include "localization.h"
 
-#include "gui_msgs/GUIEraseMsg.h"
 #include "gui_msgs/GUIPointMsg.h"
 #include "gui_msgs/GUIPolyMsg.h"
 #include "rss_msgs/MotionMsg.h"
@@ -20,6 +19,10 @@ typedef CGAL::Polygon_2<K> Polygon_2;
 
 namespace localization {
 
+double curTime() {
+  return ros::Time::now().toSec();
+}
+
 Localization::Localization() {
   ROS_INFO("Initializing localization module");
 
@@ -35,7 +38,7 @@ Localization::Localization() {
 
   ros::NodeHandle n;
   // Initialize message publishers.
-  _location_pub = n.advertise<GUIEraseMsg>("localization/update", 1000);
+  _location_pub = n.advertise<RobotLocation>("localization/update", 1000);
   _guipoly_pub = n.advertise<GUIPolyMsg>("gui/Poly", 1000);
 
   // Load map file location and initialize the map-handler class instance.
@@ -46,7 +49,16 @@ Localization::Localization() {
   ROS_INFO("Initialized wall map.");
 
   InitializeParticles();
-  Test();
+
+  // Test CASE 01
+  {
+    string res;
+    if (n.getParam("/loc/testTriangulation", res)) {
+      if (res == "yes") {
+        TestTriangulation();
+      }
+    }
+  }
 }
 
 // Initialize with N random points generated within a given tolerance (in 3-D
@@ -99,10 +111,11 @@ RobotLocation Localization::currentPositionBelief() const {
 }
 
 void Localization::PublishLocation() {
+  ROS_INFO("Publishing updated location!");
   _location_pub.publish(currentPositionBelief());
 }
 
-void Localization::Test() {
+void Localization::TestTriangulation() {
   // TEST
   ROS_INFO("Distance to wall from 0.0 0.0 in direction 1.0 0.0: %.3lf",
            _wall_map->DistanceToWall(K::Ray_2(Point_2(0.0,0.0), K::Direction_2(1.0,1.00001))));
@@ -146,6 +159,9 @@ void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
   double dy = odo->y;
   double dt = odo->theta;
 
+  double start_time = curTime();
+  ROS_INFO_STREAM("onOdometryUpdate: " << dx << " " << dy << " dt: " << dt);
+
   double varD = pow(min(0.03, 0.01 + sqrt(dx*dx+dy*dy)), 2.0);
   double varT = pow(min(0.17453292519, 0.17453292519/20.0+fabs(dt)), 2.0);
 
@@ -174,6 +190,7 @@ void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
 
   NormalizeBeliefs();
   PublishLocation();
+  ROS_INFO("onOdometryUpdate: time passed %.3lf sec.", curTime()-start_time);
 }
 
 Vector_2 Rotate(Vector_2 vec, double alfa) {
@@ -182,6 +199,9 @@ Vector_2 Rotate(Vector_2 vec, double alfa) {
 }
 
 void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
+  ROS_INFO_STREAM("Got sonar update: " << son->sonarId << " range: " << son->range);
+  return;
+  double start_time = curTime();
   double varD = 0.01;
   for (Particle &par : _particles) {
     Vector_2 dir(Rotate(SONAR_DIR[son->sonarId], par.t));
@@ -191,6 +211,7 @@ void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
   }
   NormalizeBeliefs();
   PublishLocation();
+  ROS_INFO("onSonarUpdate: time passed %.3lf sec.", curTime()-start_time);
 }
 
 double NormalizeRad(double rad) {

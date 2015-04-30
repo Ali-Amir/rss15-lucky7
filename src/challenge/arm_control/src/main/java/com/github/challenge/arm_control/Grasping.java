@@ -539,7 +539,6 @@ public class Grasping extends AbstractNodeMain {
         if (videoCounter % 12 != 0) {
           return;
         }
-        System.out.println("======================================+ASD=================");
 		// on first camera message, create new BlobTracking instance
 		if ( blobTrack == null ) {
 			System.out.println("Blobtracking");

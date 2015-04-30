@@ -17,20 +17,20 @@ public class MotorListener implements MessageListener<MotionMsg> {
   @Override
 	public void onNewMessage(MotionMsg msg){
 
-    System.out.println("///////New Motor Message Received!/////////");
-    System.out.println("Translational Vel :");
-    System.out.println(msg.getTranslationalVelocity());
-    System.out.println("Rotational Vel :");
-    System.out.println(msg.getRotationalVelocity());
-	
-    double left = msg.getTranslationalVelocity();
-    double right = msg.getTranslationalVelocity();
+    double trans = msg.getTranslationalVelocity();
+    // Convert to travel distance
+    double rot = msg.getRotationalVelocity()*(0.433/2.0);
+    double left = trans;
+    double right = trans;
     
-    left -= msg.getRotationalVelocity();
-    right += msg.getRotationalVelocity();
+    left -= rot;
+    right += rot;
     
-    left *= 3.5;
-    right *= 3.5;
+    left *= 3.5 / 0.2185; // Divide by c_conversion
+    // (read team documentation in google drive)
+    right *= 3.5 / 0.2185;
+
+
     controller.setDesiredAngularVelocity(left, right);
 	
   }   
