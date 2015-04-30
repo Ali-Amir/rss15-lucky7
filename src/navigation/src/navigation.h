@@ -30,6 +30,7 @@ class Navigation {
 
  private:
   void TestWheelVelocities();
+  void TestLocalization();
   void SmoothePath(const std::vector<cgal_kernel::Point_3> &path,
                    std::vector<cgal_kernel::Point_3> *spath);
 
@@ -42,6 +43,9 @@ class Navigation {
   std::shared_ptr<cspace::ObstacleMap> _obs_map;
   std::unique_ptr<cspace::Grid> _world;
   rss_msgs::RobotLocation _cur_loc;
+
+  double _time;
+  double _tmp_time;
  
 };
 

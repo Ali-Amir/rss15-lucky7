@@ -46,7 +46,16 @@ Localization::Localization() {
   ROS_INFO("Initialized wall map.");
 
   InitializeParticles();
-  Test();
+
+  // Test CASE 01
+  {
+    string res;
+    if (n.getParam("/loc/testTriangulation", res)) {
+      if (res == "yes") {
+        TestTriangulation();
+      }
+    }
+  }
 }
 
 // Initialize with N random points generated within a given tolerance (in 3-D
@@ -102,7 +111,7 @@ void Localization::PublishLocation() {
   _location_pub.publish(currentPositionBelief());
 }
 
-void Localization::Test() {
+void Localization::TestTriangulation() {
   // TEST
   ROS_INFO("Distance to wall from 0.0 0.0 in direction 1.0 0.0: %.3lf",
            _wall_map->DistanceToWall(K::Ray_2(Point_2(0.0,0.0), K::Direction_2(1.0,1.00001))));
