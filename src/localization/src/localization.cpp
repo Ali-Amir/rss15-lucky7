@@ -26,6 +26,8 @@ double curTime() {
 Localization::Localization() {
   ROS_INFO("Initializing localization module");
 
+  _time = curTime();
+
   // Initializing the sonar locations.
   SONAR_DIR = {
     cgal_kernel::Vector_2(0.0, 1.0),
@@ -155,12 +157,16 @@ void Localization::NormalizeBeliefs() {
 }
 
 void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
-  double dx = odo->x;
-  double dy = odo->y;
-  double dt = odo->theta;
+  double dx = odo->x-_prev_odo_x;
+  double dy = odo->y-_prev_odo_y;
+  double dt = odo->theta-_prev_odo_t;
+  _prev_odo_x = odo->x;
+  _prev_odo_y = odo->y;
+  _prev_odo_t = odo->theta;
+  _prev_odo_time = curTime();
 
   double start_time = curTime();
-  ROS_INFO_STREAM("onOdometryUpdate: " << dx << " " << dy << " dt: " << dt);
+  ROS_INFO_STREAM("onOdometryUpdate: " << dx << " " << dy << " dt: " << dt << " at time: " << curTime()-_time);
 
   double varD = pow(min(0.03, 0.01 + sqrt(dx*dx+dy*dy)), 2.0);
   double varT = pow(min(0.17453292519, 0.17453292519/20.0+fabs(dt)), 2.0);
@@ -169,24 +175,27 @@ void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
   normal_distribution<double> xyDist(0.0, varD);
   normal_distribution<double> tDist(0.0, varT);
 
-  set<Particle> new_particles;
+  vector<Particle> new_particles;
   for (const Particle &par : _particles) {
-    new_particles.insert(Particle(par.x+dx, par.y+dy, par.t+dt,
+    new_particles.push_back(Particle(par.x+dx, par.y+dy, par.t+dt,
           par.belief + logGaussian(0.0, 0.0, 0.0, 0.0, varD) + logGaussian(0.0, 0.0, varT)));
     // Generate 10 random points to account for noise.
     for (int i = 0; i < 10; ++i) {
       double x = xyDist(gen) + par.x+dx;
       double y = xyDist(gen) + par.y+dy;
       double t = tDist(gen) + par.t+dt;
-      new_particles.insert(Particle(x, y, t,
+      new_particles.push_back(Particle(x, y, t,
             par.belief + logGaussian(x-par.x-dx, 0.0, y-par.y-dy, 0.0, varD) + logGaussian(t-par.t-dt, 0.0, varT)));
     }
   }
 
+  ROS_INFO("onOdometryUpdate: time up to generation %.3lf sec.", curTime()-start_time);
   // Substitute old particles with top #N new ones.
-  for (; new_particles.size() > N; new_particles.erase(new_particles.begin()));
-  _particles.clear();
-  copy(new_particles.begin(), new_particles.end(), back_inserter(_particles));
+  sort(new_particles.begin(), new_particles.end());
+  reverse(new_particles.begin(), new_particles.end());
+  new_particles.resize(N);
+  _particles = new_particles;
+  ROS_INFO("onOdometryUpdate: time up to sorting %.3lf sec.", curTime()-start_time);
 
   NormalizeBeliefs();
   PublishLocation();

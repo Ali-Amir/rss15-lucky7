@@ -40,7 +40,7 @@ class Localization {
   rss_msgs::RobotLocation currentPositionBelief() const;
 
  private:
-  static const int N = 50000;
+  static const int N = 10000;
   // 5 cm distance tolerance
   static constexpr double DISTANCE_TOLERANCE = 0.05;
   // 10 degree heading tolerance
@@ -60,6 +60,11 @@ class Localization {
   ros::Publisher _location_pub;
   std::shared_ptr<WallMap> _wall_map;
   std::vector<Particle> _particles;
+  double _prev_odo_x;
+  double _prev_odo_y;
+  double _prev_odo_t;
+  double _prev_odo_time;
+  double _time;
  
 };
 

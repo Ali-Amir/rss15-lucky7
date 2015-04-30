@@ -228,7 +228,7 @@ public class Grasping extends AbstractNodeMain {
 	 */
 	public Grasping() {
 
-		SERVO_MODE = OFF;//PART_2A;
+		SERVO_MODE = COLLECTING;//PART_2A;
 		//System.out.println("FIRST MODE"); 
 		fsmState = RoboFSM.INITIALIZE_ARM;
 		System.out.println("Grasping class initialized");
@@ -244,7 +244,7 @@ public class Grasping extends AbstractNodeMain {
 		armPub = node.newPublisher("command/Arm", ArmMsg._TYPE);
 		motionPub = node.newPublisher("command/Motors", MotionMsg._TYPE);
 		vidPub = node.newPublisher("/rss/blobVideo", sensor_msgs.Image._TYPE);
-		graspingPub = node.newPublisher("rss/GraspingStatus", ArmMsg._TYPE);
+		graspingPub = node.newPublisher("rss/GraspingStatus", GraspingMsg._TYPE);
 
 		armSub = node.newSubscriber("rss/ArmStatus", ArmMsg._TYPE);
 		armSub.addMessageListener(new ArmListener(this));
@@ -262,8 +262,6 @@ public class Grasping extends AbstractNodeMain {
 			@Override
 			public void onNewMessage(sensor_msgs.Image message) {
 				byte[] rgbData;
-
-
 
 				if (reverseRGB) {
 					rgbData = Image.RGB2BGR(message.getData().array(),
@@ -543,10 +541,10 @@ public class Grasping extends AbstractNodeMain {
 	 * @param a received camera message
 	 */
 	public synchronized void handle(byte[] rawImage, int width, int height) {
-        ++videoCounter;
-        if (videoCounter % 12 != 0) {
-          return;
-        }
+    ++videoCounter;
+    if (videoCounter % 12 != 0) {
+      return;
+    }
 		// on first camera message, create new BlobTracking instance
 		if ( blobTrack == null ) {
 			System.out.println("Blobtracking");
@@ -581,7 +579,7 @@ public class Grasping extends AbstractNodeMain {
         }
         */
 		Image dest = new Image(rawImage, width, height);
-		// blobTrack.apply(src, dest);
+		blobTrack.apply(src, dest);
 
 		sensor_msgs.Image pubImage = vidPub.newMessage();
 		pubImage.setWidth(width);

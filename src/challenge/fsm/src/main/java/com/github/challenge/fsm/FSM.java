@@ -64,7 +64,7 @@ public class FSM extends AbstractNodeMain {
 	/**
 	 * <p>Starting pose of robot before moving<\p>
 	 */
-	Point2D.Double currentPoint;
+	Point2D.Double currentPoint = new Point2D.Double();
 
 	double currentTheta;
 

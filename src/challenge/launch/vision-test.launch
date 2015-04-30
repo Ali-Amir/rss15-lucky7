@@ -1,7 +1,7 @@
 <launch>
   <machine name="workstation" address="localhost"/>
 
-  <node name="vid" pkg="gscam" type="gscam" machine="workstation" /> 
+  <!-- <node name="vid" pkg="gscam" type="gscam" machine="workstation" /> -->
   <!-- <node name="rep" pkg="image_transport" type="republish" args="compressed in:=/gscam/image_raw raw out:=/rss/video" machine="workstation"/> -->
 
   <node name="rep" pkg="image_transport" type="republish" args="compressed in:=/camera/image_raw raw out:=/rss/video" machine="workstation"/>
