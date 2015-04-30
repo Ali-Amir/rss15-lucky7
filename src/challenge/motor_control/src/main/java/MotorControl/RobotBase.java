@@ -154,13 +154,13 @@ public class RobotBase extends Observable {
 		controlThread.start();
 		
 
-		RobotGraph f = new RobotGraph();
+		//RobotGraph f = new RobotGraph();
 //		f.setPreferredSize(new Dimension(501,532));
 //		f.setResizable(false);
 //		f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 //		f.pack();
 //		f.setVisible(true);
-		this.addObserver(f);
+		//this.addObserver(f);
 //		this.setChanged();
 //		this.notifyObservers(motor);
 //		this.clearChanged();

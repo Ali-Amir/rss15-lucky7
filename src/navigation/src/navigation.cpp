@@ -52,13 +52,15 @@ Navigation::Navigation() {
 }
 
 void Navigation::TestWheelVelocities() {
-  double cur_time = ros::Time::now().toSec();
-  while (ros::Time::now().toSec() - cur_time < 3.0) {
+  double start_time = ros::Time::now().toSec();
+  double cur_time;
+  while ((cur_time = ros::Time::now().toSec()) - start_time < 10.0) {
     MotionMsg comm;
-    comm.translationalVelocity = 0.02;
+    comm.translationalVelocity = 0.5;
     comm.rotationalVelocity = 0.0;
     _motor_pub.publish(comm);
   }
+  ROS_INFO("Time taken: %.3lf\n", cur_time-start_time);
   MotionMsg comm;
   comm.translationalVelocity = 0.0;
   comm.rotationalVelocity = 0.0;

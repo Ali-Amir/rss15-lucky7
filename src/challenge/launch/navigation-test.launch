@@ -5,6 +5,8 @@
   <node name="nav_gui" pkg="challenge" type="navigation" args="com.github.rosjava.challenge.navigation.GlobalNavigation" machine="workstation" output="screen">
     <param name="mapFileName" value="$(env CHALLENGE)/maps/global-nav-maze-2011-hard.map" />
   </node>
+  <node name="pub" pkg="challenge" type="uorc_publisher" args="com.github.rosjava.challenge.uorc_publisher.Publisher" machine="workstation" />
+  <node name="lis" pkg="challenge" type="uorc_listener" args="org.github.challenge.uorc_listener.Listener" machine="workstation" output="screen" /> 
   <node name="nav" pkg="navigation" type="navigation" args="" machine="workstation" output="screen">
     <param name="calculateFromScratch" value="no" />
     <param name="precalcPath" value="$(env CHALLENGE)/maps/global-nav-maze-2011-hard.dec" />

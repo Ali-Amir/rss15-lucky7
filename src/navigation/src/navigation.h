@@ -29,6 +29,7 @@ class Navigation {
   void moveRobotTo(const rss_msgs::RobotLocation::ConstPtr& msg);
 
  private:
+  void TestWheelVelocities();
   void SmoothePath(const std::vector<cgal_kernel::Point_3> &path,
                    std::vector<cgal_kernel::Point_3> *spath);
 
