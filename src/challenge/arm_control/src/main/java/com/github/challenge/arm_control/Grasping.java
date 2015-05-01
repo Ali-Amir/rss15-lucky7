@@ -296,9 +296,6 @@ public class Grasping extends AbstractNodeMain {
 				handle(newData, (int)message.getWidth(), (int)message.getHeight());
 			}
 		});
-
-		setGrasping(INITIALIZED, false);
-		System.out.println("//// SET GRASPING ////");
 	}
 
 	@Override public GraphName getDefaultNodeName() {
@@ -350,8 +347,10 @@ public class Grasping extends AbstractNodeMain {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() ) {
 						System.out.println("========================================================");
 						System.out.println("Arm is now initialized (in retracted state)");
+						
+
 						// part 3b
-						//fsmState = RoboFSM.VISUAL_SERVO_SEARCH;
+						fsmState = RoboFSM.VISUAL_SERVO_SEARCH;
 						//fsmState = RoboFSM.SET_ARM_FOR_GRASP;
 						// Part 4:
 					}
