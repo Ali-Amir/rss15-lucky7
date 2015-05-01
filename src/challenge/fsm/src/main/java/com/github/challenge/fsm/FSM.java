@@ -185,6 +185,7 @@ public class FSM extends AbstractNodeMain {
 	static final int OFF = 5;
 
 	public void handle(GraspingMsg msg){
+		System.out.println("//GOT GRASPING MESSAGE//");
 
 
 		int mode = msg.getServomode();
@@ -195,6 +196,8 @@ public class FSM extends AbstractNodeMain {
 
 			case INITIALIZE: {
 				fsmState = RobotFSM.COLLECTION;
+				System.out.println("//COLLECTION//");
+
 				setGrasping(COLLECTING);
 				break;
 			}
