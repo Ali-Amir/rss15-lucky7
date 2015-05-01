@@ -26,6 +26,7 @@ typedef CGAL::Constrained_triangulation_face_base_2<K>           Fb;
 typedef CGAL::Triangulation_data_structure_2<Vb,Fb>              TDS;
 typedef CGAL::Exact_predicates_tag                               Itag;
 typedef CGAL::Constrained_Delaunay_triangulation_2<K, TDS, Itag> CDT;
+typedef Polygon_2::Edge_const_iterator EdgeIterator;
 
 
 WallMap::WallMap(const string &mapfile_location) {
@@ -209,6 +210,49 @@ void WallMap::BuildTriangles() {
 }
 
 double WallMap::DistanceToWall(const Ray_2 &ray) {
+  double closest = SONAR_MAX_RANGE;
+  double x = CGAL::to_double(ray.source().x());
+  double y = CGAL::to_double(ray.source().y());
+  double vx = CGAL::to_double(ray.direction().dx());
+  double vy = CGAL::to_double(ray.direction().dy());
+  double lv = sqrt(vx*vx+vy*vy);
+  vx /= lv; vy /= lv;
+
+  int interCount = 0;
+
+  for (const Polygon_2 raw_poly : _raw_obstacles) {
+    for (EdgeIterator ei = raw_poly.edges_begin();
+         ei != raw_poly.edges_end(); ++ei) {
+      double x1 = CGAL::to_double(ei->source().x());
+      double y1 = CGAL::to_double(ei->source().y());
+      double x2 = CGAL::to_double(ei->target().x());
+      double y2 = CGAL::to_double(ei->target().y());
+      double A = y2-y1;
+      double B = x1-x2;
+      double C = x2*y1-x1*y2;
+      if (fabs(A*vx+B*vy) < 1e-6) {
+        if (fabs(A*x + B*y + C) < 1e-6) {
+          closest = min(closest, sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1)));
+          closest = min(closest, sqrt((x-x2)*(x-x2)+(y-y2)*(y-y2)));
+          ++interCount;
+        }
+      } else {
+        double t = (-C - A*x - B*y) / (A*vx + B*vy);
+        if (t >= 0) {
+          double xc = x+vx*t, yc = y+vy*t;
+          if ((x1-xc)*(x2-xc)+(y1-yc)*(y2-yc) < 1e-6) {
+            closest = min(closest, t);
+            ++interCount;
+          }
+        }
+      }
+    }
+  }
+  ROS_ASSERT(interCount > 0);
+  return closest;
+}
+/*
+double WallMap::DistanceToWall(const Ray_2 &ray) {
   double closest = pow(SONAR_MAX_RANGE, 2.0);
   int interCount = _triangles.size();
   Point_2 ipoint;
@@ -216,9 +260,9 @@ double WallMap::DistanceToWall(const Ray_2 &ray) {
   for (const auto &tri : _triangles) {
     //ROS_INFO_STREAM("Querying: " << tri << " ray: " << ray);
     CGAL::Object result = CGAL::intersection(ray, tri);
-    if (CGAL::assign(ipoint, result)) {//const Point_2 *ipoint = CGAL::object_cast<Point_2>(&result)) {
+    if (CGAL::assign(ipoint, result)) {
       closest = min(closest, CGAL::to_double(CGAL::squared_distance(ray.source(), ipoint)));
-    } else if (CGAL::assign(iseg, result)) {//const Segment_2 *iseg = CGAL::object_cast<Segment_2>(&result)) {
+    } else if (CGAL::assign(iseg, result)) {
       closest = min(closest, CGAL::to_double(CGAL::squared_distance(ray.source(), iseg.source())));
       closest = min(closest, CGAL::to_double(CGAL::squared_distance(ray.source(), iseg.target())));
     } else {
@@ -228,5 +272,6 @@ double WallMap::DistanceToWall(const Ray_2 &ray) {
   ROS_ASSERT(interCount > 0);
   return sqrt(closest);
 }
+*/
 
 } // namespace localization 
