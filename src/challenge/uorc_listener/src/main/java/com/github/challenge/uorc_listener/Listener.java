@@ -58,7 +58,7 @@ public class Listener extends AbstractNodeMain {
 
       armPub = node.newPublisher("rss/ArmStatus", ArmMsg._TYPE);
 
-      sl = new ServoListener(orc, armPub, true);//to use safe servos set to true
+      sl = new ServoListener(orc, armPub, false);//to use safe servos set to true
       //this requires modification of the ServoListener class to have the correct upper and lower bounds	    
       armSub = node.newSubscriber("command/Arm", ArmMsg._TYPE);
       armSub.addMessageListener(sl);
