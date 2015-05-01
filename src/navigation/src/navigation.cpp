@@ -94,21 +94,6 @@ Navigation::Navigation() {
       }
     }
   }
-  // TEST CASE 04
-  {
-    string res;
-    if (n.getParam("/nav/testNavigationInReality", res)) {
-      if (res == "yes") {
-        boost::shared_ptr<RobotLocation> loc(new RobotLocation());
-        loc->x = CGAL::to_double(_obs_map->_robot_goal.x());
-        loc->y = CGAL::to_double(_obs_map->_robot_goal.y());
-        loc->theta = ObstacleMap::RadToRotation(0.0);
-        while (true) {
-          moveRobotTo(loc);
-        }
-      }
-    }
-  }
 }
 
 void Navigation::TestWheelVelocities() {
@@ -162,7 +147,7 @@ void Navigation::PublishGUICSObstacles() {
 }
 
 bool Navigation::UsePreviousCommand() {
-  return CurTime() >= _time_until;
+  return CurTime() <= _time_until;
 }
 
 void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
@@ -171,16 +156,24 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
 
   int search_status;
   if (target->theta > -10.0) {
-    _world->ComputePathsToGoal(Point_3(target->x, target->y, target->theta), &search_status);
+    _world->ComputePathsToGoal(
+        Point_3(target->x, target->y, target->theta), &search_status);
   } else {
-    _world->ComputePathsToGoal(Point_2(target->x, target->y), &search_status);
+    _world->ComputePathsToGoal(
+        Point_2(target->x, target->y), &search_status);
   }
 
   ROS_INFO("Computed all paths. Now calculating command velocities.");
-  ROS_INFO("Search took: %.3lf sec.", ros::Time::now().toSec()-cur_time);
+  ROS_INFO("Search took: %.3lf sec. Search status=%d",
+      ros::Time::now().toSec()-cur_time, search_status);
 
   // search_status 0 means a new goal 
   if (search_status == 0 || !UsePreviousCommand()) {
+    MotionMsg stop_comm;
+    stop_comm.translationalVelocity = 0.0;
+    stop_comm.rotationalVelocity = 0.0;
+    _motor_pub.publish(stop_comm);
+
     // Check if path exists.
     Grid::CellId cur_cell_id;
     assert(_world->GetCellId(
@@ -229,6 +222,9 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
     mot_msg.rotationalVelocity = _rot_velocity;
     _motor_pub.publish(mot_msg);
   }
+
+  ROS_INFO("Commanding: %.3lf %.3lf time until next: %.3lf\n",
+      _trans_velocity, _rot_velocity, _time_until-CurTime());
 
 }
 

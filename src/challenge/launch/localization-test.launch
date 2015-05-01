@@ -31,13 +31,13 @@
                    type="odometry"
                    args="com.github.rosjava.challenge.odometry.Odometry"
                    machine="workstation"
-                   output="screen"/> 
+                   output="log"/> 
 
   <node name="nav" pkg="navigation"
                    type="navigation"
                    args=""
                    machine="workstation"
-                   output="log">
+                   output="screen">
       <param name="calculateFromScratch" value="no" />
       <param name="precalcPath" value="$(env CHALLENGE)/maps/global-nav-maze-2011-hard.dec" />
       <param name="mapFileName" value="$(env CHALLENGE)/maps/global-nav-maze-2011-hard.map" />

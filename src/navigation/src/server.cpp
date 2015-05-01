@@ -28,6 +28,8 @@
 
 #include "std_msgs/String.h"
 #include "rss_msgs/BumpMsg.h"
+#include "rss_msgs/RobotLocation.h"
+#include "obstacle_map.h"
 
 #include "navigation.h"
 
@@ -75,7 +77,24 @@ int main(int argc, char **argv) {
       n.subscribe("localization/update", 1, &navigation::Navigation::updateRobotLocation, &navigation);
   ros::Subscriber navigation_sub =
       n.subscribe("navigation/GoTo", 1000, &navigation::Navigation::moveRobotTo, &navigation);
-  ros::spin();
+  while (true) {
+    // TEST CASE 04
+    {
+      std::string res;
+      if (n.getParam("/nav/testNavigationInReality", res)) {
+        if (res == "yes") {
+          boost::shared_ptr<rss_msgs::RobotLocation> loc(
+              new rss_msgs::RobotLocation());
+          loc->x = CGAL::to_double(2.1336);
+          loc->y = CGAL::to_double(3.8481);
+          loc->theta = cspace::ObstacleMap::RadToRotation(0.0);
+          navigation.moveRobotTo(loc);
+        }
+      }
+    }
+
+    ros::spinOnce();
+  }
 
   return 0;
 }
