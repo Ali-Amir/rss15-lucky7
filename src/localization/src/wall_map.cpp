@@ -216,7 +216,8 @@ double WallMap::DistanceToWall(const Ray_2 &ray) {
   double vx = CGAL::to_double(ray.direction().dx());
   double vy = CGAL::to_double(ray.direction().dy());
   double lv = sqrt(vx*vx+vy*vy);
-  vx /= lv; vy /= lv;
+  vx /= lv;
+  vy /= lv;
 
   int interCount = 0;
 
