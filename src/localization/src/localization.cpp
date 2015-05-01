@@ -1,5 +1,6 @@
 #include "localization.h"
 
+#include "gui_msgs/ColorMsg.h"
 #include "gui_msgs/GUIPointMsg.h"
 #include "gui_msgs/GUIPolyMsg.h"
 #include "rss_msgs/MotionMsg.h"
@@ -42,6 +43,7 @@ Localization::Localization() {
   // Initialize message publishers.
   _location_pub = n.advertise<RobotLocation>("localization/update", 1000);
   _guipoly_pub = n.advertise<GUIPolyMsg>("gui/Poly", 1000);
+  _guipoint_pub = n.advertise<GUIPointMsg>("gui/Point", 1000);
 
   // Load map file location and initialize the map-handler class instance.
   string mapfile_location;
@@ -58,6 +60,15 @@ Localization::Localization() {
     if (n.getParam("/loc/testTriangulation", res)) {
       if (res == "yes") {
         TestTriangulation();
+      }
+    }
+  }
+  // Test CASE 02
+  {
+    string res;
+    if (n.getParam("/loc/leaveBreadCrumbs", res)) {
+      if (res == "yes") {
+        _leaveBreadCrumbs = true;
       }
     }
   }
@@ -114,7 +125,20 @@ RobotLocation Localization::currentPositionBelief() const {
 
 void Localization::PublishLocation() {
   ROS_INFO("Publishing updated location!");
-  _location_pub.publish(currentPositionBelief());
+  RobotLocation currentBelief = currentPositionBelief();
+  _location_pub.publish(currentBelief);
+
+  if (_leaveBreadCrumbs) {
+    GUIPointMsg crumb;
+    ColorMsg color;
+    color.r = 0;
+    color.g = 255;
+    color.b = 0;
+    crumb.color = color;
+    crumb.x = currentBelief.x;
+    crumb.y = currentBelief.y;
+    _guipoint_pub.publish(crumb);
+  }
 }
 
 void Localization::TestTriangulation() {

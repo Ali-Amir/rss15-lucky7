@@ -34,7 +34,7 @@
       <param name="calculateFromScratch" value="no" />
       <param name="precalcPath" value="$(env CHALLENGE)/maps/global-nav-maze-2011-hard.dec" />
       <param name="mapFileName" value="$(env CHALLENGE)/maps/global-nav-maze-2011-hard.map" />
-      <param name="testWheelVelocities" value="yes" />
+      <param name="testWheelVelocities" value="no" />
       <param name="testTrickyNavigation" value="no" />
   </node>
 

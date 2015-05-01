@@ -41,8 +41,9 @@
       <param name="calculateFromScratch" value="no" />
       <param name="precalcPath" value="$(env CHALLENGE)/maps/global-nav-maze-2011-hard.dec" />
       <param name="mapFileName" value="$(env CHALLENGE)/maps/global-nav-maze-2011-hard.map" />
-      <param name="testLocalization" value="yes" />
+      <param name="testLocalization" value="no" />
       <param name="testWheelVelocities" value="no" />
+      <param name="testNavigationInReality" value="yes" />
   </node>
 
   <node name="loc" pkg="localization"
@@ -52,6 +53,7 @@
                    output="screen">
       <param name="mapFileName" value="$(env CHALLENGE)/maps/global-nav-maze-2011-hard.map" />
       <param name="testTriangulation" value="no" />
+      <param name="leaveBreadCrubms" value="yes" />
   </node>
 
 </launch>

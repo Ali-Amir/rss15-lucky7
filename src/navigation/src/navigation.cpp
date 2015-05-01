@@ -57,6 +57,9 @@ Navigation::Navigation() {
   _world.reset(new Grid(_obs_map)); // RandomNet?
   ROS_INFO("Initialized world grid.");
 
+  // TODO: remove later, after visualization is not needed
+  PublishGUICSObstacles();
+
   // TEST CASE 01
   {
     string res;
@@ -91,8 +94,21 @@ Navigation::Navigation() {
       }
     }
   }
-  // TODO: remove later, after visualization is not needed
-  PublishGUICSObstacles();
+  // TEST CASE 04
+  {
+    string res;
+    if (n.getParam("/nav/testNavigationInReality", res)) {
+      if (res == "yes") {
+        boost::shared_ptr<RobotLocation> loc(new RobotLocation());
+        loc->x = CGAL::to_double(_obs_map->_robot_goal.x());
+        loc->y = CGAL::to_double(_obs_map->_robot_goal.y());
+        loc->theta = ObstacleMap::RadToRotation(0.0);
+        while (true) {
+          moveRobotTo(loc);
+        }
+      }
+    }
+  }
 }
 
 void Navigation::TestWheelVelocities() {
@@ -112,7 +128,8 @@ void Navigation::TestWheelVelocities() {
 }
 
 void Navigation::updateRobotLocation(const RobotLocation::ConstPtr &loc) {
-  ROS_INFO("GOT POSITION UPDATE! TIME: %.3lf\n", CurTime()-_time);
+  ROS_INFO_STREAM("GOT POSITION UPDATE! TIME: " << CurTime()-_time << ". "
+    << "Current location: (" << loc->x << " " << loc->y << " : " << loc->theta << ")");
 
   _cur_loc = *loc;
 

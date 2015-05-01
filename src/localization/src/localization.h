@@ -56,6 +56,7 @@ class Localization {
   void TestTriangulation();
 
  private:
+  ros::Publisher _guipoint_pub;
   ros::Publisher _guipoly_pub;
   ros::Publisher _location_pub;
   std::shared_ptr<WallMap> _wall_map;
@@ -65,6 +66,7 @@ class Localization {
   double _prev_odo_t;
   double _prev_odo_time;
   double _time;
+  bool _leaveBreadCrumbs{false};
  
 };
 
