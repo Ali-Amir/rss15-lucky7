@@ -120,7 +120,7 @@ void Localization::PublishLocation() {
 void Localization::TestTriangulation() {
   // TEST
   ROS_INFO("Distance to wall from 0.0 0.0 in direction 1.0 0.0: %.3lf",
-           _wall_map->DistanceToWall(K::Ray_2(Point_2(0.0,0.0), K::Direction_2(1.0,1.00001))));
+           _wall_map->DistanceToWall(K::Ray_2(Point_2(0.0,0.0), K::Direction_2(1.0,1.00000))));
   // Initialize distribution:
   ros::Duration(5.0).sleep(); // Sleep for 5 sec to allow gui node to initialize.
   for (const K::Triangle_2 &tri : _wall_map->_triangles) {
