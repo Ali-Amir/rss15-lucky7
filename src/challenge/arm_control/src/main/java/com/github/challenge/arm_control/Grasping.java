@@ -228,7 +228,7 @@ public class Grasping extends AbstractNodeMain {
 	 */
 	public Grasping() {
 
-		SERVO_MODE = OFF;//PART_2A;
+		SERVO_MODE = INITIALIZED;//PART_2A;
 		//System.out.println("FIRST MODE"); 
 		fsmState = RoboFSM.INITIALIZE_ARM;
 		System.out.println("Grasping class initialized");
@@ -313,7 +313,7 @@ public class Grasping extends AbstractNodeMain {
 		SERVO_MODE = msg.getServomode();
 
 		if (SERVO_MODE == COLLECTING){
-			fsmState = RoboFSM.VISUAL_SERVO_SEARCH;
+			fsmState = RoboFSM.INITIALIZE_ARM;
 		}
 	}
 
@@ -322,7 +322,10 @@ public class Grasping extends AbstractNodeMain {
 	 */
   	int counter = 0;
 	public void handle(ArmMsg msg) {
-		
+		if (SERVO_MODE==INITIALIZED){
+			setGrasping(INITIALIZED, false);
+		}
+
 		wristControl.update(msg.getPwms()[WRIST_INDEX]);
 		shoulderControl.update(msg.getPwms()[SHOULDER_INDEX]);
 
