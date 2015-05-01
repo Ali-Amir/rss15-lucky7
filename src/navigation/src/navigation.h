@@ -14,6 +14,7 @@ namespace navigation {
 
 class Navigation {
  public:
+  static constexpr double VELOCITY = 0.3;
   static const int GRANULARITY = 600;
 
   Navigation();

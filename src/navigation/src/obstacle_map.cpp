@@ -245,7 +245,7 @@ double ObstacleMap::RadToRotation(double rad) {
   if (rad < 0) {
     rad += 2*M_PI;
   }
-  return rad/2/M_PI*360.0;
+  return rad/M_PI*180.0;
 }
 
 double ObstacleMap::RotationToRad(double rotation) {

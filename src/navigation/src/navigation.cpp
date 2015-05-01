@@ -41,15 +41,6 @@ Navigation::Navigation() {
   _world.reset(new Grid(_obs_map)); // RandomNet?
   ROS_INFO("Initialized world grid.");
 
-  // TODO: Add localization subscriber.
-  // TODO: remove
-  boost::shared_ptr<RobotLocation> loc(new RobotLocation());
-  loc->x = CGAL::to_double(_obs_map->_robot_goal.x());
-  loc->y = CGAL::to_double(_obs_map->_robot_goal.y());
-  loc->theta = 0.0;
-  moveRobotTo(loc);
-
-  // TODO: remove the test call
   // TEST CASE 01
   {
     string res;
@@ -65,6 +56,22 @@ Navigation::Navigation() {
     if (n.getParam("/nav/testLocalization", res)) {
       if (res == "yes") {
         _testLocalization = true;
+      }
+    }
+  }
+  // TEST CASE 03
+  {
+    string res;
+    if (n.getParam("/nav/testTrickyNavigation", res)) {
+      if (res == "yes") {
+        boost::shared_ptr<RobotLocation> loc(new RobotLocation());
+        loc->x = CGAL::to_double(_obs_map->_robot_goal.x());
+        loc->y = CGAL::to_double(_obs_map->_robot_goal.y());
+        loc->theta = ObstacleMap::RadToRotation(-M_PI);
+        loc->x -= 0.10;
+        _cur_loc = *loc;
+        _cur_loc.theta = ObstacleMap::RadToRotation(0.0);
+        moveRobotTo(loc);
       }
     }
   }
@@ -102,7 +109,7 @@ void Navigation::updateRobotLocation(const RobotLocation::ConstPtr &loc) {
 }
 
 void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
-  const auto &polys = _obs_map->_lvl_obstacles[0];
+  const auto &polys = _obs_map->_lvl_obstacles[ObstacleMap::ANGLE_DIVISIONS/4];
   for (const shared_ptr<Polygon_2> &poly : polys) {
     GUIPolyMsg new_poly;
     new_poly.numVertices = poly->size();
@@ -119,7 +126,11 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
   double cur_time = ros::Time::now().toSec();
   ROS_INFO("Got a moveRobotTo command at navigation module.");
 
-  _world->ComputePathsToGoal(Point_2(target->x, target->y));
+  if (target->theta > -10.0) {
+    _world->ComputePathsToGoal(Point_3(target->x, target->y, target->theta));
+  } else {
+    _world->ComputePathsToGoal(Point_2(target->x, target->y));
+  }
   ROS_INFO("Computed all paths. Now getting the specific one.");
   Grid::CellId cur_cell_id;
   assert(_world->GetCellId(
@@ -141,6 +152,7 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
   }
   path.push_back(Point_3(cur_cell->xc, cur_cell->yc,
                          ObstacleMap::IdToRotation(cur_cell->rotId)));
+  ROS_INFO("Before smoothing path is of size: %d", int(path.size()));
   vector<Point_3> smooth_path;
   SmoothePath(path, &smooth_path);
   // TODO: Smoothen the path, etc.
@@ -149,6 +161,7 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
   GUIPolyMsg path_poly;
   path_poly.numVertices = smooth_path.size();
   for (const Point_3 &p : smooth_path) {
+    ROS_INFO("Point: %.3lf %.3lf angle: %.3lf", CGAL::to_double(p.x()), CGAL::to_double(p.y()), CGAL::to_double(p.z()));
     path_poly.x.push_back(CGAL::to_double(p.x()));
     path_poly.y.push_back(CGAL::to_double(p.y()));
   }
@@ -160,25 +173,44 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
 
 void Navigation::SmoothePath(const vector<Point_3> &path,
                              vector<Point_3> *spath) {
+  double trans_velocity;
+  double rot_velocity;
   spath->clear();
+  Point_3 pivot_p = path[0];
   for (int st = 0, next_start; st < (int)path.size()-1; st = next_start) {
     int j = path.size()-1;//min(st+50, (int)path.size() - 1);
     vector<Point_3> smooth;
-    for (; j > st+1; --j) {
-      ROS_INFO_THROTTLE(5, "Here for st=%d j=%d", st, j);
-      double stax = CGAL::to_double(path[st].x());
-      double stay = CGAL::to_double(path[st].y());
+    for (;; --j) {
+      double stax = CGAL::to_double(pivot_p.x());
+      double stay = CGAL::to_double(pivot_p.y());
       double tarx = CGAL::to_double(path[j].x());
       double tary = CGAL::to_double(path[j].y());
       double d = sqrt((stax-tarx)*(stax-tarx)+(stay-tary)*(stay-tary));
 
-      if (d < 1e-8) {
+      if (d < 2e-2 && j <= st + 2) {
+        // TODO: set rotational velocity and return
+        double starot = CGAL::to_double(pivot_p.z());
+        double tarrot = CGAL::to_double(path[j].z());
+        for (int step = 0; step < GRANULARITY; ++step) {
+          Point_3 cur_point(stax, stay, starot+step*(tarrot-starot)/GRANULARITY);
+          Grid::CellId cur_cell;
+          if (!_world->GetCellId(cur_point, &cur_cell)) {
+            ROS_ASSERT(0);
+          }
+          if (_world->GetCell(cur_cell) == nullptr) {
+            ROS_ASSERT(0);
+          }
+          //auto cell = _world->GetCell(cur_cell);
+          //ROS_INFO("CELL: %.3lf %.3lf %.3lf is reachable", cell->xc, cell->yc, ObstacleMap::IdToRad(cell->rotId));
+          smooth.push_back(cur_point);
+        }
+        pivot_p = smooth.back();
         break;
       }
 
       double heading_rad = atan2(tary-stay, tarx-stax);
 
-      double sta_rad = NormalizeRad(ObstacleMap::RotationToRad(CGAL::to_double(path[st].z())));
+      double sta_rad = NormalizeRad(ObstacleMap::RotationToRad(CGAL::to_double(pivot_p.z())));
       double tar_rad = NormalizeRad(heading_rad-(sta_rad-heading_rad));
       if (sta_rad < tar_rad && tar_rad-sta_rad > M_PI) {
         sta_rad += 2.0*M_PI;
@@ -220,12 +252,45 @@ void Navigation::SmoothePath(const vector<Point_3> &path,
           ok = false;
           break;
         }
+        //auto cell = _world->GetCell(cur_cell);
+        //ROS_INFO("CELL: %.3lf %.3lf %.3lf is reachable", cell->xc, cell->yc, ObstacleMap::IdToRad(cell->rotId));
         curx = curx + dir*mul*cos(cur_rad)/GRANULARITY;
         cury = cury + dir*mul*sin(cur_rad)/GRANULARITY;
         cur_rad = cur_rad + (tar_rad-sta_rad)/GRANULARITY;
         smooth.push_back(cur_point);
       }
+
       if (ok) {
+        double rad1 = ObstacleMap::RotationToRad(CGAL::to_double(smooth.back().z()));
+        double rad2 = NormalizeRad(ObstacleMap::RotationToRad(CGAL::to_double(path[j].z())));
+        /*
+        for (int i = 0; i < GRANULARITY; ++i) {
+          ROS_INFO("rad[%d]=%.3lf", i, ObstacleMap::RotationToRad(CGAL::to_double(smooth[i].z())));
+        }
+        ROS_INFO("ABOUT TO TEST THE LAST PART: %.3lf %.3lf", rad1, rad2);
+        */
+        for (int step = 0; step < GRANULARITY; ++step) {
+          Point_3 cur_point(tarx, tary, ObstacleMap::RadToRotation(rad1 + step*(rad2-rad1)/GRANULARITY));
+          Grid::CellId cur_cell;
+          if (!_world->GetCellId(cur_point, &cur_cell)) {
+            ok = false;
+            break;
+          }
+          if (_world->GetCell(cur_cell) == nullptr) {
+            ok = false;
+            break;
+          }
+          /*
+          auto cell = _world->GetCell(cur_cell);
+          ROS_INFO("CELL: %.3lf %.3lf %.3lf is reachable", cell->xc, cell->yc, ObstacleMap::IdToRad(cell->rotId));
+          ROS_INFO("START THETA: %.3lf", sta_rad);
+          */
+        }
+      }
+      if (ok) {
+        // TODO: set trans_vel and rotational vel
+        trans_velocity = VELOCITY*dir;
+        pivot_p = smooth.back();
         break;
       }
       smooth.clear();
@@ -236,6 +301,7 @@ void Navigation::SmoothePath(const vector<Point_3> &path,
       }
     }
     spath->insert(spath->end(), smooth.begin(), smooth.end());
+    ROS_INFO("Added st=%d j=%d", st, j);
     next_start = j;
   }
   spath->push_back(path.back());
