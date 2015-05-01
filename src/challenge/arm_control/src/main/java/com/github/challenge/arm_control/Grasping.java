@@ -228,7 +228,7 @@ public class Grasping extends AbstractNodeMain {
 	 */
 	public Grasping() {
 
-		SERVO_MODE = COLLECTING;//PART_2A;
+		SERVO_MODE = OFF;//PART_2A;
 		//System.out.println("FIRST MODE"); 
 		fsmState = RoboFSM.INITIALIZE_ARM;
 		System.out.println("Grasping class initialized");
@@ -346,7 +346,7 @@ public class Grasping extends AbstractNodeMain {
 						System.out.println("========================================================");
 						System.out.println("Arm is now initialized (in retracted state)");
 						// part 3b
-						fsmState = RoboFSM.VISUAL_SERVO_SEARCH;
+						//fsmState = RoboFSM.VISUAL_SERVO_SEARCH;
 						//fsmState = RoboFSM.SET_ARM_FOR_GRASP;
 						// Part 4:
 					}
