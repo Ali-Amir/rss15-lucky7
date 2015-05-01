@@ -297,7 +297,7 @@ public class Grasping extends AbstractNodeMain {
 			}
 		});
 
-		setGrasping(INITIALIZED, false);
+		//setGrasping(INITIALIZED, false);
 	}
 
 	@Override public GraphName getDefaultNodeName() {
@@ -371,7 +371,7 @@ public class Grasping extends AbstractNodeMain {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() && blockCollected) {
 						System.out.println("BLOCK IS COLLECTED");
 						fsmState = RoboFSM.OFF;
-						setGrasping(OFF, true);
+						//setGrasping(OFF, true);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
@@ -382,7 +382,7 @@ public class Grasping extends AbstractNodeMain {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("BLOCK IS RELEASED");
 						fsmState = RoboFSM.OFF;
-						setGrasping(OFF, false);
+						//setGrasping(OFF, false);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
