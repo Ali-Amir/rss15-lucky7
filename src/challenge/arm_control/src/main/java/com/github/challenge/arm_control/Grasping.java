@@ -298,6 +298,7 @@ public class Grasping extends AbstractNodeMain {
 		});
 
 		setGrasping(INITIALIZED, false);
+		System.out.println("//// SET GRASPING ////");
 	}
 
 	@Override public GraphName getDefaultNodeName() {
@@ -321,6 +322,7 @@ public class Grasping extends AbstractNodeMain {
 	 */
   	int counter = 0;
 	public void handle(ArmMsg msg) {
+		
 		wristControl.update(msg.getPwms()[WRIST_INDEX]);
 		shoulderControl.update(msg.getPwms()[SHOULDER_INDEX]);
 
