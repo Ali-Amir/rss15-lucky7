@@ -14,7 +14,9 @@ namespace navigation {
 
 class Navigation {
  public:
-  static constexpr double VELOCITY = 0.3;
+  static constexpr double MIN_BLIND_TIME = 5.0;
+  static constexpr double MAX_TRANS_VELOCITY = 0.3;
+  static constexpr double MAX_ROT_VELOCITY = 0.19634954084; // pi/4 / sec
   static const int GRANULARITY = 600;
 
   Navigation();
@@ -32,8 +34,10 @@ class Navigation {
  private:
   void TestWheelVelocities();
   void TestLocalization();
-  void SmoothePath(const std::vector<cgal_kernel::Point_3> &path,
-                   std::vector<cgal_kernel::Point_3> *spath);
+  void GetSmoothPathVelocities(const std::vector<cgal_kernel::Point_3> &path);
+  void CapVelocities();
+  void PublishGUICSObstacles();
+  bool UsePreviousCommand();
 
 
  private:
@@ -47,7 +51,10 @@ class Navigation {
 
   double _time;
   double _tmp_time;
+  double _time_until{-1.0};
   bool _testLocalization{false};
+  double _trans_velocity;
+  double _rot_velocity;
  
 };
 

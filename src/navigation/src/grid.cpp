@@ -137,23 +137,23 @@ Grid::Grid(const shared_ptr<ObstacleMap> &obs_map) :
   }
 }
 
-double Grid::ComputePathsToGoal(const Point_2 &goal) {
+double Grid::ComputePathsToGoal(const Point_2 &goal, int *status) {
   vector<Point_3> goal_points;
   for (int rotId = 0; rotId < ANGLE_DIVISIONS; ++rotId) {
     goal_points.push_back(Point_3(goal.x(), goal.y(),
                                   ObstacleMap::IdToRotation(rotId)));
   }
   ROS_INFO("Calling compute paths to goal given a vector of points.");
-  return ComputePathsToGoal(goal_points);
+  return ComputePathsToGoal(goal_points, status);
 }
 
-double Grid::ComputePathsToGoal(const Point_3 &goal) {
+double Grid::ComputePathsToGoal(const Point_3 &goal, int *status) {
   vector<Point_3> goal_points;
   goal_points.push_back(goal);
-  return ComputePathsToGoal(goal_points);
+  return ComputePathsToGoal(goal_points, status);
 }
 
-double Grid::ComputePathsToGoal(const vector<Point_3> &points) {
+double Grid::ComputePathsToGoal(const vector<Point_3> &points, int *status) {
   vector<CellId> start_ids;
   ROS_INFO("Getting the list of cell ids.");
   for (const Point_3& goal : points) {
@@ -168,9 +168,11 @@ double Grid::ComputePathsToGoal(const vector<Point_3> &points) {
   sort(start_ids.begin(), start_ids.end());
   ROS_INFO("Got the list of cell ids.");
   if (start_ids == _previous_start_ids) {
+    *status = 1;
     return -1.0;
   }
   ROS_INFO("Calling bfs.");
+  *status = 0;
   _previous_start_ids = start_ids;
   return RunBfs(start_ids);
 }

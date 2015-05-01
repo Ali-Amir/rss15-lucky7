@@ -18,10 +18,26 @@ typedef CGAL::Polygon_2<K> Polygon_2;
 
 namespace navigation {
 
+double CurTime() {
+  return ros::Time::now().toSec();
+}
+
+double sgn(double x) {
+  return x > 0 ? 1.0 : x < 0.0 ? -1.0 : 0.0;
+}
+
+double NormalizeRad(double rad) {
+  rad = fmod(rad, 2*M_PI);
+  if (rad < 0) {
+    rad += 2*M_PI;
+  }
+  return rad;
+}
+
 Navigation::Navigation() {
   ROS_INFO("Initializing navigation module");
 
-  _time = ros::Time::now().toSec();
+  _time = CurTime();
 
   ros::NodeHandle n;
   // Initialize message publishers.
@@ -75,15 +91,17 @@ Navigation::Navigation() {
       }
     }
   }
+  // TODO: remove later, after visualization is not needed
+  PublishGUICSObstacles();
 }
 
 void Navigation::TestWheelVelocities() {
-  double start_time = ros::Time::now().toSec();
+  double start_time = CurTime();
   double cur_time;
-  while ((cur_time = ros::Time::now().toSec()) - start_time < 10.0) {
+  while ((cur_time = CurTime()) - start_time < 10.0) {
     MotionMsg comm;
-    comm.translationalVelocity = 0.2;
-    comm.rotationalVelocity = 0.0;
+    comm.translationalVelocity = 0.0;
+    comm.rotationalVelocity = M_PI/10.0;
     _motor_pub.publish(comm);
   }
   ROS_INFO("Time taken: %.3lf\n", cur_time-start_time);
@@ -94,9 +112,10 @@ void Navigation::TestWheelVelocities() {
 }
 
 void Navigation::updateRobotLocation(const RobotLocation::ConstPtr &loc) {
-  double cur_time = ros::Time::now().toSec();
-  ROS_INFO("GOT POSITION UPDATE! TIME: %.3lf\n", cur_time-_time);
+  ROS_INFO("GOT POSITION UPDATE! TIME: %.3lf\n", CurTime()-_time);
+
   _cur_loc = *loc;
+
   if (_testLocalization) {
     MotionMsg comm;
     comm.translationalVelocity = 0.05;
@@ -104,11 +123,11 @@ void Navigation::updateRobotLocation(const RobotLocation::ConstPtr &loc) {
     _motor_pub.publish(comm);
 
     ROS_INFO("Current time: %.3lf  expected position: (%.3lf,0.0,0.0) estimated position: (%.3lf,%.3lf,%.3lf)\n",
-        cur_time-_time, 0.05*(cur_time-_time), _cur_loc.x, _cur_loc.y, _cur_loc.theta);
+        CurTime()-_time, 0.05*(CurTime()-_time), _cur_loc.x, _cur_loc.y, _cur_loc.theta);
   }
 }
 
-void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
+void Navigation::PublishGUICSObstacles() {
   const auto &polys = _obs_map->_lvl_obstacles[ObstacleMap::ANGLE_DIVISIONS/4];
   for (const shared_ptr<Polygon_2> &poly : polys) {
     GUIPolyMsg new_poly;
@@ -123,126 +142,187 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
     new_poly.closed = 1;
     _guipoly_pub.publish(new_poly);
   }
+}
+
+bool Navigation::UsePreviousCommand() {
+  return CurTime() >= _time_until;
+}
+
+void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
   double cur_time = ros::Time::now().toSec();
   ROS_INFO("Got a moveRobotTo command at navigation module.");
 
+  int search_status;
   if (target->theta > -10.0) {
-    _world->ComputePathsToGoal(Point_3(target->x, target->y, target->theta));
+    _world->ComputePathsToGoal(Point_3(target->x, target->y, target->theta), &search_status);
   } else {
-    _world->ComputePathsToGoal(Point_2(target->x, target->y));
+    _world->ComputePathsToGoal(Point_2(target->x, target->y), &search_status);
   }
-  ROS_INFO("Computed all paths. Now getting the specific one.");
-  Grid::CellId cur_cell_id;
-  assert(_world->GetCellId(
-        Point_3(_cur_loc.x, _cur_loc.y,
-                ObstacleMap::RadToRotation(_cur_loc.theta)),
-        &cur_cell_id));
-  const Grid::Cell *cur_cell(_world->GetCell(cur_cell_id));
+
+  ROS_INFO("Computed all paths. Now calculating command velocities.");
   ROS_INFO("Search took: %.3lf sec.", ros::Time::now().toSec()-cur_time);
-  ROS_ASSERT(cur_cell->HasPathToGoal());
 
-  ROS_INFO("Current location: %.3lf %.3lf target: %.3lf %.3lf. Path length: %.3lf", _cur_loc.x, _cur_loc.y, target->x, target->y, cur_cell->min_dist_to_goal);
+  // search_status 0 means a new goal 
+  if (search_status == 0 || !UsePreviousCommand()) {
+    // Check if path exists.
+    Grid::CellId cur_cell_id;
+    assert(_world->GetCellId(
+          Point_3(_cur_loc.x, _cur_loc.y,
+                  ObstacleMap::RadToRotation(_cur_loc.theta)),
+          &cur_cell_id));
+    const Grid::Cell *cur_cell(_world->GetCell(cur_cell_id));
 
-  vector<Point_3> path;
-  path.push_back(Point_3(_cur_loc.x, _cur_loc.y, ObstacleMap::RadToRotation(_cur_loc.theta)));
-  for (; cur_cell->to_goal_next != nullptr; cur_cell = cur_cell->to_goal_next) {
-    //ROS_INFO("Point: %.3lf %.3lf angle: %.3lf", cur_cell->xc, cur_cell->yc, ObstacleMap::IdToRotation(cur_cell->rotId));
+    ROS_ASSERT(cur_cell->HasPathToGoal());
+
+    ROS_INFO("Current location: %.3lf %.3lf target: %.3lf %.3lf. Path length: %.3lf",
+        _cur_loc.x, _cur_loc.y, target->x, target->y, cur_cell->min_dist_to_goal);
+
+    // Get the path.
+    vector<Point_3> path;
+    path.push_back(Point_3(_cur_loc.x, _cur_loc.y, ObstacleMap::RadToRotation(_cur_loc.theta)));
+    for (; cur_cell->to_goal_next != nullptr; cur_cell = cur_cell->to_goal_next) {
+      //ROS_INFO("Point: %.3lf %.3lf angle: %.3lf", cur_cell->xc, cur_cell->yc, ObstacleMap::IdToRotation(cur_cell->rotId));
+      path.push_back(Point_3(cur_cell->xc, cur_cell->yc,
+                             ObstacleMap::IdToRotation(cur_cell->rotId)));
+    }
     path.push_back(Point_3(cur_cell->xc, cur_cell->yc,
                            ObstacleMap::IdToRotation(cur_cell->rotId)));
-  }
-  path.push_back(Point_3(cur_cell->xc, cur_cell->yc,
-                         ObstacleMap::IdToRotation(cur_cell->rotId)));
-  ROS_INFO("Before smoothing path is of size: %d", int(path.size()));
-  vector<Point_3> smooth_path;
-  SmoothePath(path, &smooth_path);
-  // TODO: Smoothen the path, etc.
-  ROS_INFO("Publishing the path of size: %d", int(smooth_path.size()));
 
-  GUIPolyMsg path_poly;
-  path_poly.numVertices = smooth_path.size();
-  for (const Point_3 &p : smooth_path) {
-    ROS_INFO("Point: %.3lf %.3lf angle: %.3lf", CGAL::to_double(p.x()), CGAL::to_double(p.y()), CGAL::to_double(p.z()));
-    path_poly.x.push_back(CGAL::to_double(p.x()));
-    path_poly.y.push_back(CGAL::to_double(p.y()));
+    // Calculate translational/rotational velocities
+    GetSmoothPathVelocities(path);
+    CapVelocities();
+    //ROS_INFO("Publishing the path of size: %d", int(smooth_path.size()));
+
+    /*
+    GUIPolyMsg path_poly;
+    path_poly.numVertices = smooth_path.size();
+    for (const Point_3 &p : smooth_path) {
+      ROS_INFO("Point: %.3lf %.3lf angle: %.3lf", CGAL::to_double(p.x()), CGAL::to_double(p.y()), CGAL::to_double(p.z()));
+      path_poly.x.push_back(CGAL::to_double(p.x()));
+      path_poly.y.push_back(CGAL::to_double(p.y()));
+    }
+    path_poly.c.r = 255;
+    path_poly.c.g = 0;
+    path_poly.c.b = 0;
+    _guipoly_pub.publish(path_poly);
+    */
+
+    MotionMsg mot_msg;
+    mot_msg.translationalVelocity = _trans_velocity;
+    mot_msg.rotationalVelocity = _rot_velocity;
+    _motor_pub.publish(mot_msg);
   }
-  path_poly.c.r = 255;
-  path_poly.c.g = 0;
-  path_poly.c.b = 0;
-  _guipoly_pub.publish(path_poly);
+
 }
 
-void Navigation::SmoothePath(const vector<Point_3> &path,
-                             vector<Point_3> *spath) {
-  double trans_velocity;
-  double rot_velocity;
-  spath->clear();
-  Point_3 pivot_p = path[0];
-  for (int st = 0, next_start; st < (int)path.size()-1; st = next_start) {
-    int j = path.size()-1;//min(st+50, (int)path.size() - 1);
-    vector<Point_3> smooth;
-    for (;; --j) {
-      double stax = CGAL::to_double(pivot_p.x());
-      double stay = CGAL::to_double(pivot_p.y());
-      double tarx = CGAL::to_double(path[j].x());
-      double tary = CGAL::to_double(path[j].y());
-      double d = sqrt((stax-tarx)*(stax-tarx)+(stay-tary)*(stay-tary));
+void Navigation::CapVelocities() {
+  double norm = 1.0;
+  norm = max(norm, fabs(_trans_velocity)/MAX_TRANS_VELOCITY);
+  norm = max(norm, fabs(_rot_velocity)/MAX_ROT_VELOCITY);
+  _trans_velocity /= norm;
+  _rot_velocity /= norm;
+}
 
-      if (d < 2e-2 && j <= st + 2) {
-        // TODO: set rotational velocity and return
-        double starot = CGAL::to_double(pivot_p.z());
-        double tarrot = CGAL::to_double(path[j].z());
-        for (int step = 0; step < GRANULARITY; ++step) {
-          Point_3 cur_point(stax, stay, starot+step*(tarrot-starot)/GRANULARITY);
-          Grid::CellId cur_cell;
-          if (!_world->GetCellId(cur_point, &cur_cell)) {
-            ROS_ASSERT(0);
-          }
-          if (_world->GetCell(cur_cell) == nullptr) {
-            ROS_ASSERT(0);
-          }
-          //auto cell = _world->GetCell(cur_cell);
-          //ROS_INFO("CELL: %.3lf %.3lf %.3lf is reachable", cell->xc, cell->yc, ObstacleMap::IdToRad(cell->rotId));
-          smooth.push_back(cur_point);
+void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
+  int j = path.size()-1;
+  vector<Point_3> smooth;
+  for (;; --j) {
+    double stax = CGAL::to_double(path[0].x());
+    double stay = CGAL::to_double(path[0].y());
+    double tarx = CGAL::to_double(path[j].x());
+    double tary = CGAL::to_double(path[j].y());
+    double d = sqrt((stax-tarx)*(stax-tarx)+(stay-tary)*(stay-tary));
+
+    // Handle case when we need to rotate whithout translation.
+    if (d < 2e-2 && j <= 2) {
+      double starot = CGAL::to_double(path[0].z());
+      double tarrot = CGAL::to_double(path[j].z());
+      for (int step = 0; step < GRANULARITY; ++step) {
+        Point_3 cur_point(stax, stay, starot+step*(tarrot-starot)/GRANULARITY);
+        Grid::CellId cur_cell;
+        if (!_world->GetCellId(cur_point, &cur_cell)) {
+          ROS_ASSERT(0);
         }
-        pivot_p = smooth.back();
+        if (_world->GetCell(cur_cell) == nullptr) {
+          ROS_ASSERT(0);
+        }
+      }
+
+      // required dtheta in range (-pi,pi).
+      double dtheta = NormalizeRad(ObstacleMap::RotationToRad(tarrot) -
+                                   ObstacleMap::RotationToRad(starot));
+      if (dtheta > M_PI) dtheta -= 2.0*M_PI;
+
+      _trans_velocity = 0.0;
+      _rot_velocity = sgn(dtheta)*MAX_ROT_VELOCITY;
+      _time_until = min(MIN_BLIND_TIME, CurTime() + fabs(dtheta/_rot_velocity));
+      return;
+    }
+
+    // Calculate start heading, as well as the target heading, such that the
+    // path is part of a circle.
+    double heading_rad = atan2(tary-stay, tarx-stax);
+    double sta_rad = NormalizeRad(ObstacleMap::RotationToRad(
+          CGAL::to_double(path[0].z())));
+    double tar_rad = NormalizeRad(heading_rad-(sta_rad-heading_rad));
+    if (sta_rad < tar_rad && tar_rad-sta_rad > M_PI) {
+      sta_rad += 2.0*M_PI;
+    }
+    if (sta_rad > tar_rad && sta_rad-tar_rad > M_PI) {
+      tar_rad += 2.0*M_PI;
+    }
+
+    // Decide on the direction, such that we do not turn more than 90 degrees in
+    // any direction.
+    double dir;
+    if (cos(heading_rad-sta_rad) < 0.0) {
+      dir = -1.0;
+    } else {
+      dir = 1.0;
+    }
+
+    // Check if the motion is along the straight line to avoid division by zero.
+    bool is_straight = fabs(sin(heading_rad-sta_rad)) < 1e-6;
+    double mul;
+    if (fabs(sin(heading_rad-sta_rad)) < 1e-6) {
+      mul = d;
+    } else {
+      double radius = d / 2.0 / abs(sin(heading_rad-sta_rad));
+      mul = fabs(sta_rad-tar_rad)*radius;
+    }
+    double radius = is_straight ? 1e18 : (d / 2.0 / abs(sin(heading_rad-sta_rad)));
+
+    // Split the path curve into GRANULARITY points and check each one of them
+    // for passability.
+    double curx = stax;
+    double cury = stay;
+    double cur_rad = sta_rad;
+    bool ok = 1;
+    for (int step = 0; step < GRANULARITY; ++step) {
+      Point_3 cur_point(curx, cury, ObstacleMap::RadToRotation(cur_rad));
+      Grid::CellId cur_cell;
+      if (!_world->GetCellId(cur_point, &cur_cell)) {
+        ok = false;
         break;
       }
-
-      double heading_rad = atan2(tary-stay, tarx-stax);
-
-      double sta_rad = NormalizeRad(ObstacleMap::RotationToRad(CGAL::to_double(pivot_p.z())));
-      double tar_rad = NormalizeRad(heading_rad-(sta_rad-heading_rad));
-      if (sta_rad < tar_rad && tar_rad-sta_rad > M_PI) {
-        sta_rad += 2.0*M_PI;
+      if (_world->GetCell(cur_cell) == nullptr) {
+        ok = false;
+        break;
       }
-      if (sta_rad > tar_rad && sta_rad-tar_rad > M_PI) {
-        tar_rad += 2.0*M_PI;
-      }
+      //auto cell = _world->GetCell(cur_cell);
+      //ROS_INFO("CELL: %.3lf %.3lf %.3lf is reachable", cell->xc, cell->yc, ObstacleMap::IdToRad(cell->rotId));
+      curx = curx + dir*mul*cos(cur_rad)/GRANULARITY;
+      cury = cury + dir*mul*sin(cur_rad)/GRANULARITY;
+      cur_rad = cur_rad + (tar_rad-sta_rad)/GRANULARITY;
+    }
 
-      double dir;
-      if (cos(heading_rad-sta_rad) < 0.0) {
-        dir = -1.0;
-      } else {
-        dir = 1.0;
-      }
-
-      bool is_straight = fabs(sin(heading_rad-sta_rad)) < 1e-6;
-      double mul;
-      if (fabs(sin(heading_rad-sta_rad)) < 1e-6) {
-        mul = d;
-      } else {
-        double radius = d / 2.0 / abs(sin(heading_rad-sta_rad));
-        mul = fabs(sta_rad-tar_rad)*radius;
-      }
-      double radius = is_straight ? 0.0 : (d / 2.0 / abs(sin(heading_rad-sta_rad)));
-
-      double curx = stax;
-      double cury = stay;
-      double cur_rad = sta_rad;
-
-      bool ok = 1;
+    // After we arrived at the required (x,y) coordinate, check if we can align as was required (we won't align
+    // ourselves, but for the sake of consistency with our path we need to do this check).
+    if (ok) {
+      double rad1 = cur_rad;
+      double rad2 = NormalizeRad(ObstacleMap::RotationToRad(CGAL::to_double(path[j].z())));
       for (int step = 0; step < GRANULARITY; ++step) {
-        Point_3 cur_point(curx, cury, ObstacleMap::RadToRotation(cur_rad));
+        Point_3 cur_point(tarx, tary, ObstacleMap::RadToRotation(rad1 + step*(rad2-rad1)/GRANULARITY));
         Grid::CellId cur_cell;
         if (!_world->GetCellId(cur_point, &cur_cell)) {
           ok = false;
@@ -252,67 +332,24 @@ void Navigation::SmoothePath(const vector<Point_3> &path,
           ok = false;
           break;
         }
-        //auto cell = _world->GetCell(cur_cell);
-        //ROS_INFO("CELL: %.3lf %.3lf %.3lf is reachable", cell->xc, cell->yc, ObstacleMap::IdToRad(cell->rotId));
-        curx = curx + dir*mul*cos(cur_rad)/GRANULARITY;
-        cury = cury + dir*mul*sin(cur_rad)/GRANULARITY;
-        cur_rad = cur_rad + (tar_rad-sta_rad)/GRANULARITY;
-        smooth.push_back(cur_point);
-      }
-
-      if (ok) {
-        double rad1 = ObstacleMap::RotationToRad(CGAL::to_double(smooth.back().z()));
-        double rad2 = NormalizeRad(ObstacleMap::RotationToRad(CGAL::to_double(path[j].z())));
-        /*
-        for (int i = 0; i < GRANULARITY; ++i) {
-          ROS_INFO("rad[%d]=%.3lf", i, ObstacleMap::RotationToRad(CGAL::to_double(smooth[i].z())));
-        }
-        ROS_INFO("ABOUT TO TEST THE LAST PART: %.3lf %.3lf", rad1, rad2);
-        */
-        for (int step = 0; step < GRANULARITY; ++step) {
-          Point_3 cur_point(tarx, tary, ObstacleMap::RadToRotation(rad1 + step*(rad2-rad1)/GRANULARITY));
-          Grid::CellId cur_cell;
-          if (!_world->GetCellId(cur_point, &cur_cell)) {
-            ok = false;
-            break;
-          }
-          if (_world->GetCell(cur_cell) == nullptr) {
-            ok = false;
-            break;
-          }
-          /*
-          auto cell = _world->GetCell(cur_cell);
-          ROS_INFO("CELL: %.3lf %.3lf %.3lf is reachable", cell->xc, cell->yc, ObstacleMap::IdToRad(cell->rotId));
-          ROS_INFO("START THETA: %.3lf", sta_rad);
-          */
-        }
-      }
-      if (ok) {
-        // TODO: set trans_vel and rotational vel
-        trans_velocity = VELOCITY*dir;
-        pivot_p = smooth.back();
-        break;
-      }
-      smooth.clear();
-    }
-    if (!smooth.size()) {
-      for (int k = st; k < j; ++k) {
-        smooth.push_back(path[k]);
       }
     }
-    spath->insert(spath->end(), smooth.begin(), smooth.end());
-    ROS_INFO("Added st=%d j=%d", st, j);
-    next_start = j;
-  }
-  spath->push_back(path.back());
-}
 
-double NormalizeRad(double rad) {
-  rad = fmod(rad, 2*M_PI);
-  if (rad < 0) {
-    rad += 2*M_PI;
+    // If a circular path is possible, just use its parameters for the command.
+    if (ok) {
+      double dtheta = NormalizeRad(tar_rad-sta_rad);
+      if (dtheta > M_PI) dtheta -= 2.0*M_PI;
+
+      _trans_velocity = dir*MAX_TRANS_VELOCITY;
+      _rot_velocity = sgn(dtheta)*_trans_velocity/radius;
+      if (is_straight) {
+        _time_until = d / fabs(_trans_velocity);
+      } else {
+        _time_until = CurTime() + fabs(dtheta*radius/_trans_velocity);
+      }
+      return;
+    }
   }
-  return rad;
 }
 
 } // namespace navigation

@@ -81,11 +81,11 @@ class Grid {
   };
 
   double ComputePathsToGoal(
-      const cgal_kernel::Point_2 &point);
+      const cgal_kernel::Point_2 &point, int *status);
   double ComputePathsToGoal(
-      const cgal_kernel::Point_3 &point);
+      const cgal_kernel::Point_3 &point, int *status);
   double ComputePathsToGoal(
-      const std::vector<cgal_kernel::Point_3> &point);
+      const std::vector<cgal_kernel::Point_3> &point, int *status);
 
   double RunBfs(std::vector<CellId> start_ids);
   void CollectNeighbors(const CellId &ver, std::vector<CellId> *neighbors);
