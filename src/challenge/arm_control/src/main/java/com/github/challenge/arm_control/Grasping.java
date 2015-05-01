@@ -228,7 +228,7 @@ public class Grasping extends AbstractNodeMain {
 	 */
 	public Grasping() {
 
-		SERVO_MODE = COLLECTING;//PART_2A;
+		SERVO_MODE = INITIALIZED;//PART_2A;
 		//System.out.println("FIRST MODE"); 
 		fsmState = RoboFSM.INITIALIZE_ARM;
 		System.out.println("Grasping class initialized");
@@ -244,7 +244,7 @@ public class Grasping extends AbstractNodeMain {
 		armPub = node.newPublisher("command/Arm", ArmMsg._TYPE);
 		motionPub = node.newPublisher("command/Motors", MotionMsg._TYPE);
 		vidPub = node.newPublisher("/rss/blobVideo", sensor_msgs.Image._TYPE);
-		//graspingPub = node.newPublisher("rss/GraspingStatus", GraspingMsg._TYPE);
+		graspingPub = node.newPublisher("rss/GraspingStatus", GraspingMsg._TYPE);
 
 		armSub = node.newSubscriber("rss/ArmStatus", ArmMsg._TYPE);
 		armSub.addMessageListener(new ArmListener(this));
@@ -252,8 +252,8 @@ public class Grasping extends AbstractNodeMain {
 		bumpSub.addMessageListener(new BumpListener(this));
 		odoSub = node.newSubscriber("rss/odometry", OdometryMsg._TYPE);
 		odoSub.addMessageListener(new OdometryListener(this));
-		//graspingSub = node.newSubscriber("command/Grasping", GraspingMsg._TYPE);
-		//graspingSub.addMessageListener(new GraspingListener(this));
+		graspingSub = node.newSubscriber("command/Grasping", GraspingMsg._TYPE);
+		graspingSub.addMessageListener(new GraspingListener(this));
 
         final boolean reverseRGB = node.getParameterTree().getBoolean("reverse_rgb", false);
 
@@ -296,8 +296,6 @@ public class Grasping extends AbstractNodeMain {
 				handle(newData, (int)message.getWidth(), (int)message.getHeight());
 			}
 		});
-
-		//setGrasping(INITIALIZED, false);
 	}
 
 	@Override public GraphName getDefaultNodeName() {
@@ -312,7 +310,7 @@ public class Grasping extends AbstractNodeMain {
 		SERVO_MODE = msg.getServomode();
 
 		if (SERVO_MODE == COLLECTING){
-			fsmState = RoboFSM.VISUAL_SERVO_SEARCH;
+			fsmState = RoboFSM.INITIALIZE_ARM;
 		}
 	}
 
@@ -321,6 +319,10 @@ public class Grasping extends AbstractNodeMain {
 	 */
   	int counter = 0;
 	public void handle(ArmMsg msg) {
+		if (SERVO_MODE==INITIALIZED){
+			setGrasping(INITIALIZED, false);
+		}
+
 		wristControl.update(msg.getPwms()[WRIST_INDEX]);
 		shoulderControl.update(msg.getPwms()[SHOULDER_INDEX]);
 
@@ -345,6 +347,8 @@ public class Grasping extends AbstractNodeMain {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() ) {
 						System.out.println("========================================================");
 						System.out.println("Arm is now initialized (in retracted state)");
+						
+
 						// part 3b
 						fsmState = RoboFSM.VISUAL_SERVO_SEARCH;
 						//fsmState = RoboFSM.SET_ARM_FOR_GRASP;
@@ -371,7 +375,7 @@ public class Grasping extends AbstractNodeMain {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() && blockCollected) {
 						System.out.println("BLOCK IS COLLECTED");
 						fsmState = RoboFSM.OFF;
-						//setGrasping(OFF, true);
+						setGrasping(OFF, true);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
@@ -382,7 +386,7 @@ public class Grasping extends AbstractNodeMain {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("BLOCK IS RELEASED");
 						fsmState = RoboFSM.OFF;
-						//setGrasping(OFF, false);
+						setGrasping(OFF, false);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
