@@ -190,7 +190,7 @@ public class Grasping extends AbstractNodeMain {
 	/**
 	 * <p>Max rotational velocity while moving (rad/s).</p>
 	 **/
-	public static final double WHEEL_MAX_RV = 0.5;
+	public static final double WHEEL_MAX_RV = 0.1;
 
 	/**
 	 * <p>Target reached threshold (m).</p>
