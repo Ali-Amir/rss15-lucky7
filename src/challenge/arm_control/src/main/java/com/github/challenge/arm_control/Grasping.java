@@ -702,7 +702,7 @@ public class Grasping extends AbstractNodeMain {
 					setVelocity(0.0, 0.0);
 				} else {
 					//System.out.println("GRASPING:   trans, rot:" + blobTrack.translationVelocityCommand + ", " +
-							blobTrack.rotationVelocityCommand);
+							//blobTrack.rotationVelocityCommand);
 					// move robot towards target
 					if (Math.abs(blobTrack.rotationVelocityCommand)<0.001){
 						setVelocity(0, blobTrack.translationVelocityCommand);
