@@ -17,6 +17,7 @@
 package com.github.rosjava.challenge.fsm;
 
 import java.awt.geom.Point2D;
+import java.util.*;
 
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
@@ -78,7 +79,8 @@ public class FSM extends AbstractNodeMain {
 	 */
 	Point2D.Double targetPoint;
 
-
+	private ArrayList<Point2D.Double> blockLocations = new ArrayList<Point2D.Double>();
+	private boolean testBlockLocations = true;
 
 	private Publisher<MotionMsg> motionPub;
 	private Publisher<sensor_msgs.Image> vidPub;
@@ -102,8 +104,7 @@ public class FSM extends AbstractNodeMain {
 	 */
 	public FSM() {
 		fsmState = RobotFSM.INITIALIZE;
-
-		System.out.println("FSM Initialized");
+		System.out.println("FSM: FSM Initialized");
 	}
 
 	
@@ -185,7 +186,7 @@ public class FSM extends AbstractNodeMain {
 	static final int OFF = 5;
 
 	public void handle(GraspingMsg msg){
-		System.out.println("//GOT GRASPING MESSAGE//");
+		System.out.println("FSM: //GOT GRASPING MESSAGE//");
 
 
 		int mode = msg.getServomode();
@@ -196,7 +197,7 @@ public class FSM extends AbstractNodeMain {
 
 			case INITIALIZE: {
 				fsmState = RobotFSM.COLLECTION;
-				System.out.println("//COLLECTION//");
+				System.out.println("FSM: //COLLECTION//");
 
 				setGrasping(COLLECTING);
 				break;
@@ -222,6 +223,15 @@ public class FSM extends AbstractNodeMain {
 					}
 
 					case OFF: {
+
+						if (collected) {
+
+							System.out.println("FSM: BLOCK COLLECTED");
+
+
+						} else {
+							System.out.println("FSM: BLOCK NOT COLLECTED");
+						}
 						// if (collected){
 						// 	startPoint = currentPoint;
 						// 	startTheta = currentTheta;
