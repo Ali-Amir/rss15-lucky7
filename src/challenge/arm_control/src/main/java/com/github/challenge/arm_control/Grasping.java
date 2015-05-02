@@ -180,12 +180,12 @@ public class Grasping extends AbstractNodeMain {
 	/**
 	 * <p>Translational velocity while moving (m/s).</p>
 	 **/
-	public static final double WHEEL_TV = 0.2;
+	public static final double WHEEL_TV = 0.15;
 
 	/**
 	 * <p>Proportional gain for rotation controller while moving.</p>
 	 **/
-	public static final double WHEEL_RV_GAIN = 1.2;
+	public static final double WHEEL_RV_GAIN = .8;
 
 	/**
 	 * <p>Max rotational velocity while moving (rad/s).</p>
@@ -701,7 +701,7 @@ public class Grasping extends AbstractNodeMain {
 					fsmState = RoboFSM.SET_ARM_TO_COLLECT;
 					setVelocity(0.0, 0.0);
 				} else {
-					System.out.println("GRASPING:   trans, rot:" + blobTrack.translationVelocityCommand + ", " +
+					//System.out.println("GRASPING:   trans, rot:" + blobTrack.translationVelocityCommand + ", " +
 							blobTrack.rotationVelocityCommand);
 					// move robot towards target
 					if (Math.abs(blobTrack.rotationVelocityCommand)<0.001){
