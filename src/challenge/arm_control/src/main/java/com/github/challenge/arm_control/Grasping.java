@@ -527,7 +527,12 @@ public class Grasping extends AbstractNodeMain {
 			System.out.println("GRASPING:  clamped RV:" + rv);
 
 			double tv = tD/TRANSPORT_DISTANCE * WHEEL_TV * direction;
-			setVelocity(rv, tv);
+			if (rv>.01){
+				setVelocity(rv,0);
+			}
+			else{
+				setVelocity(rv, tv);
+			}
 		}
 		return false;
 	}
