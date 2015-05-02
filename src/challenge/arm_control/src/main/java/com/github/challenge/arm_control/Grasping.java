@@ -373,6 +373,12 @@ public class Grasping extends AbstractNodeMain {
 					// }
 					System.out.println("GRASPING: COLLECTING");
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
+						try {
+						    Thread.sleep(1000);                 //1000 milliseconds is one second.
+						} catch(InterruptedException ex) {
+						    Thread.currentThread().interrupt();
+						}
+						
 						if (bumpPressed){
 							System.out.println("GRASPING: BLOCK IS COLLECTED");
 							fsmState = RoboFSM.OFF;
