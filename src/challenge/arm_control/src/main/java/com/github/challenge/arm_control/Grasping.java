@@ -610,10 +610,10 @@ public class Grasping extends AbstractNodeMain {
 	private double desired_fixation_distance = .5;
 	private double translation_error_tolerance = .05;
 	private double translation_velocity_gain = 0.5;
-	private double translation_velocity_max = .15;
+	private double translation_velocity_max = .10;
 	private double rotation_error_tolerance = Math.PI/180.0*1.0;
-	private double rotation_velocity_gain = 0.1;
-	private double rotation_velocity_max = 0.05;
+	private double rotation_velocity_gain = 0.5;
+	private double rotation_velocity_max = 0.10;
 	private boolean use_gaussian_blur = false;//true;
   	int videoCounter = 0;
 	/**
@@ -704,12 +704,10 @@ public class Grasping extends AbstractNodeMain {
 					//System.out.println("GRASPING:   trans, rot:" + blobTrack.translationVelocityCommand + ", " +
 							//blobTrack.rotationVelocityCommand);
 					// move robot towards target
-					if (Math.abs(blobTrack.rotationVelocityCommand)<0.001){
-						setVelocity(0, blobTrack.translationVelocityCommand);
-					} else {
-						setVelocity(blobTrack.rotationVelocityCommand, 0);
+					
+					setVelocity(blobTrack.rotationVelocityCommand, blobTrack.translationVelocityCommand);
 
-					}
+					
 				}
 				break;
 			}
