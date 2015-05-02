@@ -899,10 +899,16 @@ public class Grasping extends AbstractNodeMain {
 			switch (fsmState) {
 
 				case INITIALIZE_ARM: {
-					returnVal = super.step(poseGating);
-					if (isAtDesired()) {
-						System.out.println("GRASPING:   - Shoulder is initialized");
-					}
+					if (wristControl.isAtDesired()){
+						returnVal = super.step(poseGating);
+						if (isAtDesired()) {
+							System.out.println("GRASPING:   - Shoulder is initialized");
+						}
+					} else {
+						returnVal = super.step(poseRetracted);
+						System.out.println("GRASPING:   - Shoulder is waiting for wrist");
+					}	
+					
 					break;
 				}
 
