@@ -41,7 +41,7 @@ public class BlobTracking {
 	public double blobSizeThreshold=400.0/128.0/128.0; // (Solution)
 	public double desiredFixationDistance=0.4; // (Solution)
 	public double translationErrorTolerance=0.05; // (Solution)
-	public double rotationErrorTolerance=Math.PI/180.0*5.0; // (Solution)
+	public double rotationErrorTolerance=Math.PI/180.0*1.0; // (Solution)
 	public boolean useGaussianBlur=false; // (Solution)
 	public boolean approximateGaussian=false; // (Solution)
 	public double translationVelocityGain=0.8; // (Solution)
