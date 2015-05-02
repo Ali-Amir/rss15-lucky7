@@ -185,7 +185,7 @@ public class Grasping extends AbstractNodeMain {
 	/**
 	 * <p>Proportional gain for rotation controller while moving.</p>
 	 **/
-	public static final double WHEEL_RV_GAIN = 0.8;
+	public static final double WHEEL_RV_GAIN = 1.2;
 
 	/**
 	 * <p>Max rotational velocity while moving (rad/s).</p>
@@ -527,12 +527,9 @@ public class Grasping extends AbstractNodeMain {
 			System.out.println("GRASPING:  clamped RV:" + rv);
 
 			double tv = tD/TRANSPORT_DISTANCE * WHEEL_TV * direction;
-			if (rv>.01){
-				setVelocity(rv,0);
-			}
-			else{
-				setVelocity(rv, tv);
-			}
+			
+			setVelocity(rv, tv);
+			
 		}
 		return false;
 	}
