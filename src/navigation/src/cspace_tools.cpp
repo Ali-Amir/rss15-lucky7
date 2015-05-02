@@ -38,8 +38,10 @@ void GetCSpaceObstacle2d(const Polygon_2 &poly, const int rotInd,
 }
 
 Polygon_2_exact GetReflectedRobotRepresentation(double rad) {
+  /*
   double pForward = 0.20, pBackward = -0.34,
          pLeft = 0.24, pRight = -0.24;
+  */
   vector<Point_2_exact> points;
 /*  points.push_back(
     Point_2_exact(
@@ -58,14 +60,14 @@ Polygon_2_exact GetReflectedRobotRepresentation(double rad) {
       -(pBackward*cos(rad)-pRight*sin(rad)),
       -(pBackward*sin(rad)+pRight*cos(rad))));
       */
-  points.push_back(Point_2_exact(-0.24, 0.07));
-  points.push_back(Point_2_exact(+0.24, 0.07));
-  points.push_back(Point_2_exact(+0.24, -0.08));
-  points.push_back(Point_2_exact(+0.20, -0.08));
-  points.push_back(Point_2_exact(+0.20, -0.34));
-  points.push_back(Point_2_exact(-0.20, -0.34));
-  points.push_back(Point_2_exact(-0.20, -0.08));
-  points.push_back(Point_2_exact(-0.24, -0.08));
+  points.push_back(Point_2_exact(-0.25, 0.08));
+  points.push_back(Point_2_exact(+0.25, 0.08));
+  points.push_back(Point_2_exact(+0.25, -0.09));
+  points.push_back(Point_2_exact(+0.21, -0.09));
+  points.push_back(Point_2_exact(+0.21, -0.35));
+  points.push_back(Point_2_exact(-0.21, -0.35));
+  points.push_back(Point_2_exact(-0.21, -0.09));
+  points.push_back(Point_2_exact(-0.25, -0.09));
   // Reflect and rotate
   for (int i = 0; i < points.size(); ++i) {
     double nx = CGAL::to_double(points[i].y());

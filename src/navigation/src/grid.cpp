@@ -36,14 +36,14 @@ Grid::Grid(const shared_ptr<ObstacleMap> &obs_map) :
       precalc_mask[i] = ch == '1';
     }
     int amo;
-    fscanf(fin, "%d", &amo);
+    ROS_ASSERT(fscanf(fin, "%d", &amo) == 1);
     _edge.resize(amo);
     for (int i = 0; i < amo; ++i) {
       int x;
-      fscanf(fin, "%d", &x);
+      ROS_ASSERT(fscanf(fin, "%d", &x) == 1);
       for (; x--;) {
         int y;
-        fscanf(fin, "%d", &y);
+        ROS_ASSERT(fscanf(fin, "%d", &y) == 1);
         _edge[i].push_back(y);
       }
     }
@@ -143,7 +143,7 @@ double Grid::ComputePathsToGoal(const Point_2 &goal, int *status) {
     goal_points.push_back(Point_3(goal.x(), goal.y(),
                                   ObstacleMap::IdToRotation(rotId)));
   }
-  ROS_INFO("Calling compute paths to goal given a vector of points.");
+  ROS_DEBUG("Calling compute paths to goal given a vector of points.");
   return ComputePathsToGoal(goal_points, status);
 }
 
@@ -155,7 +155,7 @@ double Grid::ComputePathsToGoal(const Point_3 &goal, int *status) {
 
 double Grid::ComputePathsToGoal(const vector<Point_3> &points, int *status) {
   vector<CellId> start_ids;
-  ROS_INFO("Getting the list of cell ids.");
+  ROS_DEBUG("Getting the list of cell ids.");
   for (const Point_3& goal : points) {
     CellId goal_cell_id;
     if (!GetCellId(goal, &goal_cell_id)) {
@@ -166,7 +166,7 @@ double Grid::ComputePathsToGoal(const vector<Point_3> &points, int *status) {
   }
   // Check if we already did the same computation in previous step.
   sort(start_ids.begin(), start_ids.end());
-  ROS_INFO("Got the list of cell ids.");
+  ROS_DEBUG("Got the list of cell ids.");
   if (start_ids == _previous_start_ids) {
     *status = 1;
     return -1.0;
@@ -297,8 +297,8 @@ bool Grid::GetCellId(const Point_3 &point, CellId *cell_id) {
   double varY = CGAL::to_double(point.y()-world_centerY)/_resolutionY;
   double detA = (ux*vy - uy*vx);
 
-  int dc = (int)((varX*vy - varY*vx)/detA);
-  int dr = (int)((ux*varY - uy*varX)/detA);
+  int dc = (int)round((varX*vy - varY*vx)/detA);
+  int dr = (int)round((ux*varY - uy*varX)/detA);
 
   int actualC = max(0, min(COLS-1, (COLS>>1) - dc));
   int actualR = max(0, min(ROWS-1, (ROWS>>1) - dr));

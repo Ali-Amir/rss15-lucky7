@@ -58,7 +58,7 @@ Navigation::Navigation() {
   ROS_INFO("Initialized world grid.");
 
   // TODO: remove later, after visualization is not needed
-  PublishGUICSObstacles();
+  PublishGUICSObstacles(0);
 
   // TEST CASE 01
   {
@@ -113,8 +113,8 @@ void Navigation::TestWheelVelocities() {
 }
 
 void Navigation::updateRobotLocation(const RobotLocation::ConstPtr &loc) {
-  ROS_INFO_STREAM("GOT POSITION UPDATE! TIME: " << CurTime()-_time << ". "
-    << "Current location: (" << loc->x << " " << loc->y << " : " << loc->theta << ")");
+  ROS_INFO_STREAM_THROTTLE(10, "GOT POSITION UPDATE! TIME: " << CurTime()-_time << ". "
+    << "Current location: (" << loc->x << " " << loc->y << " : " << ObstacleMap::RadToRotation(loc->theta) << ")");
 
   _cur_loc = *loc;
 
@@ -129,21 +129,41 @@ void Navigation::updateRobotLocation(const RobotLocation::ConstPtr &loc) {
   }
 }
 
-void Navigation::PublishGUICSObstacles() {
-  const auto &polys = _obs_map->_lvl_obstacles[ObstacleMap::ANGLE_DIVISIONS/4];
-  for (const shared_ptr<Polygon_2> &poly : polys) {
-    GUIPolyMsg new_poly;
-    new_poly.numVertices = poly->size();
-    for (int i = 0; i < poly->size(); ++i) {
-      new_poly.x.push_back(CGAL::to_double((*poly)[i].x()));
-      new_poly.y.push_back(CGAL::to_double((*poly)[i].y()));
+void Navigation::PublishGUICSObstacles(int lvl) {
+  if (_prevLevel >= 0) {
+    const auto &polys = _obs_map->_lvl_obstacles[_prevLevel];
+    for (const shared_ptr<Polygon_2> &poly : polys) {
+      GUIPolyMsg new_poly;
+      new_poly.numVertices = poly->size();
+      for (int i = 0; i < poly->size(); ++i) {
+        new_poly.x.push_back(int(CGAL::to_double((*poly)[i].x())*1e3)/1e3);
+        new_poly.y.push_back(int(CGAL::to_double((*poly)[i].y())*1e3)/1e3);
+      }
+      new_poly.c.r = 255;
+      new_poly.c.g = 255;
+      new_poly.c.b = 255;
+      new_poly.closed = 1;
+      _guipoly_pub.publish(new_poly);
     }
-    new_poly.c.r = 255;
-    new_poly.c.g = 0;
-    new_poly.c.b = 0;
-    new_poly.closed = 1;
-    _guipoly_pub.publish(new_poly);
   }
+  {
+    const auto &polys = _obs_map->_lvl_obstacles[lvl];
+    for (const shared_ptr<Polygon_2> &poly : polys) {
+      GUIPolyMsg new_poly;
+      new_poly.numVertices = poly->size();
+      for (int i = 0; i < poly->size(); ++i) {
+        new_poly.x.push_back(int(CGAL::to_double((*poly)[i].x())*1e3)/1e3);
+        new_poly.y.push_back(int(CGAL::to_double((*poly)[i].y())*1e3)/1e3);
+      }
+      new_poly.c.r = 255;
+      new_poly.c.g = 0;
+      new_poly.c.b = 0;
+      new_poly.closed = 1;
+      _guipoly_pub.publish(new_poly);
+    }
+    _prevLevel = lvl;
+  }
+
 }
 
 bool Navigation::UsePreviousCommand() {
@@ -152,7 +172,14 @@ bool Navigation::UsePreviousCommand() {
 
 void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
   double cur_time = ros::Time::now().toSec();
-  ROS_INFO("Got a moveRobotTo command at navigation module.");
+  ROS_DEBUG_THROTTLE(3, "Got a moveRobotTo command at navigation module.");
+
+  if (!UsePreviousCommand()) {
+    MotionMsg stop_comm;
+    stop_comm.translationalVelocity = 0.0;
+    stop_comm.rotationalVelocity = 0.0;
+    _motor_pub.publish(stop_comm);
+  }
 
   int search_status;
   if (target->theta > -10.0) {
@@ -163,12 +190,17 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
         Point_2(target->x, target->y), &search_status);
   }
 
-  ROS_INFO("Computed all paths. Now calculating command velocities.");
-  ROS_INFO("Search took: %.3lf sec. Search status=%d",
+  if (CurTime()-_time_paint > 2.0) {
+    //PublishGUICSObstacles(ObstacleMap::RadToId(_cur_loc.theta));
+    _time_paint = CurTime();
+  }
+
+  ROS_INFO_THROTTLE(3, "Search took: %.3lf sec. Search status=%d",
       ros::Time::now().toSec()-cur_time, search_status);
 
   // search_status 0 means a new goal 
   if (search_status == 0 || !UsePreviousCommand()) {
+    ROS_DEBUG("Now calculating command velocities.");
     MotionMsg stop_comm;
     stop_comm.translationalVelocity = 0.0;
     stop_comm.rotationalVelocity = 0.0;
@@ -182,10 +214,11 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
           &cur_cell_id));
     const Grid::Cell *cur_cell(_world->GetCell(cur_cell_id));
 
-    ROS_ASSERT(cur_cell->HasPathToGoal());
+    ROS_INFO("Current location: %.3lf %.3lf (rot:%.3lf) target: %.3lf %.3lf. Path length: %.3lf",
+        _cur_loc.x, _cur_loc.y, ObstacleMap::RadToRotation(_cur_loc.theta), target->x, target->y, cur_cell->min_dist_to_goal);
+    ROS_INFO("Cell that id that i got is: %d %d %d", cur_cell_id.r, cur_cell_id.c, cur_cell_id.rotId);
 
-    ROS_INFO("Current location: %.3lf %.3lf target: %.3lf %.3lf. Path length: %.3lf",
-        _cur_loc.x, _cur_loc.y, target->x, target->y, cur_cell->min_dist_to_goal);
+    ROS_ASSERT(cur_cell != nullptr && cur_cell->HasPathToGoal());
 
     // Get the path.
     vector<Point_3> path;
@@ -200,7 +233,6 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
 
     // Calculate translational/rotational velocities
     GetSmoothPathVelocities(path);
-    CapVelocities();
     //ROS_INFO("Publishing the path of size: %d", int(smooth_path.size()));
 
     /*
@@ -223,7 +255,7 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
     _motor_pub.publish(mot_msg);
   }
 
-  ROS_INFO("Commanding: %.3lf %.3lf time until next: %.3lf\n",
+  ROS_INFO_THROTTLE(10, "Commanding: %.3lf %.3lf time until next: %.3lf",
       _trans_velocity, _rot_velocity, _time_until-CurTime());
 
 }
@@ -250,8 +282,15 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
     if (d < 2e-2 && j <= 2) {
       double starot = CGAL::to_double(path[0].z());
       double tarrot = CGAL::to_double(path[j].z());
+      double starad = ObstacleMap::RotationToRad(starot);
+      // required dtheta in range (-pi,pi).
+      double dtheta = NormalizeRad(ObstacleMap::RotationToRad(tarrot) -
+                                   ObstacleMap::RotationToRad(starot));
+      if (dtheta > M_PI) dtheta -= 2.0*M_PI;
+
       for (int step = 0; step < GRANULARITY; ++step) {
-        Point_3 cur_point(stax, stay, starot+step*(tarrot-starot)/GRANULARITY);
+        Point_3 cur_point(stax, stay,
+            ObstacleMap::RadToRotation(starad+step*dtheta/GRANULARITY));
         Grid::CellId cur_cell;
         if (!_world->GetCellId(cur_point, &cur_cell)) {
           ROS_ASSERT(0);
@@ -261,14 +300,12 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
         }
       }
 
-      // required dtheta in range (-pi,pi).
-      double dtheta = NormalizeRad(ObstacleMap::RotationToRad(tarrot) -
-                                   ObstacleMap::RotationToRad(starot));
-      if (dtheta > M_PI) dtheta -= 2.0*M_PI;
-
       _trans_velocity = 0.0;
       _rot_velocity = sgn(dtheta)*MAX_ROT_VELOCITY;
-      _time_until = min(MIN_BLIND_TIME, CurTime() + fabs(dtheta/_rot_velocity));
+      CapVelocities();
+      _time_until = min(MAX_BLIND_TIME, fabs(dtheta*0.9/_rot_velocity))
+                      + CurTime();
+      ROS_INFO("COMMANDING TO GO FROM %.3lf to %.3lf", starot, tarrot);
       return;
     }
 
@@ -305,6 +342,8 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
     }
     double radius = is_straight ? 1e18 : (d / 2.0 / abs(sin(heading_rad-sta_rad)));
 
+    ROS_ASSERT(fabs(tar_rad-sta_rad) < M_PI+1e-8);
+
     // Split the path curve into GRANULARITY points and check each one of them
     // for passability.
     double curx = stax;
@@ -334,8 +373,11 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
     if (ok) {
       double rad1 = cur_rad;
       double rad2 = NormalizeRad(ObstacleMap::RotationToRad(CGAL::to_double(path[j].z())));
+      double dtheta = NormalizeRad(rad2-rad1);
+      if (dtheta > M_PI) dtheta -= 2.0*M_PI;
+
       for (int step = 0; step < GRANULARITY; ++step) {
-        Point_3 cur_point(tarx, tary, ObstacleMap::RadToRotation(rad1 + step*(rad2-rad1)/GRANULARITY));
+        Point_3 cur_point(tarx, tary, ObstacleMap::RadToRotation(rad1 + step*dtheta/GRANULARITY));
         Grid::CellId cur_cell;
         if (!_world->GetCellId(cur_point, &cur_cell)) {
           ok = false;
@@ -354,12 +396,15 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
       if (dtheta > M_PI) dtheta -= 2.0*M_PI;
 
       _trans_velocity = dir*MAX_TRANS_VELOCITY;
-      _rot_velocity = sgn(dtheta)*_trans_velocity/radius;
+      _rot_velocity = sgn(dtheta)*fabs(_trans_velocity)/radius;
+      CapVelocities();
       if (is_straight) {
-        _time_until = d / fabs(_trans_velocity);
+        _time_until = min(MAX_BLIND_TIME, d*0.9/fabs(_trans_velocity)) + CurTime();
       } else {
-        _time_until = CurTime() + fabs(dtheta*radius/_trans_velocity);
+        _time_until = min(MAX_BLIND_TIME, fabs(dtheta*radius*0.9/_trans_velocity))
+                        + CurTime();
       }
+      ROS_INFO("COMMANDING TO GO FROM (%.2lf,%.2lf,%.3lf) to (%.2lf,%.2lf,%.3lf)", stax,stay,ObstacleMap::RadToRotation(sta_rad), tarx,tary,ObstacleMap::RadToRotation(tar_rad));
       return;
     }
   }

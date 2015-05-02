@@ -25,7 +25,7 @@ double curTime() {
 }
 
 Localization::Localization() {
-  ROS_INFO("Initializing localization module");
+  ROS_DEBUG("Initializing localization module");
 
   _time = curTime();
 
@@ -48,9 +48,9 @@ Localization::Localization() {
   // Load map file location and initialize the map-handler class instance.
   string mapfile_location;
   assert(n.getParam("/loc/mapFileName", mapfile_location));
-  ROS_INFO("Got mapFileName: %s", mapfile_location.c_str());
+  ROS_DEBUG("Got mapFileName: %s", mapfile_location.c_str());
   _wall_map = make_shared<WallMap>(mapfile_location);
-  ROS_INFO("Initialized wall map.");
+  ROS_DEBUG("Initialized wall map.");
 
   InitializeParticles();
 
@@ -124,7 +124,7 @@ RobotLocation Localization::currentPositionBelief() const {
 }
 
 void Localization::PublishLocation() {
-  ROS_INFO("Publishing updated location!");
+  ROS_DEBUG("Publishing updated location!");
   RobotLocation currentBelief = currentPositionBelief();
   _location_pub.publish(currentBelief);
 
@@ -143,7 +143,7 @@ void Localization::PublishLocation() {
 
 void Localization::TestTriangulation() {
   // TEST
-  ROS_INFO("Distance to wall from 0.0 0.0 in direction 1.0 0.0: %.3lf",
+  ROS_DEBUG("Distance to wall from 0.0 0.0 in direction 1.0 0.0: %.3lf",
            _wall_map->DistanceToWall(K::Ray_2(Point_2(0.0,0.0), K::Direction_2(1.0,1.00000))));
   // Initialize distribution:
   ros::Duration(5.0).sleep(); // Sleep for 5 sec to allow gui node to initialize.
@@ -190,7 +190,7 @@ void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
   _prev_odo_time = curTime();
 
   double start_time = curTime();
-  ROS_INFO_STREAM("onOdometryUpdate: " << dx << " " << dy << " dt: " << dt << " at time: " << curTime()-_time);
+  ROS_DEBUG_STREAM("onOdometryUpdate: " << dx << " " << dy << " dt: " << dt << " at time: " << curTime()-_time);
 
   double varD = pow(min(0.03, 0.01 + sqrt(dx*dx+dy*dy)), 2.0);
   double varT = pow(min(0.17453292519, 0.17453292519/20.0+fabs(dt)), 2.0);
@@ -213,17 +213,17 @@ void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
     }
   }
 
-  ROS_INFO("onOdometryUpdate: time up to generation %.3lf sec.", curTime()-start_time);
+  ROS_DEBUG("onOdometryUpdate: time up to generation %.3lf sec.", curTime()-start_time);
   // Substitute old particles with top #N new ones.
   sort(new_particles.begin(), new_particles.end());
   reverse(new_particles.begin(), new_particles.end());
   new_particles.resize(N);
   _particles = new_particles;
-  ROS_INFO("onOdometryUpdate: time up to sorting %.3lf sec.", curTime()-start_time);
+  ROS_DEBUG("onOdometryUpdate: time up to sorting %.3lf sec.", curTime()-start_time);
 
   NormalizeBeliefs();
   PublishLocation();
-  ROS_INFO("onOdometryUpdate: time passed %.3lf sec.", curTime()-start_time);
+  ROS_DEBUG("onOdometryUpdate: time passed %.3lf sec.", curTime()-start_time);
 }
 
 Vector_2 Rotate(Vector_2 vec, double alfa) {
@@ -232,7 +232,7 @@ Vector_2 Rotate(Vector_2 vec, double alfa) {
 }
 
 void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
-  ROS_INFO_STREAM("Got sonar update: " << son->sonarId << " range: " << son->range);
+  ROS_DEBUG_STREAM("Got sonar update: " << son->sonarId << " range: " << son->range);
   return;
   double start_time = curTime();
   double varD = 0.01;
@@ -244,7 +244,7 @@ void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
   }
   NormalizeBeliefs();
   PublishLocation();
-  ROS_INFO("onSonarUpdate: time passed %.3lf sec.", curTime()-start_time);
+  ROS_DEBUG("onSonarUpdate: time passed %.3lf sec.", curTime()-start_time);
 }
 
 double NormalizeRad(double rad) {

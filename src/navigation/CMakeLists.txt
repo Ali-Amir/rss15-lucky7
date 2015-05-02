@@ -102,7 +102,7 @@ add_executable(navigation src/server.cpp
                           #src/random_net.cpp
                           src/grid.cpp)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lCGAL -std=c++11 -frounding-math -lgmp -lglpk -lCGAL_Core -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lCGAL -std=c++11 -frounding-math -lgmp -lglpk -lCGAL_Core -O2")
 target_link_libraries(navigation ${catkin_LIBRARIES} ${CGAL_LIBRARIES}
                         /usr/lib/x86_64-linux-gnu/libgmp.so
                         /usr/lib/x86_64-linux-gnu/libmpfr.so)

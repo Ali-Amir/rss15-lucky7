@@ -228,8 +228,15 @@ bool ObstacleMap::WorldContains(const Point_3& point) {
          point.y() < _world_rect.ymax()+1e-9;
 }
 
+int ObstacleMap::RadToId(double rad) {
+  return RotationToId(RadToRotation(rad));
+}
+
 int ObstacleMap::RotationToId(double rotation) {
-  return int(ANGLE_DIVISIONS/360.0*rotation+1e-9);
+  assert(rotation > -1e-9);
+  assert(rotation < 360.0+1e-9);
+  return min(max(0, (int)round(ANGLE_DIVISIONS*rotation/360.0)),
+             ANGLE_DIVISIONS-1);
 }
 
 double ObstacleMap::IdToRotation(int id) {

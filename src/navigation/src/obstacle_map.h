@@ -17,7 +17,7 @@ namespace cspace {
 
 class ObstacleMap {
  public:
-  static const int ANGLE_DIVISIONS = 100;
+  static const int ANGLE_DIVISIONS = 150;
 
   ObstacleMap(const std::string &mapfile_location);
 
@@ -31,6 +31,7 @@ class ObstacleMap {
   double GetWorldCenterY();
   bool WorldContains(const cgal_kernel::Point_2 &point);
   bool WorldContains(const cgal_kernel::Point_3 &point);
+  static int RadToId(double rad);
   static int RotationToId(double rotation);
   static double IdToRotation(int id);
   static double IdToRad(int id);

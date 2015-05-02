@@ -14,8 +14,8 @@ namespace cspace {
 
 class Grid {
  public:
-  static const int ROWS = 600;
-  static const int COLS = 600;
+  static const int ROWS = 700;
+  static const int COLS = 700;
   static const int ANGLE_DIVISIONS = ObstacleMap::ANGLE_DIVISIONS;
   static int BFS_COLOR;
 
