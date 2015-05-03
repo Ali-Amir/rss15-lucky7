@@ -214,7 +214,7 @@ public class FSM extends AbstractNodeMain {
 			case INITIALIZE: {
 				fsmState = RobotFSM.COLLECTION;
 				System.out.println("FSM: //COLLECTION//");
-				setGrasping(ASSEMBLING);
+				setGrasping(COLLECTION);
 				break;
 			}
 
