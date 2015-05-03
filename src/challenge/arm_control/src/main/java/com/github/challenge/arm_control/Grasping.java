@@ -843,7 +843,7 @@ public class Grasping extends AbstractNodeMain {
   	int videoCounter = 0;
 
 
-  	private double desired_fixation_distance_approach = .45;
+  	private double desired_fixation_distance_approach = .34;
   	private double rotation_velocity_gain_approach = 0.3;
   	private double rotation_velocity_max_approach = 0.05;
   	private double translation_error_tolerance_approach = .01;
