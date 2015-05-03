@@ -171,8 +171,8 @@ public class FSM extends AbstractNodeMain {
 			}
 
 			case SMART_PATHING: {
-				double dx = Math.abs(currentPoint.x-testPoint.x)
-				double dy = Math.abs(currentPoint.y-testPoint.y)
+				double dx = Math.abs(currentPoint.x-testPoint.x);
+				double dy = Math.abs(currentPoint.y-testPoint.y);
 				double dist = Math.sqrt(dx*dx + dy*dy);
 				if (dist<.03){
 					fsmState = RobotFSM.COLLECTION;
@@ -246,8 +246,6 @@ public class FSM extends AbstractNodeMain {
 
 							if (blockCount>4){
 								fsmState = RobotFSM.SMART_PATHING;
-								setNavigation()
-
 							}
 
 
