@@ -833,14 +833,22 @@ public class Grasping extends AbstractNodeMain {
 	private double blob_size_threshold = 0.015;
 	private double target_radius = 0.1;
 	private double desired_fixation_distance = .5;
-	private double translation_error_tolerance = .01;
+	private double translation_error_tolerance = .02;
 	private double translation_velocity_gain = 0.5;
 	private double translation_velocity_max = .10;
 	private double rotation_error_tolerance = Math.PI/180.0*1.0;
-	private double rotation_velocity_gain = 0.5;
+	private double rotation_velocity_gain = 0.3;
 	private double rotation_velocity_max = 0.10;
 	private boolean use_gaussian_blur = false;//true;
   	int videoCounter = 0;
+
+
+  	private double desired_fixation_distance_approach = .4;
+  	private double rotation_velocity_gain_approach = 0.3;
+  	private double rotation_velocity_max_approach = 0.05;
+  	private double translation_error_tolerance_approach = .01;
+
+
 	/**
 	 * <p>Handle an image message. Perform blob tracking and
 	 * servo robot towards target.</p>
@@ -899,7 +907,10 @@ public class Grasping extends AbstractNodeMain {
 
 		switch (fsmState) {
 			case VISUAL_SERVO_SEARCH: {
-				blobTrack.desiredFixationDistance = 0.5;
+				blobTrack.desiredFixationDistance = desired_fixation_distance;
+				blobTrack.translationErrorTolerance = translation_error_tolerance;
+				blobTrack.rotationVelocityGain = rotation_velocity_gain;
+				blobTrack.rotationVelocityMax = rotation_velocity_max;
 
 				Image src = new Image(rawImage, width, height);
 
@@ -935,7 +946,10 @@ public class Grasping extends AbstractNodeMain {
 			}
 
 			case VISUAL_SERVO_APPROACH: {
-				blobTrack.desiredFixationDistance = 0.4;
+				blobTrack.desiredFixationDistance = desired_fixation_distance_approach;
+				blobTrack.translationErrorTolerance = translation_error_tolerance_approach;
+				blobTrack.rotationVelocityGain = rotation_velocity_gain_approach;
+				blobTrack.rotationVelocityMax = rotation_velocity_max_approach;
 
 
 				Image src = new Image(rawImage, width, height);
