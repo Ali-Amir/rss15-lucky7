@@ -933,7 +933,7 @@ public class Grasping extends AbstractNodeMain {
 			}
 
 			case VISUAL_SERVO_APPROACH: {
-				private double desired_fixation_distance = .37;
+				double desired_fixation_distance = .37;
 
 				Image src = new Image(rawImage, width, height);
 
