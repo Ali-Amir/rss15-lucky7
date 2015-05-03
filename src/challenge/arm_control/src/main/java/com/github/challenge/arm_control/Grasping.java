@@ -180,7 +180,7 @@ public class Grasping extends AbstractNodeMain {
 	 * <p>Distance to transport object (m)<\p>
 	 */
 	static final double TRANSPORT_DISTANCE = 0.5;
-	static final double APPROACH_DISTANCE = 0.48;
+	static final double APPROACH_DISTANCE = 0.37;
 
 
 	/**
@@ -385,7 +385,7 @@ public class Grasping extends AbstractNodeMain {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
 						fsmState = RoboFSM.MOVE_FORWARD;
-						moveDistance = 0.35;
+						moveDistance = 0.15;
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
@@ -396,7 +396,7 @@ public class Grasping extends AbstractNodeMain {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
 						fsmState = RoboFSM.MOVE_BACKWARD;
-						moveDistance = 0.3;
+						moveDistance = 0.1;
 
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
@@ -1071,8 +1071,8 @@ public class Grasping extends AbstractNodeMain {
 
 		final double poseGating = pwmToTheta(650);
 
-		final double poseSetShoulderToPull = pwmToTheta(1100);   
-		final double poseShoulderEngage = pwmToTheta(1100);                   //radians
+		final double poseSetShoulderToPull = pwmToTheta(1300);   
+		final double poseShoulderEngage = pwmToTheta(1300);                   //radians
 
 		public ShoulderController() {
 			super(servoPwmMin, servoPwmMax, thetaAtPwmMin, thetaAtPwmMax,
@@ -1192,7 +1192,7 @@ public class Grasping extends AbstractNodeMain {
 		double poseExtended = pwmToTheta(800);//thetaMin;
 		double poseCollecting = pwmToTheta(2400);//thetaMax;
 		double poseSetWristToPull = pwmToTheta(1000);
-		double poseWristEngage = pwmToTheta(900);
+		double poseWristEngage = pwmToTheta(1200);
 		double poseGating = pwmToTheta(2400);
 		//double poseReleasing = thetaMin;  //radians
 
