@@ -87,6 +87,7 @@ enum RoboFSM {
 
   	REAPPROACH,
   	PULL_BACK,
+  	SET_ARM_RETRACTED,
 
   	OFF
 
@@ -396,6 +397,16 @@ public class Grasping extends AbstractNodeMain {
 						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
 						fsmState = RoboFSM.MOVE_FORWARD;
 						moveDistance = 0.1;
+						//fsmState = RoboFSM.BLIND_APPROACH;
+					}
+					break;
+				}
+
+				case SET_ARM_RETRACTED: {
+					System.out.println("GRASPING: SET_BLADE_TO_COLLECT");
+					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
+						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
+						fsmState = RoboFSM.VISUAL_SERVO_APPROACH;
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
@@ -912,7 +923,7 @@ public class Grasping extends AbstractNodeMain {
 						(blobTrack.targetBearing*180.0/Math.PI));
 
 				if (Math.abs(blobTrack.rotationVelocityCommand)<0.001 && Math.abs(blobTrack.targetRange-SEARCH_STANDOFF) < EPS_SEARCH_STANDOFF) {
-					fsmState = RoboFSM.SET_ARM_TO_PULL;
+					fsmState = RoboFSM.SET_ARM_RETRACTED;
 					setVelocity(0.0, 0.0);
 				} else {
 					//System.out.println("GRASPING:   trans, rot:" + blobTrack.translationVelocityCommand + ", " +
@@ -1263,6 +1274,14 @@ public class Grasping extends AbstractNodeMain {
 					break;
 				}
 
+				case SET_ARM_RETRACTED: {
+					returnVal = super.step(poseRetracted);
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Shoulder is at desired");
+					}
+					break;
+				}
+
 				case COLLECTING: {
 					System.out.println("GRASPING: *** COLLECTING OBJECT ***");
 					returnVal = super.step(poseGating);
@@ -1367,6 +1386,8 @@ public class Grasping extends AbstractNodeMain {
 
 					break;
 				}
+
+
 
 				case SET_ARM_TO_PULL: {
 					returnVal = super.step(poseSetWristToPull);
