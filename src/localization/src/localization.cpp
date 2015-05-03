@@ -31,11 +31,11 @@ Localization::Localization() {
 
   // Initializing the sonar locations.
   SONAR_DIR = {
-    cgal_kernel::Vector_2(0.0, 1.0),
+    cgal_kernel::Vector_2(0.0, -1.0),
     cgal_kernel::Vector_2(0.0, 1.0)
   };
   SONAR_POS = {
-    cgal_kernel::Vector_2(-0.28, 0.215),
+    cgal_kernel::Vector_2(-0.0975, -0.215),
     cgal_kernel::Vector_2(0.025, 0.215)
   };
 
