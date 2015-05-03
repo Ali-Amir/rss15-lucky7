@@ -899,6 +899,8 @@ public class Grasping extends AbstractNodeMain {
 
 		switch (fsmState) {
 			case VISUAL_SERVO_SEARCH: {
+				blobTrack.desiredFixationDistance = 0.5;
+
 				Image src = new Image(rawImage, width, height);
 
 				Image dest = new Image(rawImage, width, height);
@@ -932,8 +934,9 @@ public class Grasping extends AbstractNodeMain {
 				break;
 			}
 
-			case VISUAL_SERVO_APPROACH: {
-				double desired_fixation_distance = .37;
+			case VISUAL_SERVO_APPROACH: 
+				blobTrack.desiredFixationDistance = 0.37;
+
 
 				Image src = new Image(rawImage, width, height);
 
@@ -949,7 +952,7 @@ public class Grasping extends AbstractNodeMain {
 				pubImage.setData(org.jboss.netty.buffer.ChannelBuffers.
 		                      copiedBuffer(org.jboss.netty.buffer.ChannelBuffers.LITTLE_ENDIAN, dest.toArray()));
 				vidPub.publish(pubImage);
-				System.out.println("GRASPING: VISUAL SERVO SEARCH");
+				System.out.println("GRASPING: VISUAL SERVO APPORACH");
 				System.out.println("GRASPING:   range, bearing:" + blobTrack.targetRange + ", " +
 						(blobTrack.targetBearing*180.0/Math.PI));
 
