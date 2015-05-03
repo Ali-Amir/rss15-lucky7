@@ -458,21 +458,12 @@ public class Grasping extends AbstractNodeMain {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() ) {
 						System.out.println("========================================================");
 						System.out.println("ASSEMBLING: Arm is now initialized to releasing state");
-						fsmState = ;
+						fsmState = RoboFSM.MOVE_BACKWARD;
+						moveDistance=0.25;
 					}
 					break;
 				}
-
-				case SET_ARM_TO_COLLECT: {
-					System.out.println("GRASPING: SET_BLADE_TO_COLLECT");
-					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
-						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
-						fsmState = RoboFSM.VISUAL_SERVO_APPROACH;
-						}
-					break;
-				}
 			}
-
 		} 
   }
 
@@ -578,7 +569,7 @@ public class Grasping extends AbstractNodeMain {
 					// if object is lost, go back to VSSEARCH
 
 					//this is just a placeholder for moving forward.
-					System.out.println("GRASPING: *** MOVE_FORWARD *** " + startingMove);
+					System.out.println("GRASPING: *** MOVE_BACKWARD *** " + startingMove);
 					if(startingMove) {
 						startPoint = new Point2D.Double();
 						startPoint.x = msg.getX();
@@ -595,7 +586,6 @@ public class Grasping extends AbstractNodeMain {
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
 							targetPoint.y, DIR_BACKWARD)) {
-						System.out.println("GRASPING: We are within range of target");
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
 						startingMove = true;
