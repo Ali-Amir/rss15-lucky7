@@ -833,7 +833,7 @@ public class Grasping extends AbstractNodeMain {
 	private double blob_size_threshold = 0.015;
 	private double target_radius = 0.1;
 	private double desired_fixation_distance = .5;
-	private double translation_error_tolerance = .05;
+	private double translation_error_tolerance = .01;
 	private double translation_velocity_gain = 0.5;
 	private double translation_velocity_max = .10;
 	private double rotation_error_tolerance = Math.PI/180.0*1.0;
@@ -877,26 +877,7 @@ public class Grasping extends AbstractNodeMain {
 			System.out.println("GRASPING: done");
 		}
 
-		Image src = new Image(rawImage, width, height);
-        /*
-        for (int i = 0; i < height/2; ++i) {
-            for (int j = 0; j < width/2; ++j) {
-                src.setPixel(j, i, (byte)0, (byte)0, (byte)255);
-            }
-        }
-        */
-		Image dest = new Image(rawImage, width, height);
-		blobTrack.apply(src, dest);
-
-		sensor_msgs.Image pubImage = vidPub.newMessage();
-		pubImage.setWidth(width);
-		pubImage.setHeight(height);
-		pubImage.setEncoding("rgb8");
-		pubImage.setIsBigendian((byte)0);
-		pubImage.setStep(width*3);
-		pubImage.setData(org.jboss.netty.buffer.ChannelBuffers.
-                      copiedBuffer(org.jboss.netty.buffer.ChannelBuffers.LITTLE_ENDIAN, dest.toArray()));
-		vidPub.publish(pubImage);
+		
 
 		// to calibrate standoff distance
 		// wait until breakbeam is tripped, then output that range
@@ -918,6 +899,20 @@ public class Grasping extends AbstractNodeMain {
 
 		switch (fsmState) {
 			case VISUAL_SERVO_SEARCH: {
+				Image src = new Image(rawImage, width, height);
+
+				Image dest = new Image(rawImage, width, height);
+				blobTrack.apply(src, dest);
+
+				sensor_msgs.Image pubImage = vidPub.newMessage();
+				pubImage.setWidth(width);
+				pubImage.setHeight(height);
+				pubImage.setEncoding("rgb8");
+				pubImage.setIsBigendian((byte)0);
+				pubImage.setStep(width*3);
+				pubImage.setData(org.jboss.netty.buffer.ChannelBuffers.
+		                      copiedBuffer(org.jboss.netty.buffer.ChannelBuffers.LITTLE_ENDIAN, dest.toArray()));
+				vidPub.publish(pubImage);
 				System.out.println("GRASPING: VISUAL SERVO SEARCH");
 				System.out.println("GRASPING:   range, bearing:" + blobTrack.targetRange + ", " +
 						(blobTrack.targetBearing*180.0/Math.PI));
@@ -938,6 +933,22 @@ public class Grasping extends AbstractNodeMain {
 			}
 
 			case VISUAL_SERVO_APPROACH: {
+				private double desired_fixation_distance = .37;
+
+				Image src = new Image(rawImage, width, height);
+
+				Image dest = new Image(rawImage, width, height);
+				blobTrack.apply(src, dest);
+
+				sensor_msgs.Image pubImage = vidPub.newMessage();
+				pubImage.setWidth(width);
+				pubImage.setHeight(height);
+				pubImage.setEncoding("rgb8");
+				pubImage.setIsBigendian((byte)0);
+				pubImage.setStep(width*3);
+				pubImage.setData(org.jboss.netty.buffer.ChannelBuffers.
+		                      copiedBuffer(org.jboss.netty.buffer.ChannelBuffers.LITTLE_ENDIAN, dest.toArray()));
+				vidPub.publish(pubImage);
 				System.out.println("GRASPING: VISUAL SERVO SEARCH");
 				System.out.println("GRASPING:   range, bearing:" + blobTrack.targetRange + ", " +
 						(blobTrack.targetBearing*180.0/Math.PI));
