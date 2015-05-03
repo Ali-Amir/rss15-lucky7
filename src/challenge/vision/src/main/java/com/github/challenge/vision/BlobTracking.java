@@ -535,7 +535,7 @@ public class BlobTracking {
 		// End Student Code
 	}
 
-	public void apply_background(Image src, Image dest) {
+	public boolean apply_background(Image src, Image dest) {
 
 		stepTiming(); // monitors the frame rate
 
