@@ -120,6 +120,8 @@ void Navigation::updateRobotLocation(const RobotLocation::ConstPtr &loc) {
 
   _cur_loc = *loc;
 
+  moveRobotTo(nullptr);
+
   if (_testLocalization) {
     MotionMsg comm;
     comm.translationalVelocity = 0.05;
@@ -172,6 +174,18 @@ bool Navigation::UsePreviousCommand() {
   return CurTime() <= _time_until;
 }
 
+bool WithinReach(const RobotLocation &a, const RobotLocation &b) {
+  double dtheta = NormalizeRad(a.theta-b.theta);
+  if (dtheta > M_PI) {
+    dtheta -= 2*M_PI;
+  }
+  if (sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)) < 2e-2 &&
+      fabs(dtheta) < 3/180.0*M_PI) {
+    return true;
+  }
+  return false;
+}
+
 void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
   double cur_time = ros::Time::now().toSec();
   ROS_DEBUG_THROTTLE(3, "Got a moveRobotTo command at navigation module.");
@@ -183,15 +197,18 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
     _motor_pub.publish(stop_comm);
   }
 
-  int search_status;
+  int search_status = 1;
   vector<Grid::CellId> bfs_cells;
-  if (target->theta > -10.0) {
-    bfs_cells = _world->ComputeInitCells(
-        Point_3(target->x, target->y, ObstacleMap::RadToRotation(target->theta)),
-                &search_status);
-  } else {
-    bfs_cells = _world->ComputeInitCells(
-        Point_2(target->x, target->y), &search_status);
+
+  if (target != nullptr) {
+    if (target->theta > -10.0) {
+      bfs_cells = _world->ComputeInitCells(
+          Point_3(target->x, target->y, ObstacleMap::RadToRotation(target->theta)),
+                  &search_status);
+    } else {
+      bfs_cells = _world->ComputeInitCells(
+          Point_2(target->x, target->y), &search_status);
+    }
   }
 
   if (CurTime()-_time_paint > 200.0) {
@@ -229,9 +246,11 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
         &cur_cell_id));
     const Grid::Cell *cur_cell(_world->GetCell(cur_cell_id));
 
+    /*
     ROS_INFO("Current location: %.3lf %.3lf (rot:%.3lf) target: %.3lf %.3lf (rad:%.3lf).",
         _cur_loc.x, _cur_loc.y, ObstacleMap::RadToRotation(_cur_loc.theta),
         target->x, target->y, target->theta);
+    */
     ROS_INFO("Cell that i got is: %d %d %d",
         cur_cell_id.r, cur_cell_id.c, cur_cell_id.rotId);
 
@@ -290,6 +309,14 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
     }
     path.push_back(Point_3(cur_cell->xc, cur_cell->yc,
                            ObstacleMap::IdToRotation(cur_cell->rotId)));
+
+    RobotLocation end;
+    end.x = cur_cell->xc;
+    end.y = cur_cell->yc;
+    end.theta = ObstacleMap::IdToRad(cur_cell->rotId);
+    if (WithinReach(end, _cur_loc)) {
+      // TODO: publish message done!
+    }
 
     // Calculate translational/rotational velocities
     GetSmoothPathVelocities(path);
