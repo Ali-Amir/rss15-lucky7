@@ -61,7 +61,8 @@ enum RoboFSM {
 	/**
 	 * <p>FSM state: maintain gated position<\p>
 	 */
-	GATING,
+	SET_ARM_TO_PULL,
+	ENGAGE_BLOCK,
 	/**
 	 * <p>FSM state: set blade to collect block<\p>
 	 */
@@ -79,6 +80,9 @@ enum RoboFSM {
 	VISUAL_SERVO_SEARCH,
 
   	RELEASING,
+
+  	MOVE_FORWARD,
+  	MOVE_BACKWARD,
 
   	OFF
 
@@ -169,6 +173,8 @@ public class Grasping extends AbstractNodeMain {
 	 * <p>Target pose for robot at end of motion<\p>
 	 */
 	Point2D.Double targetPoint;
+
+	double moveDistance;
 
 	/**
 	 * <p>Distance to transport object (m)<\p>
@@ -317,6 +323,8 @@ public class Grasping extends AbstractNodeMain {
 		if (SERVO_MODE == COLLECTING  || SERVO_MODE==ASSEMBLING){
 			fsmState = RoboFSM.INITIALIZE_ARM;
 		}
+
+
 	}
 
 	/**
@@ -325,7 +333,7 @@ public class Grasping extends AbstractNodeMain {
   	int counter = 0;
 	public void handle(ArmMsg msg) {
 		if (SERVO_MODE==INITIALIZED){
-			setGrasping(INITIALIZED, false);
+			setGrasping(INITIALIZED, false, false);
 		}
 
 		wristControl.update(msg.getPwms()[WRIST_INDEX]);
@@ -362,8 +370,8 @@ public class Grasping extends AbstractNodeMain {
 					break;
 				}
 
-				case SET_ARM_TO_COLLECT: {
-					System.out.println("GRASPING: SET_BLADE_TO_COLLECT");
+				case SET_ARM_TO_PULL: {
+					System.out.println("GRASPING: SET_BLADE_TO_PULL");
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
 						fsmState = RoboFSM.VISUAL_SERVO_APPROACH;
@@ -371,6 +379,30 @@ public class Grasping extends AbstractNodeMain {
 					}
 					break;
 				}
+
+				case SET_ARM_TO_COLLECT: {
+					System.out.println("GRASPING: SET_BLADE_TO_COLLECT");
+					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
+						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
+						fsmState = RoboFSM.MOVE_FORWARD;
+						moveDistance = 0.35;
+						//fsmState = RoboFSM.BLIND_APPROACH;
+					}
+					break;
+				}
+
+				case ENGAGE_BLOCK: {
+					System.out.println("GRASPING: ENGAGE_BLOCK");
+					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
+						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
+						fsmState = RoboFSM.MOVE_BACKWARD;
+						moveDistance = 0.3;
+
+						//fsmState = RoboFSM.BLIND_APPROACH;
+					}
+					break;
+				}
+
 				case COLLECTING: {
 					// if (bumpPressed){
 					// 	blockCollected = true;
@@ -398,7 +430,7 @@ public class Grasping extends AbstractNodeMain {
 						// }
 
 						fsmState = RoboFSM.OFF;
-						setGrasping(OFF, true);
+						setGrasping(OFF, true, true);
 						// 	setGrasping(OFF, true);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
@@ -410,7 +442,7 @@ public class Grasping extends AbstractNodeMain {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("GRASPING: BLOCK IS RELEASED");
 						fsmState = RoboFSM.OFF;
-						setGrasping(OFF, false);
+						setGrasping(OFF, false, false);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
@@ -493,7 +525,83 @@ public class Grasping extends AbstractNodeMain {
 						startingMove = true;
 						setVelocity(0.0, 0.0);
 						//					Robot.setVelocity(0.0, 0.0);
+						fsmState = RoboFSM.ENGAGE_BLOCK; 
+					}
+					break;
+				}
+
+				case MOVE_FORWARD: {
+
+					System.out.println("GRASPING: MOVE FORWARD");
+					// TODO
+					//if (Math.abs(blobTrack.target
+					// check distance to target and decrease standoff
+
+					// if object is lost, go back to VSSEARCH
+
+					//this is just a placeholder for moving forward.
+					System.out.println("GRASPING: *** MOVE_FORWARD *** " + startingMove);
+					if(startingMove) {
+						startPoint = new Point2D.Double();
+						startPoint.x = msg.getX();
+						startPoint.y = msg.getY();
+						startTheta = msg.getTheta();
+						targetPoint = new Point2D.Double();
+						targetPoint.x = startPoint.x +
+						moveDistance*Math.cos(startTheta);
+						targetPoint.y = startPoint.y +
+						moveDistance*Math.sin(startTheta);
+						targetTheta = startTheta;
+						startingMove = false;
+					}
+
+					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
+							targetPoint.y, DIR_FORWARD)) {
+						System.out.println("GRASPING: We are within range of target");
+						// TBD
+						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
+						startingMove = true;
+						setVelocity(0.0, 0.0);
+						//					Robot.setVelocity(0.0, 0.0);
 						fsmState = RoboFSM.COLLECTING; 
+					}
+					break;
+				}
+
+				case MOVE_BACKWARD: {
+
+					System.out.println("GRASPING: MOVE BACKWARD");
+					// TODO
+					//if (Math.abs(blobTrack.target
+					// check distance to target and decrease standoff
+
+					// if object is lost, go back to VSSEARCH
+
+					//this is just a placeholder for moving forward.
+					System.out.println("GRASPING: *** MOVE_FORWARD *** " + startingMove);
+					if(startingMove) {
+						startPoint = new Point2D.Double();
+						startPoint.x = msg.getX();
+						startPoint.y = msg.getY();
+						startTheta = msg.getTheta();
+						targetPoint = new Point2D.Double();
+						targetPoint.x = startPoint.x -
+						moveDistance*Math.cos(startTheta);
+						targetPoint.y = startPoint.y -
+						moveDistance*Math.sin(startTheta);
+						targetTheta = startTheta;
+						startingMove = false;
+					}
+
+					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
+							targetPoint.y, DIR_BACKWARD)) {
+						System.out.println("GRASPING: We are within range of target");
+						// TBD
+						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
+						startingMove = true;
+						setVelocity(0.0, 0.0);
+						//					Robot.setVelocity(0.0, 0.0);
+						fsmState = RoboFSM.SET_ARM_TO_COLLECT; 
 					}
 					break;
 				}
@@ -508,10 +616,11 @@ public class Grasping extends AbstractNodeMain {
 		motionPub.publish(motionMsg);
 	}
 
-	public void setGrasping(int graspingMode, boolean collected){
+	public void setGrasping(int graspingMode, boolean collected, boolean found){
 		GraspingMsg graspingMsg = graspingPub.newMessage();
 		graspingMsg.setServomode(graspingMode);
 		graspingMsg.setCollected(collected);
+		graspingMsg.setFound(found);
 		graspingPub.publish(graspingMsg);
 	}
 
@@ -729,7 +838,7 @@ public class Grasping extends AbstractNodeMain {
 						(blobTrack.targetBearing*180.0/Math.PI));
 
 				if (Math.abs(blobTrack.rotationVelocityCommand)<0.001 && Math.abs(blobTrack.targetRange-SEARCH_STANDOFF) < EPS_SEARCH_STANDOFF) {
-					fsmState = RoboFSM.SET_ARM_TO_COLLECT;
+					fsmState = RoboFSM.SET_ARM_TO_PULL;
 					setVelocity(0.0, 0.0);
 				} else {
 					//System.out.println("GRASPING:   trans, rot:" + blobTrack.translationVelocityCommand + ", " +
@@ -978,7 +1087,10 @@ public class Grasping extends AbstractNodeMain {
 
 		final double poseCollecting = pwmToTheta(1100);
 
-		final double poseGating = pwmToTheta(650);                   //radians
+		final double poseGating = pwmToTheta(650);
+
+		final double poseSetShoulderToPull = pwmToTheta(1100);   
+		final double poseShoulderEngage = pwmToTheta(1100);                   //radians
 
 		public ShoulderController() {
 			super(servoPwmMin, servoPwmMax, thetaAtPwmMin, thetaAtPwmMax,
@@ -1018,6 +1130,22 @@ public class Grasping extends AbstractNodeMain {
 
 				case SET_ARM_TO_COLLECT: {
 					returnVal = super.step(poseCollecting);
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Shoulder is at desired");
+					}
+					break;
+				}
+
+				case SET_ARM_TO_PULL: {
+					returnVal = super.step(poseSetShoulderToPull);
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Shoulder is at desired");
+					}
+					break;
+				}
+
+				case ENGAGE_BLOCK: {
+					returnVal = super.step(poseShoulderEngage);
 					if(isAtDesired()) {
 						System.out.println("GRASPING:   - Shoulder is at desired");
 					}
@@ -1081,6 +1209,8 @@ public class Grasping extends AbstractNodeMain {
 
 		double poseExtended = pwmToTheta(800);//thetaMin;
 		double poseCollecting = pwmToTheta(2400);//thetaMax;
+		double poseSetWristToPull = pwmToTheta(1000);
+		double poseWristEngage = pwmToTheta(900);
 		double poseGating = pwmToTheta(2400);
 		//double poseReleasing = thetaMin;  //radians
 
@@ -1132,6 +1262,22 @@ public class Grasping extends AbstractNodeMain {
 						System.out.println("GRASPING:   - Wrist is in gating position");
 					}
 
+					break;
+				}
+
+				case SET_ARM_TO_PULL: {
+					returnVal = super.step(poseSetWristToPull);
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Shoulder is at desired");
+					}
+					break;
+				}
+
+				case ENGAGE_BLOCK: {
+					returnVal = super.step(poseWristEngage);
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Shoulder is at desired");
+					}
 					break;
 				}
 

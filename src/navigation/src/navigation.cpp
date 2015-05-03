@@ -60,6 +60,7 @@ Navigation::Navigation() {
   _world.reset(new Grid(_obs_map)); // RandomNet?
   ROS_INFO("Initialized world grid.");
 
+  _stay_idle = 1;
   //PublishGUICSObstacles(ObstacleMap::ANGLE_DIVISIONS/4);
 
   // TEST CASE 01
@@ -167,7 +168,6 @@ void Navigation::PublishGUICSObstacles(int lvl) {
     }
     _prevLevel = lvl;
   }
-
 }
 
 bool Navigation::UsePreviousCommand() {
@@ -190,7 +190,7 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
   double cur_time = ros::Time::now().toSec();
   ROS_DEBUG_THROTTLE(3, "Got a moveRobotTo command at navigation module.");
 
-  if (!UsePreviousCommand()) {
+  if (!UsePreviousCommand() && !_stay_idle) {
     MotionMsg stop_comm;
     stop_comm.translationalVelocity = 0.0;
     stop_comm.rotationalVelocity = 0.0;
@@ -201,11 +201,15 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
   vector<Grid::CellId> bfs_cells;
 
   if (target != nullptr) {
-    if (target->theta > -10.0) {
+    if (target->theta > 10.0) {
+      _stay_idle = 1;
+    } else if (target->theta > -10.0) {
+      _stay_idle = 0;
       bfs_cells = _world->ComputeInitCells(
           Point_3(target->x, target->y, ObstacleMap::RadToRotation(target->theta)),
                   &search_status);
     } else {
+      _stay_idle = 0;
       bfs_cells = _world->ComputeInitCells(
           Point_2(target->x, target->y), &search_status);
     }
@@ -217,7 +221,7 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
   }
 
   // search_status 0 means a new goal 
-  if (search_status == 0 || !UsePreviousCommand()) {
+  if (!_stay_idle && (search_status == 0 || !UsePreviousCommand())) {
     MotionMsg stop_comm;
     stop_comm.translationalVelocity = 0.0;
     stop_comm.rotationalVelocity = 0.0;
