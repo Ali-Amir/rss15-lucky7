@@ -161,6 +161,10 @@ public class BlobTracking {
 	        centroidX = xC;
 	        centroidY = yC;
 
+	        System.out.println("//PRINTING X, Y//");
+	        System.out.println(centroidX);
+	        System.out.println(centroidY);
+
 	        int destIndex = 0;
 	        for (int j = 0; j < arraySize; ++j) {
 	          if (connIm[j]-1 == i) {
@@ -564,16 +568,12 @@ public class BlobTracking {
 		blobPresent(blobPixelGreenMask, imageConnected, blobMask);
 		 //(Solution)
 		if (targetDetected) { // (Solution)
-      System.out.println("Target detected!");
-			blobFix(); // (Solution)
-			computeTranslationVelocityCommand(); // (Solution)
-			computeRotationVelocityCommand(); // (Solution)
+	    	return true;
 			// System.err.println("Bearing (Deg): " + (targetBearing*180.0/Math.PI)); // (Solution)
 			// System.err.println("Range (M): " + targetRange); // (Solution)
 		} else { // (Solution)
 			// System.err.println("no target"); // (Solution)
-			translationVelocityCommand = 0.0; // (Solution)
-			rotationVelocityCommand = 0.0; // (Solution)
+			return false;
 		} // (Solution)
 		// (Solution)
 		// System.err.println("Tracking Velocity: " + // (Solution)
@@ -583,7 +583,7 @@ public class BlobTracking {
 		//if (dest != null) { // (Solution)
 			// (Solution)
 			//Histogram.getHistogram(src, dest, true); // (Solution)
-			markBlob(src, dest); // (Solution) TODO
+			//markBlob(src, dest); // (Solution) TODO
 			// (Solution)
 		//} // (Solution)
 		// End Student Code
