@@ -385,7 +385,7 @@ public class Grasping extends AbstractNodeMain {
 					System.out.println("GRASPING: SET_BLADE_TO_PULL");
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
-						fsmState = RoboFSM.VISUAL_SERVO_APPROACH;
+						fsmState = RoboFSM.ENGAGE_BLOCK;
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
@@ -935,7 +935,7 @@ public class Grasping extends AbstractNodeMain {
 			}
 
 			case VISUAL_SERVO_APPROACH: {
-				blobTrack.desiredFixationDistance = 0.37;
+				blobTrack.desiredFixationDistance = 0.4;
 
 
 				Image src = new Image(rawImage, width, height);
