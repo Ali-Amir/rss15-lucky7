@@ -63,6 +63,7 @@ enum RoboFSM {
 	 */
 	SET_ARM_TO_PULL,
 	ENGAGE_BLOCK,
+	RELEASE_BLOCK,
 	/**
 	 * <p>FSM state: set blade to collect block<\p>
 	 */
@@ -83,6 +84,9 @@ enum RoboFSM {
 
   	MOVE_FORWARD,
   	MOVE_BACKWARD,
+
+  	REAPPROACH,
+  	PULL_BACK
 
   	OFF
 
@@ -185,7 +189,7 @@ public class Grasping extends AbstractNodeMain {
 	 * <p>Distance to transport object (m)<\p>
 	 */
 	static final double TRANSPORT_DISTANCE = 0.5;
-	static final double APPROACH_DISTANCE = 0.13;
+	static final double APPROACH_DISTANCE = 0.15;
 
 
 	/**
@@ -400,6 +404,18 @@ public class Grasping extends AbstractNodeMain {
 					System.out.println("GRASPING: ENGAGE_BLOCK");
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
+						fsmState = RoboFSM.PULL_BACK;
+						moveDistance = 0.1;
+
+						//fsmState = RoboFSM.BLIND_APPROACH;
+					}
+					break;
+				}
+
+				case RELEASE_BLOCK: {
+					System.out.println("GRASPING: ENGAGE_BLOCK");
+					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
+						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
 						fsmState = RoboFSM.MOVE_BACKWARD;
 						moveDistance = 0.1;
 
@@ -527,7 +543,6 @@ public class Grasping extends AbstractNodeMain {
 					}
 					break;
 				}
-
 				case MOVE_FORWARD: {
 
 					System.out.println("GRASPING: MOVE FORWARD");
@@ -562,6 +577,73 @@ public class Grasping extends AbstractNodeMain {
 						setVelocity(0.0, 0.0);
 						//					Robot.setVelocity(0.0, 0.0);
 						fsmState = RoboFSM.COLLECTING; 
+					}
+					break;
+				}
+
+				case REAPPROACH: {
+
+					System.out.println("GRASPING: MOVE FORWARD");
+					// TODO
+					//if (Math.abs(blobTrack.target
+					// check distance to target and decrease standoff
+
+					// if object is lost, go back to VSSEARCH
+
+					//this is just a placeholder for moving forward.
+					System.out.println("GRASPING: *** MOVE_FORWARD *** " + startingMove);
+					if(startingMove) {
+						startPoint = new Point2D.Double();
+						startPoint.x = msg.getX();
+						startPoint.y = msg.getY();
+						startTheta = msg.getTheta();
+						targetPoint = new Point2D.Double();
+						targetPoint.x = startPoint.x +
+						moveDistance*Math.cos(startTheta);
+						targetPoint.y = startPoint.y +
+						moveDistance*Math.sin(startTheta);
+						targetTheta = startTheta;
+						startingMove = false;
+					}
+
+					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
+							targetPoint.y, DIR_FORWARD)) {
+						System.out.println("GRASPING: We are within range of target");
+						// TBD
+						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
+						startingMove = true;
+						setVelocity(0.0, 0.0);
+						//					Robot.setVelocity(0.0, 0.0);
+						fsmState = RoboFSM.COLLECTING; 
+					}
+					break;
+				}
+
+				case PULL_BACK: {
+			
+					System.out.println("GRASPING: *** MOVE_BACKWARD *** " + startingMove);
+					if(startingMove) {
+						startPoint = new Point2D.Double();
+						startPoint.x = msg.getX();
+						startPoint.y = msg.getY();
+						startTheta = msg.getTheta();
+						targetPoint = new Point2D.Double();
+						targetPoint.x = startPoint.x -
+						moveDistance*Math.cos(startTheta);
+						targetPoint.y = startPoint.y -
+						moveDistance*Math.sin(startTheta);
+						targetTheta = startTheta;
+						startingMove = false;
+					}
+
+					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
+							targetPoint.y, DIR_BACKWARD)) {
+						// TBD
+						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
+						startingMove = true;
+						setVelocity(0.0, 0.0);
+						//					Robot.setVelocity(0.0, 0.0);
+						fsmState = RoboFSM.RELEASE_BLOCK; 
 					}
 					break;
 				}
