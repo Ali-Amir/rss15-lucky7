@@ -155,7 +155,7 @@ public class Grasping extends AbstractNodeMain {
 	 */
 	RoboFSM fsmState;
 
-	static final double EPS_SEARCH_STANDOFF = 0.05; // m
+	static final double EPS_SEARCH_STANDOFF = 0.01; // m
 	static final double SEARCH_STANDOFF = 0.5; // m
 	static final double APPROACH_STANDOFF = 0.37;
 
