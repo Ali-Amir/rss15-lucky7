@@ -78,7 +78,7 @@ enum RoboFSM {
 
 	VISUAL_SERVO_SEARCH,
 
-  	ASSEMBLY,
+  	RELEASING,
 
   	OFF
 
@@ -317,6 +317,8 @@ public class Grasping extends AbstractNodeMain {
 		if (SERVO_MODE == COLLECTING){
 			fsmState = RoboFSM.INITIALIZE_ARM;
 		}
+
+
 	}
 
 	/**
