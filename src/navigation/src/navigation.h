@@ -55,6 +55,7 @@ class Navigation {
   double _rot_velocity;
   int _prevLevel{-1};
   double _time_paint{-1.0};
+  int _stay_idle{1};
  
  public:
   std::shared_ptr<cspace::ObstacleMap> _obs_map;
