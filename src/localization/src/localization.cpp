@@ -72,6 +72,12 @@ Localization::Localization() {
       }
     }
   }
+
+  /*
+  boost::shared_ptr<SonarMsg> son(
+    new SonarMsg());
+  onSonarUpdate(son);
+  */
 }
 
 // Initialize with N random points generated within a given tolerance (in 3-D
@@ -195,7 +201,7 @@ void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
   double start_time = curTime();
   ROS_DEBUG_STREAM("onOdometryUpdate: " << dx << " " << dy << " dt: " << dt << " at time: " << curTime()-_time);
 
-  double varD = pow(min(0.03, 0.01 + sqrt(dx*dx+dy*dy)), 2.0);
+  double varD = pow(min(0.01, 0.001 + sqrt(dx*dx+dy*dy)/3.0), 2.0);
   double varT = pow(min(0.17453292519, 0.17453292519/20.0+fabs(dt)), 2.0);
 
   default_random_engine gen;
@@ -235,8 +241,8 @@ Vector_2 Rotate(Vector_2 vec, double alfa) {
 }
 
 void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
-  ROS_DEBUG_STREAM("Got sonar update: " << son->sonarId << " range: " << son->range);
-  return;
+  ROS_INFO_STREAM("Got sonar update: " << son->sonarId << " range: " << son->range);
+  //return;
   double start_time = curTime();
   double varD = 0.01;
   for (Particle &par : _particles) {
@@ -247,7 +253,7 @@ void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
   }
   NormalizeBeliefs();
   PublishLocation();
-  ROS_DEBUG("onSonarUpdate: time passed %.3lf sec.", curTime()-start_time);
+  ROS_INFO("onSonarUpdate: time passed %.3lf sec.", curTime()-start_time);
 }
 
 double NormalizeRad(double rad) {
