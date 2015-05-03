@@ -189,7 +189,7 @@ public class Grasping extends AbstractNodeMain {
 	 * <p>Distance to transport object (m)<\p>
 	 */
 	static final double TRANSPORT_DISTANCE = 0.5;
-	static final double APPROACH_DISTANCE = 0.15;
+	static final double APPROACH_DISTANCE = 0.2;
 
 
 	/**
@@ -1347,6 +1347,14 @@ public class Grasping extends AbstractNodeMain {
 
 				case ENGAGE_BLOCK: {
 					returnVal = super.step(poseWristEngage);
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Shoulder is at desired");
+					}
+					break;
+				}
+
+				case RELEASE_BLOCK: {
+					returnVal = super.step(poseSetWristToPull);
 					if(isAtDesired()) {
 						System.out.println("GRASPING:   - Shoulder is at desired");
 					}
