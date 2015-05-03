@@ -1224,6 +1224,14 @@ public class Grasping extends AbstractNodeMain {
 					break;
 				}
 
+				case RELEASE_BLOCK: {
+					returnVal = super.step(poseSetShoulderToPull);
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Shoulder is at desired");
+					}
+					break;
+				}
+
 				case SET_ARM_TO_GATE: {
 					returnVal = super.step(poseGating);
 					if(isAtDesired()) {
