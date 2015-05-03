@@ -314,7 +314,7 @@ public class Grasping extends AbstractNodeMain {
 	public void handle(GraspingMsg msg){
 		SERVO_MODE = msg.getServomode();
 
-		if (SERVO_MODE == COLLECTING){
+		if (SERVO_MODE == COLLECTING  || SERVO_MODE==ASSEMBLING){
 			fsmState = RoboFSM.INITIALIZE_ARM;
 		}
 	}
@@ -413,6 +413,30 @@ public class Grasping extends AbstractNodeMain {
 						setGrasping(OFF, false);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
+					break;
+				}
+			}
+
+		}
+		else if (SERVO_MODE == ASSEMBLING) {
+
+			switch (fsmState) {
+
+				case INITIALIZE_ARM: {
+					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() ) {
+						System.out.println("========================================================");
+						System.out.println("ASSEMBLING: Arm is now initialized to releasing state");
+						fsmState = ;
+					}
+					break;
+				}
+
+				case SET_ARM_TO_COLLECT: {
+					System.out.println("GRASPING: SET_BLADE_TO_COLLECT");
+					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
+						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
+						fsmState = RoboFSM.VISUAL_SERVO_APPROACH;
+						}
 					break;
 				}
 			}
