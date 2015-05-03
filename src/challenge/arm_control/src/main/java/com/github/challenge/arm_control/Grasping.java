@@ -185,6 +185,7 @@ public class Grasping extends AbstractNodeMain {
 	 * <p>Distance to transport object (m)<\p>
 	 */
 	static final double TRANSPORT_DISTANCE = 0.5;
+	static final double BACK_DISTANCE = 0.35;
 	static final double APPROACH_DISTANCE = 0.13;
 
 
@@ -464,7 +465,6 @@ public class Grasping extends AbstractNodeMain {
 						System.out.println("========================================================");
 						System.out.println("ASSEMBLING: Arm is now initialized to releasing state");
 						fsmState = RoboFSM.MOVE_BACKWARD;
-						moveDistance=0.35;
 					}
 				} break;
 				case OFF: {
@@ -541,7 +541,8 @@ public class Grasping extends AbstractNodeMain {
 					System.out.println("GRASPING: *** MOVE_FORWARD *** " + startingMove);
 					if(startingMove) {
 						startPoint = new Point2D.Double();
-						startPoint.x = msg.getX();
+						startPoint.x = msg.
+						getX();
 						startPoint.y = msg.getY();
 						startTheta = msg.getTheta();
 						targetPoint = new Point2D.Double();
@@ -596,6 +597,43 @@ public class Grasping extends AbstractNodeMain {
 				}
 			}
 		}
+		else if (SERVO_MODE == ASSEMBLING) {
+			switch (fsmState) {
+
+				case INITIALIZE_ARM: {
+					setVelocity(0.0, 0.0);
+					break;
+				}
+				
+				case MOVE_BACKWARD: {
+			
+					System.out.println("GRASPING: *** MOVE_BACKWARD *** " + startingMove);
+					if(startingMove) {
+						startPoint = new Point2D.Double();
+						startPoint.x = msg.getX();
+						startPoint.y = msg.getY();
+						startTheta = msg.getTheta();
+						targetPoint = new Point2D.Double();
+						targetPoint.x = startPoint.x -
+						BACK_DISTANCE*Math.cos(startTheta);
+						targetPoint.y = startPoint.y -
+						BACK_DISTANCE*Math.sin(startTheta);
+						targetTheta = startTheta;
+						startingMove = false;
+					}
+
+					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
+							targetPoint.y, DIR_BACKWARD)) {
+						// TBD
+						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
+						startingMove = true;
+						setVelocity(0.0, 0.0);
+						//					Robot.setVelocity(0.0, 0.0);
+						fsmState = RoboFSM.OFF; 
+					}
+					break;
+				}
+		}	}
 	}
 
 	public void setVelocity(double rotVel, double transVel) {
