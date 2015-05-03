@@ -502,7 +502,7 @@ public class Grasping extends AbstractNodeMain {
 				} break;
 				case OFF: {
 					System.out.println("Structure Assembly finished"); 
-					//setGrasping(OFF, false, false);
+					setGrasping(OFF, false, false);
 				}
 					break;	
 			}
