@@ -185,7 +185,7 @@ public class Grasping extends AbstractNodeMain {
 	 * <p>Distance to transport object (m)<\p>
 	 */
 	static final double TRANSPORT_DISTANCE = 0.5;
-	static final double APPROACH_DISTANCE = 0.37;
+	static final double APPROACH_DISTANCE = 0.13;
 
 
 	/**
@@ -206,7 +206,7 @@ public class Grasping extends AbstractNodeMain {
 	/**
 	 * <p>Target reached threshold (m).</p>
 	 **/
-	public static final double TARGET_THRESHOLD = 0.1;
+	public static final double TARGET_THRESHOLD = 0.01;
 
 	/**
 	 * <p>Target reached threshold (m).</p>
@@ -594,7 +594,7 @@ public class Grasping extends AbstractNodeMain {
 						startingMove = true;
 						setVelocity(0.0, 0.0);
 						//					Robot.setVelocity(0.0, 0.0);
-						fsmState = RoboFSM.OFF; 
+						fsmState = RoboFSM.SET_ARM_TO_COLLECT; 
 					}
 					break;
 				}
@@ -1083,8 +1083,8 @@ public class Grasping extends AbstractNodeMain {
 
 		final double poseGating = pwmToTheta(650);
 
-		final double poseSetShoulderToPull = pwmToTheta(1300);   
-		final double poseShoulderEngage = pwmToTheta(1300);                   //radians
+		final double poseSetShoulderToPull = pwmToTheta(1100);   
+		final double poseShoulderEngage = pwmToTheta(1100);                   //radians
 
 		public ShoulderController() {
 			super(servoPwmMin, servoPwmMax, thetaAtPwmMin, thetaAtPwmMax,
@@ -1203,8 +1203,8 @@ public class Grasping extends AbstractNodeMain {
 
 		double poseExtended = pwmToTheta(800);//thetaMin;
 		double poseCollecting = pwmToTheta(2400);//thetaMax;
-		double poseSetWristToPull = pwmToTheta(1000);
-		double poseWristEngage = pwmToTheta(1200);
+		double poseSetWristToPull = pwmToTheta(600);
+		double poseWristEngage = pwmToTheta(1000);
 		double poseGating = pwmToTheta(2400);
 		//double poseReleasing = thetaMin;  //radians
 
