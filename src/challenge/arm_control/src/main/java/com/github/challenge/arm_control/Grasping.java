@@ -459,7 +459,7 @@ public class Grasping extends AbstractNodeMain {
 						System.out.println("========================================================");
 						System.out.println("ASSEMBLING: Arm is now initialized to releasing state");
 						fsmState = RoboFSM.MOVE_BACKWARD;
-						moveDistance=0.25;
+						moveDistance=0.35;
 					}
 					break;
 				}
@@ -560,15 +560,7 @@ public class Grasping extends AbstractNodeMain {
 				}
 
 				case MOVE_BACKWARD: {
-
-					System.out.println("GRASPING: MOVE BACKWARD");
-					// TODO
-					//if (Math.abs(blobTrack.target
-					// check distance to target and decrease standoff
-
-					// if object is lost, go back to VSSEARCH
-
-					//this is just a placeholder for moving forward.
+			
 					System.out.println("GRASPING: *** MOVE_BACKWARD *** " + startingMove);
 					if(startingMove) {
 						startPoint = new Point2D.Double();
@@ -591,7 +583,7 @@ public class Grasping extends AbstractNodeMain {
 						startingMove = true;
 						setVelocity(0.0, 0.0);
 						//					Robot.setVelocity(0.0, 0.0);
-						fsmState = RoboFSM.SET_ARM_TO_COLLECT; 
+						fsmState = RoboFSM.OFF; 
 					}
 					break;
 				}
