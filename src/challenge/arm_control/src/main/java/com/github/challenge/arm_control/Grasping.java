@@ -1183,9 +1183,9 @@ public class Grasping extends AbstractNodeMain {
 	}
 
   public void setBumpPressed(boolean value) {
-  	System.out.println("GRASPING: ////Bump Status////");
-  	System.out.println(bumpPressed);
-  	System.out.println("GRASPING: ////End Bump Status////");
+  	//System.out.println("GRASPING: ////Bump Status////");
+  	//System.out.println(bumpPressed);
+  	//System.out.println("GRASPING: ////End Bump Status////");
     this.bumpPressed = value;
   }
 

@@ -201,7 +201,7 @@ public class FSM extends AbstractNodeMain {
 	static final int OFF = 5;
 
 	public void handle(GraspingMsg msg){
-		System.out.println("FSM: //GOT GRASPING MESSAGE//");
+		//System.out.println("FSM: //GOT GRASPING MESSAGE//");
 
 
 		int mode = msg.getServomode();

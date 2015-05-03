@@ -86,14 +86,31 @@ int main(int argc, char **argv) {
         if (res == "yes") {
           boost::shared_ptr<rss_msgs::RobotLocation> loc(
               new rss_msgs::RobotLocation());
-          loc->x = CGAL::to_double(navigation._obs_map->_robot_goal.x());
-          loc->y = CGAL::to_double(navigation._obs_map->_robot_goal.y());
-          loc->theta = -20.0;
-          if (sqrt(pow(navigation._cur_loc.x-loc->x, 2.0)+pow(navigation._cur_loc.y-loc->y, 2.0)) < 3e-2 || tar) {
-            loc->x -= 0.1;
-            //loc->y = 0;
-            loc->theta = M_PI;
+          boost::shared_ptr<rss_msgs::RobotLocation> loc1(
+              new rss_msgs::RobotLocation());
+          boost::shared_ptr<rss_msgs::RobotLocation> loc2(
+              new rss_msgs::RobotLocation());
+
+          loc1->x = CGAL::to_double(navigation._obs_map->_robot_goal.x());
+          loc1->y = CGAL::to_double(navigation._obs_map->_robot_goal.y());
+          loc1->theta = -20.0;
+          loc2->x = 4.275;
+          loc2->y = 0.2875;
+          loc2->theta = -20.0;
+
+          double d1 = sqrt(pow(navigation._cur_loc.x-loc1->x, 2.0)+pow(navigation._cur_loc.y-loc1->y, 2.0));
+          double d2 = sqrt(pow(navigation._cur_loc.x-loc2->x, 2.0)+pow(navigation._cur_loc.y-loc2->y, 2.0));
+          if (d1 < 3e-2 && !tar) {
             tar = 1;
+          }
+          if (d2 < 3e-2 && tar) {
+            tar = 0;
+          }
+
+          if (tar) {
+            *loc = *loc2;
+          } else {
+            *loc = *loc1;
           }
           navigation.moveRobotTo(loc);
         }

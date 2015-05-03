@@ -15,8 +15,8 @@ namespace navigation {
 class Navigation {
  public:
   static constexpr double MAX_BLIND_TIME = 4.0;
-  static constexpr double MAX_TRANS_VELOCITY = 0.15;
-  static constexpr double MAX_ROT_VELOCITY = 0.157079633; // pi/4 / 5 sec
+  static constexpr double MAX_TRANS_VELOCITY = 0.10;
+  static constexpr double MAX_ROT_VELOCITY = 0.130899694; // pi/4 / 5 sec
   static const int GRANULARITY = 600;
 
   Navigation();
