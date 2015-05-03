@@ -4,6 +4,7 @@
 #include <ros/ros.h>
 
 #include <rss_msgs/RobotLocation.h>
+#include <rss_msgs/LocFree.h>
 
 #include "obstacle_map.h"
 #include "grid.h"
@@ -30,6 +31,8 @@ class Navigation {
    * Method for handling move commands (to specified location). Sends commands to motion control module.
    **/
   void moveRobotTo(const rss_msgs::RobotLocation::ConstPtr& msg);
+  bool isLocationFree(rss_msgs::LocFree::Request &req,
+                      rss_msgs::LocFree::Response &res);
 
  private:
   void TestWheelVelocities();

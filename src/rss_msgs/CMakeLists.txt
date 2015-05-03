@@ -27,6 +27,12 @@ add_message_files(
   RobotLocation.msg
 )
 
+add_service_files(
+  DIRECTORY msg
+  FILES
+  LocFree.srv
+)
+
 generate_messages()
 
 # Set the gradle targets you want catkin's make to run by default, e.g.

@@ -134,40 +134,18 @@ void Navigation::updateRobotLocation(const RobotLocation::ConstPtr &loc) {
   }
 }
 
-void Navigation::PublishGUICSObstacles(int lvl) {
-  if (_prevLevel >= 0) {
-    const auto &polys = _obs_map->_lvl_obstacles[_prevLevel];
-    for (const shared_ptr<Polygon_2> &poly : polys) {
-      GUIPolyMsg new_poly;
-      new_poly.numVertices = poly->size();
-      for (int i = 0; i < poly->size(); ++i) {
-        new_poly.x.push_back(int(CGAL::to_double((*poly)[i].x())*1e3)/1e3);
-        new_poly.y.push_back(int(CGAL::to_double((*poly)[i].y())*1e3)/1e3);
-      }
-      new_poly.c.r = 255;
-      new_poly.c.g = 255;
-      new_poly.c.b = 255;
-      new_poly.closed = 1;
-      _guipoly_pub.publish(new_poly);
-    }
-  }
-  {
-    const auto &polys = _obs_map->_lvl_obstacles[lvl];
-    for (const shared_ptr<Polygon_2> &poly : polys) {
-      GUIPolyMsg new_poly;
-      new_poly.numVertices = poly->size();
-      for (int i = 0; i < poly->size(); ++i) {
-        new_poly.x.push_back(int(CGAL::to_double((*poly)[i].x())*1e3)/1e3);
-        new_poly.y.push_back(int(CGAL::to_double((*poly)[i].y())*1e3)/1e3);
-      }
-      new_poly.c.r = 255;
-      new_poly.c.g = 0;
-      new_poly.c.b = 0;
-      new_poly.closed = 1;
-      _guipoly_pub.publish(new_poly);
-    }
-    _prevLevel = lvl;
-  }
+bool Navigation::isLocationFree(
+    LocFree::Request &req, LocFree::Response &res) {
+  Grid::CellId cur_cell_id;
+  assert(_world->GetCellId(
+      Point_3(req.x, req.y,
+              ObstacleMap::RadToRotation(req.theta)),
+      &cur_cell_id));
+  const Grid::Cell *cur_cell(_world->GetCell(cur_cell_id));
+
+  res.result = cur_cell != nullptr;
+
+  return true;
 }
 
 bool Navigation::UsePreviousCommand() {
@@ -525,6 +503,42 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
       ROS_INFO("COMMANDING TO GO FROM (%.2lf,%.2lf,%.3lf) to (%.2lf,%.2lf,%.3lf)", stax,stay,ObstacleMap::RadToRotation(sta_rad), tarx,tary,ObstacleMap::RadToRotation(tar_rad));
       return;
     }
+  }
+}
+
+void Navigation::PublishGUICSObstacles(int lvl) {
+  if (_prevLevel >= 0) {
+    const auto &polys = _obs_map->_lvl_obstacles[_prevLevel];
+    for (const shared_ptr<Polygon_2> &poly : polys) {
+      GUIPolyMsg new_poly;
+      new_poly.numVertices = poly->size();
+      for (int i = 0; i < poly->size(); ++i) {
+        new_poly.x.push_back(int(CGAL::to_double((*poly)[i].x())*1e3)/1e3);
+        new_poly.y.push_back(int(CGAL::to_double((*poly)[i].y())*1e3)/1e3);
+      }
+      new_poly.c.r = 255;
+      new_poly.c.g = 255;
+      new_poly.c.b = 255;
+      new_poly.closed = 1;
+      _guipoly_pub.publish(new_poly);
+    }
+  }
+  {
+    const auto &polys = _obs_map->_lvl_obstacles[lvl];
+    for (const shared_ptr<Polygon_2> &poly : polys) {
+      GUIPolyMsg new_poly;
+      new_poly.numVertices = poly->size();
+      for (int i = 0; i < poly->size(); ++i) {
+        new_poly.x.push_back(int(CGAL::to_double((*poly)[i].x())*1e3)/1e3);
+        new_poly.y.push_back(int(CGAL::to_double((*poly)[i].y())*1e3)/1e3);
+      }
+      new_poly.c.r = 255;
+      new_poly.c.g = 0;
+      new_poly.c.b = 0;
+      new_poly.closed = 1;
+      _guipoly_pub.publish(new_poly);
+    }
+    _prevLevel = lvl;
   }
 }
 

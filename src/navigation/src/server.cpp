@@ -71,12 +71,17 @@ int main(int argc, char **argv) {
    * than we can send them, the number here specifies how many messages to
    * buffer up before throwing some away.
    */
+
   ROS_INFO("Adding subscribers to navigation module.");
   navigation::Navigation navigation;
   ros::Subscriber localization_sub =
       n.subscribe("localization/update", 1, &navigation::Navigation::updateRobotLocation, &navigation);
   ros::Subscriber navigation_sub =
       n.subscribe("navigation/GoTo", 1000, &navigation::Navigation::moveRobotTo, &navigation);
+  ros::ServiceServer freecell_ser =
+      n.advertiseService("navigation/IsLocationFree", &navigation::Navigation::isLocationFree,
+          &navigation);
+
   int tar = 0;
   while (true) {
     // TEST CASE 04
