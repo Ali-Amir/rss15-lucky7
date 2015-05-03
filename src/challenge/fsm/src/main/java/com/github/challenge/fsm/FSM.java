@@ -161,8 +161,8 @@ public class FSM extends AbstractNodeMain {
 			case INITIALIZE: {
 				setVelocity(0.0, 0.0);
 
-				fsmState = RobotFSM.SMART_PATHING;
-				setNavigation(testPoint);
+				// fsmState = RobotFSM.SMART_PATHING;
+				// setNavigation(testPoint);
 				break;
 			}
 
@@ -211,9 +211,9 @@ public class FSM extends AbstractNodeMain {
 		switch (fsmState) {
 
 			case INITIALIZE: {
-				// fsmState = RobotFSM.COLLECTION;
-				// System.out.println("FSM: //COLLECTION//");
-				// setGrasping(COLLECTING);
+				fsmState = RobotFSM.COLLECTION;
+				System.out.println("FSM: //COLLECTION//");
+				setGrasping(COLLECTING);
 				break;
 			}
 
