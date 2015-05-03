@@ -189,7 +189,7 @@ public class Grasping extends AbstractNodeMain {
 	 * <p>Distance to transport object (m)<\p>
 	 */
 	static final double TRANSPORT_DISTANCE = 0.5;
-	static final double APPROACH_DISTANCE = 0.16;
+	static final double APPROACH_DISTANCE = 0.15;
 
 
 	/**
@@ -1162,7 +1162,7 @@ public class Grasping extends AbstractNodeMain {
 		final double poseGating = pwmToTheta(650);
 
 		final double poseSetShoulderToPull = pwmToTheta(1100);   
-		final double poseShoulderEngage = pwmToTheta(1100);                   //radians
+		final double poseShoulderEngage = pwmToTheta(1050);                   //radians
 
 		public ShoulderController() {
 			super(servoPwmMin, servoPwmMax, thetaAtPwmMin, thetaAtPwmMax,
