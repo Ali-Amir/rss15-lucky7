@@ -206,6 +206,7 @@ public class FSM extends AbstractNodeMain {
 
 		int mode = msg.getServomode();
 		boolean collected = msg.getCollected();
+		boolean found = msg.getFound();
 
 
 		switch (fsmState) {
@@ -368,6 +369,12 @@ public class FSM extends AbstractNodeMain {
 		navMsg.setX(targetPoint.getX());
 		navMsg.setY(targetPoint.getY());
 		navMsg.setTheta(-20.0);
+	 	navPub.publish(navMsg);
+	}
+
+	public void stopNavigation(){
+		RobotLocation navMsg = navPub.newMessage();
+		navMsg.setTheta(20.0);
 	 	navPub.publish(navMsg);
 	}
 
