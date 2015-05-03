@@ -219,10 +219,26 @@ public class FSM extends AbstractNodeMain {
 			}
 
 			case EXPLORATORY_PATHING: {
+				switch (mode) {
+					case COLLECTING: {
+						fsmState = RobotFSM.COLLECTION;
+						stopNavigation();
+						setGrasping(COLLECTING);
+						break;
+					}
+				}
 				break;
 			}
 
 			case SMART_PATHING: {
+				switch (mode) {
+					case COLLECTING: {
+						fsmState = RobotFSM.COLLECTION;
+						stopNavigation();
+						setGrasping(COLLECTING);
+						break;
+					}
+				}
 				break;
 			}
 

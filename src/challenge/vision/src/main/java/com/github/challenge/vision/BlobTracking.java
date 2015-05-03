@@ -530,4 +530,62 @@ public class BlobTracking {
 		//} // (Solution)
 		// End Student Code
 	}
+
+	public void apply_background(Image src, Image dest) {
+
+		stepTiming(); // monitors the frame rate
+
+		// Begin Student Code
+
+		//averageRGB(src); // (Solution)
+		//averageHSB(src); // (Solution)
+
+		if (useGaussianBlur) {// (Solution)
+			byte[] srcArray = src.toArray();// (Solution)
+			byte[] destArray = new byte[srcArray.length]; // (Solution)
+			if (approximateGaussian) { // (Solution)
+				GaussianBlur.applyBox(srcArray, destArray, src.getWidth(), src.getHeight());
+			} // (Solution)
+			else { // (Solution)
+				GaussianBlur.apply(srcArray, destArray, width, height); // (Solution)
+			} // (Solution)
+			src = new Image(destArray, src.getWidth(), src.getHeight()); // (Solution)
+		}
+		blobPixel(src, blobPixelRedMask, targetRedHueLevel); //(Solution)
+		blobPixel(src, blobPixelBlueMask, targetBlueHueLevel); //(Solution)
+		blobPixel(src, blobPixelYellowMask, targetYellowHueLevel); //(Solution)
+		blobPixel(src, blobPixelGreenMask, targetGreenHueLevel); //(Solution)
+		max_area = -1;
+
+
+		blobPresent(blobPixelRedMask, imageConnected, blobMask);
+		blobPresent(blobPixelBlueMask, imageConnected, blobMask);
+		blobPresent(blobPixelYellowMask, imageConnected, blobMask);
+		blobPresent(blobPixelGreenMask, imageConnected, blobMask);
+		 //(Solution)
+		if (targetDetected) { // (Solution)
+      System.out.println("Target detected!");
+			blobFix(); // (Solution)
+			computeTranslationVelocityCommand(); // (Solution)
+			computeRotationVelocityCommand(); // (Solution)
+			// System.err.println("Bearing (Deg): " + (targetBearing*180.0/Math.PI)); // (Solution)
+			// System.err.println("Range (M): " + targetRange); // (Solution)
+		} else { // (Solution)
+			// System.err.println("no target"); // (Solution)
+			translationVelocityCommand = 0.0; // (Solution)
+			rotationVelocityCommand = 0.0; // (Solution)
+		} // (Solution)
+		// (Solution)
+		// System.err.println("Tracking Velocity: " + // (Solution)
+		//		translationVelocityCommand + "m/s, " + // (Solution)
+		//		rotationVelocityCommand + "rad/s"); // (Solution)
+		// For a start, just copy src to dest. // (Solution)
+		//if (dest != null) { // (Solution)
+			// (Solution)
+			//Histogram.getHistogram(src, dest, true); // (Solution)
+			markBlob(src, dest); // (Solution) TODO
+			// (Solution)
+		//} // (Solution)
+		// End Student Code
+	}
 }
