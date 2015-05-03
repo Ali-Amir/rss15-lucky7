@@ -954,7 +954,7 @@ public class Grasping extends AbstractNodeMain {
 
 		final double poseCollecting = pwmToTheta(1100);
 
-		final double poseGating = pwmToTheta(800);                   //radians
+		final double poseGating = pwmToTheta(650);                   //radians
 
 		public ShoulderController() {
 			super(servoPwmMin, servoPwmMax, thetaAtPwmMin, thetaAtPwmMax,
@@ -1057,7 +1057,7 @@ public class Grasping extends AbstractNodeMain {
 
 		double poseExtended = pwmToTheta(800);//thetaMin;
 		double poseCollecting = pwmToTheta(2400);//thetaMax;
-		double poseGating = pwmToTheta(2200);
+		double poseGating = pwmToTheta(2400);
 		//double poseReleasing = thetaMin;  //radians
 
 		public WristController() {
