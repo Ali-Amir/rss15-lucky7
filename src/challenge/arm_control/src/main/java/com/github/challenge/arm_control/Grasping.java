@@ -192,7 +192,7 @@ public class Grasping extends AbstractNodeMain {
 	 */
 	static final double TRANSPORT_DISTANCE = 0.5;
 
-	static final double BACK_DISTANCE = 0.35;
+	static final double BACK_DISTANCE = 0.50;
 	
 	static final double APPROACH_DISTANCE = 0.15;
 

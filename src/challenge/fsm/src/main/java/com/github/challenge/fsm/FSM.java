@@ -214,7 +214,7 @@ public class FSM extends AbstractNodeMain {
 			case INITIALIZE: {
 				fsmState = RobotFSM.COLLECTION;
 				System.out.println("FSM: //COLLECTION//");
-				setGrasping(ASSEMBLING);
+				setGrasping(COLLECTING);
 				break;
 			}
 
@@ -246,7 +246,7 @@ public class FSM extends AbstractNodeMain {
 							blockCount += 1;
 
 							if (blockCount>4){
-								fsmState = RobotFSM.SMART_PATHING;
+								fsmState = RobotFSM.ASSEMBLY;
 							}
 
 
@@ -276,10 +276,18 @@ public class FSM extends AbstractNodeMain {
 			}
 
 			case ASSEMBLY: {
+				switch (mode) {
 
-				fsmState=RobotFSM.SMART_PATHING;
-
-				break;
+					case ASSEMBLING: {
+						System.out.println("Starting to assembly blocks");
+						break;
+					}
+					case OFF:{
+					System.out.println("Assembly done");
+					fsmState=RobotFSM.SMART_PATHING;
+					break;
+					}
+				}
 			}
 		}
 	}
