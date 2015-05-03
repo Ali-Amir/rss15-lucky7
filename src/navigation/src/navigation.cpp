@@ -39,6 +39,8 @@ Navigation::Navigation() {
 
   _time = CurTime();
   _time_paint = CurTime();
+  _cur_loc.x = 0.6;
+  _cur_loc.y = 0.6;
 
   ros::NodeHandle n;
   // Initialize message publishers.
@@ -250,6 +252,9 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
           }
         }
       }
+      PublishGUICSObstacles(curRotId);
+      ROS_INFO("Replaced with cell: %.3lf %.3lf %d",
+          cur_cell->xc, cur_cell->yc, cur_cell->rotId);
       ROS_ASSERT(cur_cell != nullptr && cur_cell->HasPathToGoal());
     }
     /*
