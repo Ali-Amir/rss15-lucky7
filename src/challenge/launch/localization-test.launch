@@ -12,7 +12,7 @@
                        args="com.github.rosjava.challenge.navigation.GlobalNavigation"
                        machine="workstation"
                        output="log">
-      <param name="mapFileName" value="$(env CHALLENGE)/maps/global-nav-maze-2011-hard.map" />
+      <param name="mapFileName" value="$(env CHALLENGE)/maps/challenge_2015.map" />
   </node>
 
   <!--
@@ -40,9 +40,9 @@
                    args=""
                    machine="workstation"
                    output="screen">
-      <param name="calculateFromScratch" value="yes" />
-      <param name="precalcPath" value="$(env CHALLENGE)/maps/global-nav-maze-2011-hard.dec" />
-      <param name="mapFileName" value="$(env CHALLENGE)/maps/global-nav-maze-2011-hard.map" />
+      <param name="calculateFromScratch" value="no" />
+      <param name="precalcPath" value="$(env CHALLENGE)/maps/challenge_2015.dec" />
+      <param name="mapFileName" value="$(env CHALLENGE)/maps/challenge_2015.map" />
       <param name="testLocalization" value="no" />
       <param name="testWheelVelocities" value="no" />
       <param name="testNavigationInReality" value="yes" />

@@ -38,6 +38,7 @@ Navigation::Navigation() {
   ROS_INFO("Initializing navigation module");
 
   _time = CurTime();
+  _time_paint = CurTime();
 
   ros::NodeHandle n;
   // Initialize message publishers.
@@ -57,8 +58,7 @@ Navigation::Navigation() {
   _world.reset(new Grid(_obs_map)); // RandomNet?
   ROS_INFO("Initialized world grid.");
 
-  // TODO: remove later, after visualization is not needed
-  PublishGUICSObstacles(0);
+  //PublishGUICSObstacles(ObstacleMap::ANGLE_DIVISIONS/4);
 
   // TEST CASE 01
   {
@@ -182,41 +182,96 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
   }
 
   int search_status;
+  vector<Grid::CellId> bfs_cells;
   if (target->theta > -10.0) {
-    _world->ComputePathsToGoal(
-        Point_3(target->x, target->y, target->theta), &search_status);
+    bfs_cells = _world->ComputeInitCells(
+        Point_3(target->x, target->y, ObstacleMap::RadToRotation(target->theta)),
+                &search_status);
   } else {
-    _world->ComputePathsToGoal(
+    bfs_cells = _world->ComputeInitCells(
         Point_2(target->x, target->y), &search_status);
   }
 
-  if (CurTime()-_time_paint > 2.0) {
+  if (CurTime()-_time_paint > 200.0) {
     //PublishGUICSObstacles(ObstacleMap::RadToId(_cur_loc.theta));
     _time_paint = CurTime();
   }
 
-  ROS_INFO_THROTTLE(3, "Search took: %.3lf sec. Search status=%d",
-      ros::Time::now().toSec()-cur_time, search_status);
-
   // search_status 0 means a new goal 
   if (search_status == 0 || !UsePreviousCommand()) {
-    ROS_DEBUG("Now calculating command velocities.");
     MotionMsg stop_comm;
     stop_comm.translationalVelocity = 0.0;
     stop_comm.rotationalVelocity = 0.0;
     _motor_pub.publish(stop_comm);
 
+    if (search_status == 0) {
+      int cnt = 10;
+      for (auto id : bfs_cells) {
+        if (!cnt--) {
+          break;
+        }
+        ROS_INFO("One of the start points: rotId %d", id.rotId);
+      }
+      _world->_previous_start_ids = bfs_cells;
+      _world->RunBfs(bfs_cells);
+    }
+    ROS_INFO_THROTTLE(3, "Search took: %.3lf sec. Search status=%d",
+        ros::Time::now().toSec()-cur_time, search_status);
+
+    ROS_INFO("Now calculating command velocities.");
     // Check if path exists.
     Grid::CellId cur_cell_id;
     assert(_world->GetCellId(
-          Point_3(_cur_loc.x, _cur_loc.y,
-                  ObstacleMap::RadToRotation(_cur_loc.theta)),
-          &cur_cell_id));
+        Point_3(_cur_loc.x, _cur_loc.y,
+                ObstacleMap::RadToRotation(_cur_loc.theta)),
+        &cur_cell_id));
     const Grid::Cell *cur_cell(_world->GetCell(cur_cell_id));
 
-    ROS_INFO("Current location: %.3lf %.3lf (rot:%.3lf) target: %.3lf %.3lf. Path length: %.3lf",
-        _cur_loc.x, _cur_loc.y, ObstacleMap::RadToRotation(_cur_loc.theta), target->x, target->y, cur_cell->min_dist_to_goal);
-    ROS_INFO("Cell that id that i got is: %d %d %d", cur_cell_id.r, cur_cell_id.c, cur_cell_id.rotId);
+    ROS_INFO("Current location: %.3lf %.3lf (rot:%.3lf) target: %.3lf %.3lf (rad:%.3lf).",
+        _cur_loc.x, _cur_loc.y, ObstacleMap::RadToRotation(_cur_loc.theta),
+        target->x, target->y, target->theta);
+    ROS_INFO("Cell that i got is: %d %d %d",
+        cur_cell_id.r, cur_cell_id.c, cur_cell_id.rotId);
+
+    if (cur_cell == nullptr || !cur_cell->HasPathToGoal()) {
+      int curRotId = ObstacleMap::RadToId(_cur_loc.theta);
+      auto free_cells = _world->getFreeCellsByRotId(curRotId);
+      double best = -1.0;
+      for (auto &cell : *free_cells) {
+        ROS_INFO_THROTTLE(5, "good %d: %.3lf %.3lf",
+            (int)cell->HasPathToGoal(), cell->xc, cell->yc);
+        if (cell->HasPathToGoal()) {
+          ROS_INFO_THROTTLE(5, "EVEN BETTER!!!");
+          double cur = fabs(cell->xc-_cur_loc.x)+fabs(cell->yc-_cur_loc.y);
+
+          if (best < 0 || cur < best) {
+            best = cur;
+            cur_cell = cell;
+          }
+        }
+      }
+      ROS_ASSERT(cur_cell != nullptr && cur_cell->HasPathToGoal());
+    }
+    /*
+      double x = _cur_loc.x;
+      double y = _cur_loc.y;
+      double theta = _cur_loc.theta;
+      double z = ObstacleMap::RadToRotation(theta);
+      int id = ObstacleMap::RadToId(theta);
+      int nxt = (id + 1) % ObstacleMap::ANGLE_DIVISIONS;
+      int prev = (id - 1 + ObstacleMap::ANGLE_DIVISIONS) % ObstacleMap::ANGLE_DIVISIONS;
+      ROS_INFO_STREAM("x: " << x << " y: " << y << " theta: " << theta);
+      bool ok = 0;
+      for (int i = -2; i <= 2; ++i) {
+        int v = (id + ObstacleMap::ANGLE_DIVISIONS + i) % ObstacleMap::ANGLE_DIVISIONS;
+        if (_obs_map->IsInsideObstacle(Point_2(x,y), v)) {
+          ok = 1;
+          PublishGUICSObstacles(v);
+        }
+      }
+      ROS_ASSERT(ok);
+    }
+    */
 
     ROS_ASSERT(cur_cell != nullptr && cur_cell->HasPathToGoal());
 
@@ -271,6 +326,17 @@ void Navigation::CapVelocities() {
 void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
   int j = path.size()-1;
   vector<Point_3> smooth;
+  int furthest = 0;
+  for (; furthest < path.size(); ++furthest) {
+    int i = furthest;
+    double sqr_dist = CGAL::to_double(
+        (path[i].x()-path[0].x())*(path[i].x()-path[0].x())+
+        (path[i].y()-path[0].y())*(path[i].y()-path[0].y()));
+    if (sqrt(sqr_dist) > 7e-2) {
+      break; 
+    }
+  }
+
   for (;; --j) {
     double stax = CGAL::to_double(path[0].x());
     double stay = CGAL::to_double(path[0].y());
@@ -279,7 +345,7 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
     double d = sqrt((stax-tarx)*(stax-tarx)+(stay-tary)*(stay-tary));
 
     // Handle case when we need to rotate whithout translation.
-    if (d < 2e-2 && j <= 2) {
+    if (d < 2e-2) {//&& j < furthest) {
       double starot = CGAL::to_double(path[0].z());
       double tarrot = CGAL::to_double(path[j].z());
       double starad = ObstacleMap::RotationToRad(starot);
@@ -288,25 +354,41 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
                                    ObstacleMap::RotationToRad(starot));
       if (dtheta > M_PI) dtheta -= 2.0*M_PI;
 
+      bool bad = 0;
       for (int step = 0; step < GRANULARITY; ++step) {
         Point_3 cur_point(stax, stay,
             ObstacleMap::RadToRotation(starad+step*dtheta/GRANULARITY));
         Grid::CellId cur_cell;
         if (!_world->GetCellId(cur_point, &cur_cell)) {
-          ROS_ASSERT(0);
+          //ROS_ASSERT(0);
+          bad = 1;
         }
         if (_world->GetCell(cur_cell) == nullptr) {
-          ROS_ASSERT(0);
+          //ROS_ASSERT(0);
+          bad = 1;
         }
       }
 
-      _trans_velocity = 0.0;
-      _rot_velocity = sgn(dtheta)*MAX_ROT_VELOCITY;
-      CapVelocities();
-      _time_until = min(MAX_BLIND_TIME, fabs(dtheta*0.9/_rot_velocity))
-                      + CurTime();
-      ROS_INFO("COMMANDING TO GO FROM %.3lf to %.3lf", starot, tarrot);
-      return;
+      if (!bad) {
+        _trans_velocity = 0.0;
+        _rot_velocity = sgn(dtheta)*MAX_ROT_VELOCITY;
+        CapVelocities();
+        _time_until = min(MAX_BLIND_TIME, fabs(dtheta*0.9/_rot_velocity))
+                        + CurTime();
+        if (fabs(starot-tarrot) < 1.0) {
+          for (int i = 0; i < 5 && i < path.size(); ++i) {
+            ROS_INFO("Point ahead: %.3lf %.3lf %.3lf",
+                CGAL::to_double(path[i].x()),
+                CGAL::to_double(path[i].y()),
+                CGAL::to_double(path[i].z()));
+          }
+        }
+        ROS_INFO("COMMANDING TO GO FROM %.3lf to %.3lf", starot, tarrot);
+        return;
+      }
+      if (j <= 2) {
+        ROS_ASSERT(0);
+      }
     }
 
     // Calculate start heading, as well as the target heading, such that the

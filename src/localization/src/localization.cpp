@@ -124,8 +124,11 @@ RobotLocation Localization::currentPositionBelief() const {
 }
 
 void Localization::PublishLocation() {
-  ROS_DEBUG("Publishing updated location!");
   RobotLocation currentBelief = currentPositionBelief();
+  // TODO: remove
+  currentBelief.x = _prev_odo_x;
+  currentBelief.y = _prev_odo_y;
+  currentBelief.theta = _prev_odo_t;
   _location_pub.publish(currentBelief);
 
   if (_leaveBreadCrumbs) {

@@ -12,9 +12,10 @@ int Grid::BFS_COLOR;
 
 Grid::Grid(const shared_ptr<ObstacleMap> &obs_map) :
     _obs_map(obs_map) {
-  ROS_INFO("Initializing grid");
   _resolutionX = 2.0*_obs_map->GetWorldWidth()/ROWS;
   _resolutionY = 2.0*_obs_map->GetWorldHeight()/COLS;
+  ROS_INFO("Initializing grid: resolution (%.3lf, %.3lf)",
+      _resolutionX, _resolutionY);
 
   ros::NodeHandle n;
   string precalc_path;
@@ -47,6 +48,10 @@ Grid::Grid(const shared_ptr<ObstacleMap> &obs_map) :
         _edge[i].push_back(y);
       }
     }
+    _dist_to_obs.resize(amo);
+    for (int i = 0; i < amo; ++i) {
+      assert(fscanf(fin, "%d", &_dist_to_obs[i])==1);
+    }
     fclose(fin);
   }
 
@@ -76,8 +81,12 @@ Grid::Grid(const shared_ptr<ObstacleMap> &obs_map) :
             ++impassable;
           }
         } else {
+          int prev = (rotId - 1 + ANGLE_DIVISIONS) % ANGLE_DIVISIONS;
+          int nxt = (rotId + 1) % ANGLE_DIVISIONS;
           if (!_obs_map->WorldContains(Point_2(centerX, centerY)) ||
-              _obs_map->IsInsideObstacle(Point_2(centerX, centerY), rotId)) {
+              _obs_map->IsInsideObstacle(Point_2(centerX, centerY), rotId) ||
+              _obs_map->IsInsideObstacle(Point_2(centerX, centerY), prev) ||
+              _obs_map->IsInsideObstacle(Point_2(centerX, centerY), nxt)) {
             ++impassable;
           } else {
             ++passable;
@@ -94,6 +103,7 @@ Grid::Grid(const shared_ptr<ObstacleMap> &obs_map) :
   _compressed_id.clear();
   for (int i = 0; i < _free_cells.size(); ++i) {
     _cells[i] = _free_cells[i];
+    _free_cells_by_rotid[_cells[i].rotId].push_back(_cells+i);
     _compressed_id[_free_cells[i].GetIndex()] = i;
   }
 
@@ -102,16 +112,35 @@ Grid::Grid(const shared_ptr<ObstacleMap> &obs_map) :
                   ". Passable cells: " << passable);
   ROS_INFO_STREAM("Calculating neighbors now.");
   double cur_time = ros::Time::now().toSec();
+  _dp.resize(_free_cells.size());
   if (!have_precalc) {
     _edge.clear();
+    _dist_to_obs.clear();
+    queue<int> que;
     for (int i = 0; i < _free_cells.size(); ++i) {
       _edge.push_back(vector<int>());
       CellId cur_cell(_cells[i].r, _cells[i].c, _cells[i].rotId);
       vector<CellId> neighbors;
       CollectNeighbors(cur_cell, &neighbors);
+      _dist_to_obs.push_back(0);
       for (const CellId &next_cell : neighbors) {
         if (_compressed_id.count(next_cell.GetIndex())) {
           _edge[i].push_back(_compressed_id[next_cell.GetIndex()]);
+        } else {
+          _dist_to_obs[i] = 1;
+        }
+      }
+      if (_dist_to_obs[i]) {
+        que.push(i);
+      }
+    }
+    while (que.size() > 0) {
+      int u = que.front();
+      que.pop();
+      for (const int &v : _edge[u]) {
+        if (!_dist_to_obs[v]) {
+          _dist_to_obs[v] = _dist_to_obs[u]+1;
+          que.push(v);
         }
       }
     }
@@ -133,8 +162,49 @@ Grid::Grid(const shared_ptr<ObstacleMap> &obs_map) :
       }
       fprintf(precalc_fout, "\n");
     }
+    for (int i = 0; i < _dist_to_obs.size(); ++i) {
+      fprintf(precalc_fout, "%d ", _dist_to_obs[i]);
+    }
+    fprintf(precalc_fout, "\n");
     fclose(precalc_fout);
   }
+}
+
+vector<Grid::CellId> Grid::ComputeInitCells(const Point_2 &goal, int *status) {
+  vector<Point_3> goal_points;
+  for (int rotId = 0; rotId < ANGLE_DIVISIONS; ++rotId) {
+    goal_points.push_back(Point_3(goal.x(), goal.y(),
+                                  ObstacleMap::IdToRotation(rotId)));
+  }
+  return ComputeInitCells(goal_points, status);
+}
+
+vector<Grid::CellId> Grid::ComputeInitCells(const Point_3 &goal, int *status) {
+  vector<Point_3> goal_points;
+  goal_points.push_back(goal);
+  return ComputeInitCells(goal_points, status);
+}
+
+vector<Grid::CellId> Grid::ComputeInitCells(const vector<Point_3> &points,
+                                            int *status) {
+  vector<CellId> start_ids;
+  for (const Point_3& goal : points) {
+    CellId goal_cell_id;
+    if (!GetCellId(goal, &goal_cell_id)) {
+      *status = 0;
+      return vector<Grid::CellId>();
+    }
+   
+    start_ids.push_back(goal_cell_id);
+  }
+  // Check if we already did the same computation in previous step.
+  sort(start_ids.begin(), start_ids.end());
+  if (start_ids == _previous_start_ids) {
+    *status = 1;
+  } else {
+    *status = 0;
+  }
+  return start_ids;
 }
 
 double Grid::ComputePathsToGoal(const Point_2 &goal, int *status) {
@@ -171,16 +241,16 @@ double Grid::ComputePathsToGoal(const vector<Point_3> &points, int *status) {
     *status = 1;
     return -1.0;
   }
-  ROS_INFO("Calling bfs.");
+  ROS_DEBUG("Calling bfs.");
   *status = 0;
   _previous_start_ids = start_ids;
   return RunBfs(start_ids);
 }
 
 double Grid::RunBfs(vector<CellId> start_ids) {
-  queue<int> queue;
+  priority_queue<pair<int,int>> queue;
   ++BFS_COLOR;
-  ROS_INFO("Starting bfs");
+  ROS_INFO("Starting bfs: %d start ids", (int)start_ids.size());
   for (const CellId &cell_id : start_ids) {
     assert(cell_id.r < ROWS && cell_id.c < COLS && cell_id.rotId < ANGLE_DIVISIONS);
     if (!_compressed_id.count(cell_id.GetIndex())) {
@@ -195,46 +265,54 @@ double Grid::RunBfs(vector<CellId> start_ids) {
     _cells[comp_ind].color = BFS_COLOR;
     _cells[comp_ind].min_dist_to_goal = 0.0;
     _cells[comp_ind].to_goal_next = nullptr;
-    queue.push(comp_ind);
+    _dp[comp_ind] = 0;
+    queue.push(make_pair(_dp[comp_ind], comp_ind));
   }
 
-  ROS_INFO("Doing bfs!");
+  ROS_INFO("Doing bfs! Initial points: %d", (int)queue.size());
   int num_visited = 0;
   double max_dist = 0.0;
   //vector<CellId> neighbor_ids;
   while (!queue.empty()) {
     ++num_visited;
-    int cur_cell = queue.front();
+    int cur_cell = queue.top().second;
+    int cur_dist = queue.top().first;
+    /*
+    if (cur_dist > _dp[cur_cell]) {
+      continue;
+    }
+    */
+
     queue.pop();
     assert(cur_cell < ROWS*COLS*ANGLE_DIVISIONS);
     //ROS_ASSERT(_compressed_id.count(cur_cell_id.GetIndex()));
-    double cur_dist = _cells[cur_cell].min_dist_to_goal;
+    //double cur_dist = _cells[cur_cell].min_dist_to_goal;
     for (const int &v : _edge[cur_cell]) {
+      /*
       if (_cells[v].color != BFS_COLOR) {
-        _cells[v].min_dist_to_goal = cur_dist + _resolutionX;
+        _dp[v] = _dp[cur_cell] + 2;
+      }
+      */
+
+      int w = _dist_to_obs[v];
+      if (_cells[v].color != BFS_COLOR) {
+      //if (cur_dist + w < _dp[v]) {
+        //_dp[v] = cur_dist - w;
+        _cells[v].min_dist_to_goal = _cells[cur_cell].min_dist_to_goal
+                                      + _resolutionX;
         _cells[v].to_goal_next = _cells + cur_cell;
         _cells[v].color = BFS_COLOR;
         max_dist = max(max_dist, cur_dist + _resolutionX);
-        queue.push(v);
+        queue.push(make_pair(w, v));
       }
     }
   }
-  ROS_INFO("Done doing bfs! Visited: %d/%d cells.", num_visited, int(_compressed_id.size()));
+  ROS_DEBUG("Done doing bfs! Visited: %d/%d cells.", num_visited, int(_compressed_id.size()));
   return max_dist;
 }
 
 void Grid::CollectNeighbors(const CellId &ver, vector<CellId> *neighbors) {
   neighbors->clear();
-
-  /*
-  //below
-  if (ver.r > 0)
-    neighbors->push_back(CellId(ver.r-1, ver.c, ver.rotId));
-
-  //above
-  if (ver.r < ROWS-1)
-    neighbors->push_back(CellId(ver.r+1, ver.c, ver.rotId));
-    */
 
   //left
   if (ver.c > 0)
@@ -244,35 +322,19 @@ void Grid::CollectNeighbors(const CellId &ver, vector<CellId> *neighbors) {
   if (ver.c < COLS-1)
     neighbors->push_back(CellId(ver.r, ver.c+1, ver.rotId));
 
-  CellId lvl_cell;
-  int next_lvl;
-  if (ver.rotId + 1 < ANGLE_DIVISIONS) {
-    next_lvl = ver.rotId + 1;
-  } else {
-    next_lvl = 0;
-  }
-  int ver_ind;
   if (_compressed_id.count(ver.GetIndex())) {
-    ver_ind = _compressed_id[ver.GetIndex()];
-    GetCellId(Point_3(_cells[ver_ind].xc,
-                      _cells[ver_ind].yc,
-                      ObstacleMap::IdToRotation(next_lvl)),
-              &lvl_cell);
-    neighbors->push_back(lvl_cell);
-  }
-
-  if (ver.rotId > 0) {
-    next_lvl = ver.rotId - 1;
-  } else {
-    next_lvl = ANGLE_DIVISIONS-1;
-  }
-  if (_compressed_id.count(ver.GetIndex())) {
-    ver_ind = _compressed_id[ver.GetIndex()];
-    GetCellId(Point_3(_cells[ver_ind].xc,
-                      _cells[ver_ind].yc,
-                      ObstacleMap::IdToRotation(next_lvl)),
-              &lvl_cell);
-    neighbors->push_back(lvl_cell);
+    int ver_ind = _compressed_id[ver.GetIndex()];
+    for (int i = ver.rotId-3; i < ver.rotId+4; ++i) {
+      int id = (i + ANGLE_DIVISIONS)%ANGLE_DIVISIONS;
+      if (ver.rotId != i) {
+        CellId lvl_cell;
+        GetCellId(Point_3(_cells[ver_ind].xc,
+                          _cells[ver_ind].yc,
+                          ObstacleMap::IdToRotation(id)),
+                  &lvl_cell);
+        neighbors->push_back(lvl_cell);
+      }
+    }
   }
 }
 

@@ -45,9 +45,7 @@ class Navigation {
   ros::Publisher _guipoint_pub;
   ros::Publisher _guipoly_pub;
   ros::Publisher _motor_pub;
-  std::shared_ptr<cspace::ObstacleMap> _obs_map;
   std::unique_ptr<cspace::Grid> _world;
-  rss_msgs::RobotLocation _cur_loc;
 
   double _time;
   double _tmp_time;
@@ -58,6 +56,9 @@ class Navigation {
   int _prevLevel{-1};
   double _time_paint{-1.0};
  
+ public:
+  std::shared_ptr<cspace::ObstacleMap> _obs_map;
+  rss_msgs::RobotLocation _cur_loc;
 };
 
 double NormalizeRad(double rad);

@@ -14,8 +14,8 @@ namespace cspace {
 
 class Grid {
  public:
-  static const int ROWS = 700;
-  static const int COLS = 700;
+  static const int ROWS = 650;
+  static const int COLS = 750;
   static const int ANGLE_DIVISIONS = ObstacleMap::ANGLE_DIVISIONS;
   static int BFS_COLOR;
 
@@ -80,6 +80,12 @@ class Grid {
     }
   };
 
+  std::vector<CellId> ComputeInitCells(
+      const cgal_kernel::Point_2 &goal, int *status);
+  std::vector<CellId> ComputeInitCells(
+      const cgal_kernel::Point_3 &goal, int *status);
+  std::vector<CellId> ComputeInitCells(
+      const std::vector<cgal_kernel::Point_3> &points, int *status);
   double ComputePathsToGoal(
       const cgal_kernel::Point_2 &point, int *status);
   double ComputePathsToGoal(
@@ -99,15 +105,23 @@ class Grid {
     return nullptr;
   }
 
+  const std::vector<const Cell*> *getFreeCellsByRotId(int rotId) const {
+    return &_free_cells_by_rotid[rotId];
+  }
+
  private:
   Cell *_cells;
   std::shared_ptr<ObstacleMap> _obs_map;
   double _resolutionX;
   double _resolutionY;
-  std::vector<CellId> _previous_start_ids;
   std::vector<Cell> _free_cells;
   std::map<int,int> _compressed_id;
   std::vector<std::vector<int>> _edge;
+  std::vector<const Cell*> _free_cells_by_rotid[ANGLE_DIVISIONS];
+  std::vector<int> _dist_to_obs;
+  std::vector<int> _dp;
+ public:
+  std::vector<CellId> _previous_start_ids;
 };
 
 } // namespace cspace 

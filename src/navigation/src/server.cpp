@@ -77,6 +77,7 @@ int main(int argc, char **argv) {
       n.subscribe("localization/update", 1, &navigation::Navigation::updateRobotLocation, &navigation);
   ros::Subscriber navigation_sub =
       n.subscribe("navigation/GoTo", 1000, &navigation::Navigation::moveRobotTo, &navigation);
+  int tar = 0;
   while (true) {
     // TEST CASE 04
     {
@@ -85,9 +86,15 @@ int main(int argc, char **argv) {
         if (res == "yes") {
           boost::shared_ptr<rss_msgs::RobotLocation> loc(
               new rss_msgs::RobotLocation());
-          loc->x = CGAL::to_double(2.1336);
-          loc->y = CGAL::to_double(3.8481);
-          loc->theta = cspace::ObstacleMap::RadToRotation(0.0);
+          loc->x = CGAL::to_double(navigation._obs_map->_robot_goal.x());
+          loc->y = CGAL::to_double(navigation._obs_map->_robot_goal.y());
+          loc->theta = -20.0;
+          if (sqrt(pow(navigation._cur_loc.x-loc->x, 2.0)+pow(navigation._cur_loc.y-loc->y, 2.0)) < 3e-2 || tar) {
+            loc->x -= 0.1;
+            //loc->y = 0;
+            loc->theta = M_PI;
+            tar = 1;
+          }
           navigation.moveRobotTo(loc);
         }
       }

@@ -47,20 +47,27 @@ void ObstacleMap::BuildMapFromFile(const string &mapfile_location) {
 void ObstacleMap::ParseFromFile(const string &mapfile_location) {
   ROS_INFO("ObstacleMap: Parsing from file: %s", mapfile_location.c_str());
 
-  ifstream mapstream;
-  mapstream.open(mapfile_location, ifstream::in);
-  ParsePoint(mapstream, &_robot_start);
-  ParsePoint(mapstream, &_robot_goal);
-  ParseRect(mapstream, &_world_rect);
+  FILE *fin;
+  fin = fopen(mapfile_location.c_str(), "r");
+  ParsePoint(fin, &_robot_start);
+  ParsePoint(fin, &_robot_goal);
+  ParseRect(fin, &_world_rect);
+
+  int numObstacles;
+  ROS_ASSERT(fscanf(fin, "%d", &numObstacles)==1);
 
   _raw_obstacles.clear();
-  for (int obstacleNumber = 0;; ++obstacleNumber) {
+  for (int obstacleNumber = 0; obstacleNumber < numObstacles;
+      ++obstacleNumber) {
     Polygon_2 poly;
-    if (!ParseObstacle(mapstream, &poly)) {
+    if (!ParseObstacle(fin, &poly)) {
       break;
     }
     _raw_obstacles.push_back(poly);
   }
+
+  fclose(fin);
+
   {
     Polygon_2 upper_wall;
     upper_wall.insert(upper_wall.vertices_end(),
@@ -100,51 +107,39 @@ void ObstacleMap::ParseFromFile(const string &mapfile_location) {
 /***
  * Parses a 2d point from input stream.
  **/
-void ObstacleMap::ParsePoint(ifstream &stream, Point_2 *point) {
-  char buff[1024];
-  stream.getline(buff, 1024);
+void ObstacleMap::ParsePoint(FILE *fin, Point_2 *point) {
   double x, y;
-  stringstream line;
-  line << string(buff);
-  line >> x >> y;
+  ROS_ASSERT(fscanf(fin, "%lf%lf", &x, &y)==2);
   *point = Point_2(x, y);
 }
 
 /***
  * Parses world boundary rectangle from input stream.
  **/
-void ObstacleMap::ParseRect(ifstream &stream, Iso_rectangle_2 *rect) {
-  char buff[1024];
-  stream.getline(buff, 1024);
-  stringstream line;
-  line << string(buff);
-  double x, y, size_x, size_y;
-  line >> x >> y >> size_x >> size_y;
-  Point_2 corner(x, y), size(size_x, size_y);
-  *rect = Iso_rectangle_2(corner, corner+Vector_2(size.x(), size.y()));
+void ObstacleMap::ParseRect(FILE *fin, Iso_rectangle_2 *rect) {
+  double x, y, xx, yy;
+  ROS_ASSERT(fscanf(fin, "%lf%lf%lf%lf", &x, &y, &xx, &yy)==4);
+  Point_2 corner(x, y), cornerx(x+xx, y+yy);
+  *rect = Iso_rectangle_2(corner, cornerx);
+  double a = CGAL::to_double(rect->xmin()),
+         b = CGAL::to_double(rect->ymin()),
+         c = CGAL::to_double(rect->xmax()),
+         d = CGAL::to_double(rect->ymax());
+  ROS_INFO("World bounds: %.3lf %.3lf -- %.3lf %.3lf\n", a, b, c, d);
 }
 
 /***
  * Parses raw obstacles from input stream.
  **/
-bool ObstacleMap::ParseObstacle(ifstream &stream, Polygon_2 *poly) {
-  if (stream.eof()) {
-    return false;
-  }
-
+bool ObstacleMap::ParseObstacle(FILE *fin, Polygon_2 *poly) {
   *poly = Polygon_2();
 
-  char buff[1024];
-  stream.getline(buff, 1024);
-  stringstream line;
-  line << string(buff);
-  double x, y;
-  while (line >> x >> y) {
+  int n;
+  ROS_ASSERT(fscanf(fin, "%d", &n)==1);
+  for (int i = 0; i < n; ++i) {
+    double x, y;
+    ROS_ASSERT(fscanf(fin, "%lf%lf", &x, &y)==2);
     poly->insert(poly->vertices_end(), Point_2(x, y));
-  }
-
-  if (poly->is_empty()) {
-    return false;
   }
 
   return true;
@@ -273,6 +268,7 @@ bool ObstacleMap::IsInsideObstacle(const Point_3 &point) {
 bool ObstacleMap::IsInsideObstacle(const Point_2 &point, const int rotInd) {
   for (auto poly_ptr : _lvl_obstacles[rotInd]) {
     if (poly_ptr->bounded_side(point) == CGAL::ON_BOUNDED_SIDE) {
+      //ROS_INFO_THROTTLE(5, "Point intersects polygon!");
       return true;
     }
   }

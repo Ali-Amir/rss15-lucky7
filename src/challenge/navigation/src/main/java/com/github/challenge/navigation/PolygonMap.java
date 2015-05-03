@@ -240,15 +240,17 @@ public class PolygonMap extends AbstractNodeMain{
 		//    for (int i = 0; i < tok.length; i++)
 		//      System.err.println("  " + tok[i]);
 
-		if (tok.length%2 != 0)
+		if (tok.length%2 != 1)
 			throw new ParseException(name + " (line " + lineNumber + ")",
 					lineNumber);
 
+    int n = Integer.parseInt(tok[0]);
+
 		PolygonObstacle poly = new PolygonObstacle();
 
-		for (int i = 0; i < tok.length/2; i++)
-			poly.addVertex(Double.parseDouble(tok[2*i]),
-					Double.parseDouble(tok[2*i+1]));
+		for (int i = 0; i < n; i++)
+			poly.addVertex(Double.parseDouble(tok[2*i+1]),
+					Double.parseDouble(tok[2*i+2]));
 
 		poly.close();
 
@@ -293,11 +295,10 @@ public class PolygonMap extends AbstractNodeMain{
 		parsePoint(robotStart, br, "robot start", lineNumber++);
 		parsePoint(robotGoal, br, "robot goal", lineNumber++);
 		parseRect(worldRect, br, "world rect", lineNumber++);
+		String line = br.readLine();
+    int n = Integer.parseInt(line);
 		
-		while (parseExtra(br, lineNumber++))
-		    ;
-		
-		for (int obstacleNumber = 0; ; obstacleNumber++) {
+		for (int obstacleNumber = 0; obstacleNumber < n; obstacleNumber++) {
 		    
 		    PolygonObstacle poly = parseObs(br, "obstacle " + obstacleNumber,
 						    lineNumber++);
