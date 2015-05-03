@@ -157,6 +157,7 @@ public class Grasping extends AbstractNodeMain {
 
 	static final double EPS_SEARCH_STANDOFF = 0.05; // m
 	static final double SEARCH_STANDOFF = 0.5; // m
+	static final double APPROACH_STANDOFF = 0.37;
 
 	/**
 	 * <p>Indicates first iteration through position controller<\p>
@@ -507,43 +508,43 @@ public class Grasping extends AbstractNodeMain {
 					break;
 				}
 
-				case VISUAL_SERVO_APPROACH: {
+				// case VISUAL_SERVO_APPROACH: {
 
-					System.out.println("GRASPING: VISUAL_SERVO APPROACH");
-					// TODO
-					//if (Math.abs(blobTrack.target
-					// check distance to target and decrease standoff
+				// 	System.out.println("GRASPING: VISUAL_SERVO APPROACH");
+				// 	// TODO
+				// 	//if (Math.abs(blobTrack.target
+				// 	// check distance to target and decrease standoff
 
-					// if object is lost, go back to VSSEARCH
+				// 	// if object is lost, go back to VSSEARCH
 
-					//this is just a placeholder for moving forward.
-					System.out.println("GRASPING: *** MOVE_FORWARD *** " + startingMove);
-					if(startingMove) {
-						startPoint = new Point2D.Double();
-						startPoint.x = msg.getX();
-						startPoint.y = msg.getY();
-						startTheta = msg.getTheta();
-						targetPoint = new Point2D.Double();
-						targetPoint.x = startPoint.x +
-						APPROACH_DISTANCE*Math.cos(startTheta);
-						targetPoint.y = startPoint.y +
-						APPROACH_DISTANCE*Math.sin(startTheta);
-						targetTheta = startTheta;
-						startingMove = false;
-					}
+				// 	//this is just a placeholder for moving forward.
+				// 	System.out.println("GRASPING: *** MOVE_FORWARD *** " + startingMove);
+				// 	if(startingMove) {
+				// 		startPoint = new Point2D.Double();
+				// 		startPoint.x = msg.getX();
+				// 		startPoint.y = msg.getY();
+				// 		startTheta = msg.getTheta();
+				// 		targetPoint = new Point2D.Double();
+				// 		targetPoint.x = startPoint.x +
+				// 		APPROACH_DISTANCE*Math.cos(startTheta);
+				// 		targetPoint.y = startPoint.y +
+				// 		APPROACH_DISTANCE*Math.sin(startTheta);
+				// 		targetTheta = startTheta;
+				// 		startingMove = false;
+				// 	}
 
-					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, DIR_FORWARD)) {
-						System.out.println("GRASPING: We are within range of target");
-						// TBD
-						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
-						startingMove = true;
-						setVelocity(0.0, 0.0);
-						//					Robot.setVelocity(0.0, 0.0);
-						fsmState = RoboFSM.ENGAGE_BLOCK; 
-					}
-					break;
-				}
+				// 	if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
+				// 			targetPoint.y, DIR_FORWARD)) {
+				// 		System.out.println("GRASPING: We are within range of target");
+				// 		// TBD
+				// 		//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
+				// 		startingMove = true;
+				// 		setVelocity(0.0, 0.0);
+				// 		//					Robot.setVelocity(0.0, 0.0);
+				// 		fsmState = RoboFSM.ENGAGE_BLOCK; 
+				// 	}
+				// 	break;
+				// }
 				case MOVE_FORWARD: {
 
 					System.out.println("GRASPING: MOVE FORWARD");
@@ -911,6 +912,26 @@ public class Grasping extends AbstractNodeMain {
 						(blobTrack.targetBearing*180.0/Math.PI));
 
 				if (Math.abs(blobTrack.rotationVelocityCommand)<0.001 && Math.abs(blobTrack.targetRange-SEARCH_STANDOFF) < EPS_SEARCH_STANDOFF) {
+					fsmState = RoboFSM.SET_ARM_TO_PULL;
+					setVelocity(0.0, 0.0);
+				} else {
+					//System.out.println("GRASPING:   trans, rot:" + blobTrack.translationVelocityCommand + ", " +
+							//blobTrack.rotationVelocityCommand);
+					// move robot towards target
+					
+					setVelocity(blobTrack.rotationVelocityCommand, blobTrack.translationVelocityCommand);
+
+					
+				}
+				break;
+			}
+
+			case VISUAL_SERVO_APPROACH: {
+				System.out.println("GRASPING: VISUAL SERVO SEARCH");
+				System.out.println("GRASPING:   range, bearing:" + blobTrack.targetRange + ", " +
+						(blobTrack.targetBearing*180.0/Math.PI));
+
+				if (Math.abs(blobTrack.rotationVelocityCommand)<0.001 && Math.abs(blobTrack.targetRange-APPROACH_STANDOFF) < EPS_SEARCH_STANDOFF) {
 					fsmState = RoboFSM.SET_ARM_TO_PULL;
 					setVelocity(0.0, 0.0);
 				} else {
