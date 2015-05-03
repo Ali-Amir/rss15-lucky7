@@ -848,7 +848,7 @@ public class Grasping extends AbstractNodeMain {
   	private double rotation_velocity_max_approach = 0.05;
   	private double translation_error_tolerance_approach = .005;
   	private double translation_velocity_gain_approach = 0.2;
-	private double translation_velocity_max_approach = .08;
+	private double translation_velocity_max_approach = .04;
 
 
 	/**
