@@ -180,22 +180,27 @@ public class Grasping extends AbstractNodeMain {
 	/**
 	 * <p>Translational velocity while moving (m/s).</p>
 	 **/
-	public static final double WHEEL_TV = 0.2;
+	public static final double WHEEL_TV = 0.15;
 
 	/**
 	 * <p>Proportional gain for rotation controller while moving.</p>
 	 **/
-	public static final double WHEEL_RV_GAIN = 0.8;
+	public static final double WHEEL_RV_GAIN = .8;
 
 	/**
 	 * <p>Max rotational velocity while moving (rad/s).</p>
 	 **/
-	public static final double WHEEL_MAX_RV = 0.5;
+	public static final double WHEEL_MAX_RV = 0.1;
 
 	/**
 	 * <p>Target reached threshold (m).</p>
 	 **/
 	public static final double TARGET_THRESHOLD = 0.1;
+
+	/**
+	 * <p>Target reached threshold (m).</p>
+	 **/
+	public static final double THETA_THRESHOLD = Math.PI/180;
 
 	/**
 	 * <p>Indicates backward direction motion<\p>
@@ -425,6 +430,7 @@ public class Grasping extends AbstractNodeMain {
 				}
 
 				case VISUAL_SERVO_APPROACH: {
+
 					System.out.println("GRASPING: VISUAL_SERVO APPROACH");
 					// TODO
 					//if (Math.abs(blobTrack.target
@@ -479,6 +485,63 @@ public class Grasping extends AbstractNodeMain {
 	}
 
 
+
+	/**
+	 * <p>Moves from current (x, y, heading) towards target point (tX, tY) in
+	 * a forward (1) or backward (-1) direction.<\p>
+	 */
+	private boolean rotateTowardTarget(double x, double y, double heading,
+			double tX, double tY, int direction) {
+		System.out.println("GRASPING:   - current: x:" + x + " y:" + y);
+		System.out.println("GRASPING:   - target: x:" + tX + " y:" + tY);
+
+		// distance to target
+		double tD = Math.sqrt((x-tX)*(x-tX) + (y-tY)*(y-tY));
+		double tD1 = Math.hypot((x-tX), (x-tY));
+		System.out.println("GRASPING:   Distance to target: " + tD + " td1: " + tD1);
+
+		if (direction == DIR_BACKWARD) {
+			heading = heading - Math.PI;
+		}
+
+		
+		
+		//cosine and sine of actual heading
+		double cActual = Math.cos(heading);
+		double sActual = Math.sin(heading);
+
+		//cosine and sine of desired heading
+		double cDesired = (tX-x)/tD;
+		double sDesired = (tY-y)/tD;
+
+		//cosine and sine of error angle
+		double cError = cDesired*cActual+sDesired*sActual;
+		double sError = sDesired*cActual-cDesired*sActual;
+
+		double thetaError = Math.atan2(sError, cError);
+
+		if (thetaError<THETA_THRESHOLD){
+			return true;
+		}
+		else {
+			System.out.println("GRASPING:  thetaError: " + thetaError);
+			double rv = WHEEL_RV_GAIN * thetaError;
+			System.out.println("GRASPING:  RV: " + rv);
+			if (rv > WHEEL_MAX_RV) {
+				rv = WHEEL_MAX_RV;
+			}
+			if (rv < -WHEEL_MAX_RV) {
+				rv = -WHEEL_MAX_RV;
+			}
+
+			System.out.println("GRASPING:  clamped RV:" + rv);
+
+			setVelocity(rv, 0);
+				
+			return false;
+		}
+	}
+
 	/**
 	 * <p>Moves from current (x, y, heading) towards target point (tX, tY) in
 	 * a forward (1) or backward (-1) direction.<\p>
@@ -527,7 +590,9 @@ public class Grasping extends AbstractNodeMain {
 			System.out.println("GRASPING:  clamped RV:" + rv);
 
 			double tv = tD/TRANSPORT_DISTANCE * WHEEL_TV * direction;
+			
 			setVelocity(rv, tv);
+			
 		}
 		return false;
 	}
@@ -545,10 +610,10 @@ public class Grasping extends AbstractNodeMain {
 	private double desired_fixation_distance = .5;
 	private double translation_error_tolerance = .05;
 	private double translation_velocity_gain = 0.5;
-	private double translation_velocity_max = .25;
-	private double rotation_error_tolerance = 0.2;
-	private double rotation_velocity_gain = 0.1;
-	private double rotation_velocity_max = 0.05;
+	private double translation_velocity_max = .10;
+	private double rotation_error_tolerance = Math.PI/180.0*1.0;
+	private double rotation_velocity_gain = 0.5;
+	private double rotation_velocity_max = 0.10;
 	private boolean use_gaussian_blur = false;//true;
   	int videoCounter = 0;
 	/**
@@ -636,11 +701,13 @@ public class Grasping extends AbstractNodeMain {
 					fsmState = RoboFSM.SET_ARM_TO_COLLECT;
 					setVelocity(0.0, 0.0);
 				} else {
+					//System.out.println("GRASPING:   trans, rot:" + blobTrack.translationVelocityCommand + ", " +
+							//blobTrack.rotationVelocityCommand);
 					// move robot towards target
-					System.out.println("GRASPING:   trans, rot:" + blobTrack.translationVelocityCommand + ", " +
-							blobTrack.rotationVelocityCommand);
+					
 					setVelocity(blobTrack.rotationVelocityCommand, blobTrack.translationVelocityCommand);
 
+					
 				}
 				break;
 			}
@@ -1109,7 +1176,9 @@ public class Grasping extends AbstractNodeMain {
 	}
 
   public void setBumpPressed(boolean value) {
-  	System.out.println("GRASPING: /////BUMP PRESSED////");
+  	System.out.println("GRASPING: ////Bump Status////");
+  	System.out.println(bumpPressed);
+  	System.out.println("GRASPING: ////End Bump Status////");
     this.bumpPressed = value;
   }
 
