@@ -1162,7 +1162,7 @@ public class Grasping extends AbstractNodeMain {
 		final double poseGating = pwmToTheta(650);
 
 		final double poseSetShoulderToPull = pwmToTheta(1100);   
-		final double poseShoulderEngage = pwmToTheta(900);                   //radians
+		final double poseShoulderEngage = pwmToTheta(1000);                   //radians
 
 		public ShoulderController() {
 			super(servoPwmMin, servoPwmMax, thetaAtPwmMin, thetaAtPwmMax,
