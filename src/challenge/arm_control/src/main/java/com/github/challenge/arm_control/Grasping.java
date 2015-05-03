@@ -466,19 +466,15 @@ public class Grasping extends AbstractNodeMain {
 						fsmState = RoboFSM.MOVE_BACKWARD;
 						moveDistance=0.35;
 					}
-					break;
-				}
+				} break;
 				case OFF: {
 					System.out.println("Structure Assembly finished"); 
 					setGrasping(OFF, false, false, true);
-					}
-					break;
 				}
+					break;	
 			}
 		} 
-  }
-
-
+	}
 	/**
 	 * <p>Handle an OdometryMessage<\p>
 	 */
