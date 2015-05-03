@@ -161,6 +161,10 @@ public class BlobTracking {
 	        centroidX = xC;
 	        centroidY = yC;
 
+	        System.out.println("//PRINTING X, Y//");
+	        System.out.println(centroidX);
+	        System.out.println(centroidY);
+
 	        int destIndex = 0;
 	        for (int j = 0; j < arraySize; ++j) {
 	          if (connIm[j]-1 == i) {
@@ -526,6 +530,60 @@ public class BlobTracking {
 			// (Solution)
 			//Histogram.getHistogram(src, dest, true); // (Solution)
 			markBlob(src, dest); // (Solution) TODO
+			// (Solution)
+		//} // (Solution)
+		// End Student Code
+	}
+
+	public boolean apply_background(Image src, Image dest) {
+
+		stepTiming(); // monitors the frame rate
+
+		// Begin Student Code
+
+		//averageRGB(src); // (Solution)
+		//averageHSB(src); // (Solution)
+
+		if (useGaussianBlur) {// (Solution)
+			byte[] srcArray = src.toArray();// (Solution)
+			byte[] destArray = new byte[srcArray.length]; // (Solution)
+			if (approximateGaussian) { // (Solution)
+				GaussianBlur.applyBox(srcArray, destArray, src.getWidth(), src.getHeight());
+			} // (Solution)
+			else { // (Solution)
+				GaussianBlur.apply(srcArray, destArray, width, height); // (Solution)
+			} // (Solution)
+			src = new Image(destArray, src.getWidth(), src.getHeight()); // (Solution)
+		}
+		blobPixel(src, blobPixelRedMask, targetRedHueLevel); //(Solution)
+		blobPixel(src, blobPixelBlueMask, targetBlueHueLevel); //(Solution)
+		blobPixel(src, blobPixelYellowMask, targetYellowHueLevel); //(Solution)
+		blobPixel(src, blobPixelGreenMask, targetGreenHueLevel); //(Solution)
+		max_area = -1;
+
+
+		blobPresent(blobPixelRedMask, imageConnected, blobMask);
+		blobPresent(blobPixelBlueMask, imageConnected, blobMask);
+		blobPresent(blobPixelYellowMask, imageConnected, blobMask);
+		blobPresent(blobPixelGreenMask, imageConnected, blobMask);
+		 //(Solution)
+		if (targetDetected) { // (Solution)
+	    	return true;
+			// System.err.println("Bearing (Deg): " + (targetBearing*180.0/Math.PI)); // (Solution)
+			// System.err.println("Range (M): " + targetRange); // (Solution)
+		} else { // (Solution)
+			// System.err.println("no target"); // (Solution)
+			return false;
+		} // (Solution)
+		// (Solution)
+		// System.err.println("Tracking Velocity: " + // (Solution)
+		//		translationVelocityCommand + "m/s, " + // (Solution)
+		//		rotationVelocityCommand + "rad/s"); // (Solution)
+		// For a start, just copy src to dest. // (Solution)
+		//if (dest != null) { // (Solution)
+			// (Solution)
+			//Histogram.getHistogram(src, dest, true); // (Solution)
+			//markBlob(src, dest); // (Solution) TODO
 			// (Solution)
 		//} // (Solution)
 		// End Student Code

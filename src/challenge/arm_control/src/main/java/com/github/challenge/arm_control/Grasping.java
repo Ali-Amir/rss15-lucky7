@@ -88,6 +88,7 @@ enum RoboFSM {
   	REAPPROACH,
   	PULL_BACK,
   	SET_ARM_RETRACTED,
+  	BACKGROUND_PROCESSING_STATE,
 
   	OFF
 
@@ -104,6 +105,8 @@ public class Grasping extends AbstractNodeMain {
 	static final int INITIALIZED = -1;
 	static final int COLLECTING = 0;
 	static final int ASSEMBLING = 1;
+	static final int BACKGROUND_PROCESSING =2 ;
+
 	static final int OFF = 5;
 	/**
 	 * <p>Shoulder joint array index.  Note, current sense is on Orc port 0,
@@ -169,11 +172,12 @@ public class Grasping extends AbstractNodeMain {
 	 * <p> Indicate whether the block is collected or not <\p>
 	 */
 	boolean blockCollected = true;
+	boolean blockFound;
 
 /**
 	 * <p> Indicate whether the structure is assembled or not <\p>
 	 */
-	boolean Assembled = true;
+	boolean assembled = true;
 	
 	/**
 	 * <p>Starting pose of robot before moving<\p>
@@ -337,6 +341,9 @@ public class Grasping extends AbstractNodeMain {
 
 		if (SERVO_MODE == COLLECTING  || SERVO_MODE==ASSEMBLING){
 			fsmState = RoboFSM.INITIALIZE_ARM;
+		}
+		else if (SERVO_MODE == BACKGROUND_PROCESSING){
+			fsmState = RoboFSM.BACKGROUND_PROCESSING_STATE;
 		}
 
 
@@ -899,6 +906,7 @@ public class Grasping extends AbstractNodeMain {
 	 * @param a received camera message
 	 */
 	public synchronized void handle(byte[] rawImage, int width, int height) {
+
     ++videoCounter;
     if (videoCounter % 12 != 0) {
       return;
@@ -976,14 +984,13 @@ public class Grasping extends AbstractNodeMain {
 						(blobTrack.targetBearing*180.0/Math.PI));
 
 				if (Math.abs(blobTrack.rotationVelocityCommand)<0.001 && Math.abs(blobTrack.targetRange-SEARCH_STANDOFF) < EPS_SEARCH_STANDOFF) {
-					fsmState = RoboFSM.SET_ARM_RETRACTED;
+					//fsmState = RoboFSM.SET_ARM_RETRACTED;<<<<
 					setVelocity(0.0, 0.0);
 				} else {
-					//System.out.println("GRASPING:   trans, rot:" + blobTrack.translationVelocityCommand + ", " +
-							//blobTrack.rotationVelocityCommand);
+			
 					// move robot towards target
 					
-					setVelocity(blobTrack.rotationVelocityCommand, blobTrack.translationVelocityCommand);
+					//setVelocity(blobTrack.rotationVelocityCommand, blobTrack.translationVelocityCommand);<<<
 
 					
 				}
@@ -1030,6 +1037,24 @@ public class Grasping extends AbstractNodeMain {
 
 					
 				}
+				break;
+			}
+
+			case BACKGROUND_PROCESSING_STATE: {
+
+
+				Image src = new Image(rawImage, width, height);
+
+				Image dest = new Image(rawImage, width, height);
+				blockFound = blobTrack.apply_background(src, dest);
+
+		
+				//System.out.println("GRASPING: BACKGROUND_PROCESSING");
+				
+				if (blockFound) {
+					setGrasping(COLLECTING, false, true);
+					
+				} 
 				break;
 			}
 		}
