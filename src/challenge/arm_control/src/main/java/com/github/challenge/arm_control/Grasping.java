@@ -450,8 +450,10 @@ public class Grasping extends AbstractNodeMain {
 						// 	setGrasping(OFF, false);
 						// }
 
-						fsmState = RoboFSM.OFF;
-						setGrasping(OFF, true, true);
+						fsmState = RoboFSM.VISUAL_SERVO_SEARCH;
+
+						// fsmState = RoboFSM.OFF;
+						// setGrasping(OFF, true, true);
 						// 	setGrasping(OFF, true);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
@@ -1157,7 +1159,7 @@ public class Grasping extends AbstractNodeMain {
 		//final double poseGrasp =
 		final double poseParallel = pwmToTheta(1450);
 
-		final double poseCollecting = pwmToTheta(1100);
+		final double poseCollecting = pwmToTheta(1500);
 
 		final double poseGating = pwmToTheta(650);
 
