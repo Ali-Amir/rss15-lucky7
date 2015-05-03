@@ -147,6 +147,9 @@ public class BlobTracking {
                             + " miny=" + minY[i] + " maxy=" + maxY[i]);
       }
       if (Math.abs(1.0 - aspectRatio) < 0.2 && r > 5) {
+
+
+
       	if (b_w*b_h>max_area && !isDouble(b_w, b_h)){
 	        int xC = (minX[i] + maxX[i]) / 2;
 	        int yC = (minY[i] + maxY[i]) / 2;
@@ -231,6 +234,27 @@ public class BlobTracking {
 		targetBearing = Math.atan2(deltaX, focalPlaneDistance); //(Solution)
   */
 	} //(Solution)
+
+	public double[] getRangeBearing(double cX, double cY, double tA) { //(Solution)
+    double px = cX;
+    double py = cY;
+    double area = tA;
+
+    double dForward_cm = -0.8587*py + 123.57;
+    double dLateralLeft_cm = -0.3968*px + 31.91;
+
+    double[] results = new double[2];
+    results[0] = dForward_cm/100.0; //dist
+    results[1] = Math.atan2(dLateralLeft_cm, dForward_cm); //header
+    return results;
+  /*
+		double deltaX = centroidX - width / 2.0; //(Solution)
+		targetRange = //(Solution)
+			focalPlaneDistance * targetRadius / Math.sqrt(targetArea / Math.PI); //(Solution)
+		targetBearing = Math.atan2(deltaX, focalPlaneDistance); //(Solution)
+  */
+	} //(Solution)
+
 
 	//(Solution)
 	/**  //(Solution)
