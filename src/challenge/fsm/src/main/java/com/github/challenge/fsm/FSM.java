@@ -276,7 +276,9 @@ public class FSM extends AbstractNodeMain {
 			}
 
 			case ASSEMBLY: {
-					fsmState=RobotFSM.SMART_PATHING;
+
+				fsmState=RobotFSM.SMART_PATHING;
+
 				break;
 			}
 		}
