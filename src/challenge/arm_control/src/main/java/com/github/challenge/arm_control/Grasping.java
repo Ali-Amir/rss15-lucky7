@@ -934,7 +934,7 @@ public class Grasping extends AbstractNodeMain {
 				break;
 			}
 
-			case VISUAL_SERVO_APPROACH: 
+			case VISUAL_SERVO_APPROACH: {
 				blobTrack.desiredFixationDistance = 0.37;
 
 
