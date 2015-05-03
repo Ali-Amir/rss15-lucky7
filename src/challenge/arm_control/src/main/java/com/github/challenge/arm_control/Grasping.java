@@ -201,7 +201,7 @@ public class Grasping extends AbstractNodeMain {
 	/**
 	 * <p>Target reached threshold (m).</p>
 	 **/
-	public static final double TARGET_THRESHOLD = 0.1;
+	public static final double TARGET_THRESHOLD = 0.01;
 
 	/**
 	 * <p>Target reached threshold (m).</p>
