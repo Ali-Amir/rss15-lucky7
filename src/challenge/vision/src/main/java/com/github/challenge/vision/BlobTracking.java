@@ -17,6 +17,8 @@ public class BlobTracking {
 	public int width;
 	public int height;
 
+	public double rectThreshold = 1.4;
+
 	protected float histogram[][]; //(Solution)
 	// (Solution)
 	protected int blobMask[] = null; //(Solution)
@@ -145,7 +147,7 @@ public class BlobTracking {
                             + " miny=" + minY[i] + " maxy=" + maxY[i]);
       }
       if (Math.abs(1.0 - aspectRatio) < 0.2 && r > 5) {
-      	if (b_w*b_h>max_area){
+      	if (b_w*b_h>max_area && !isDouble(b_w, b_h)){
 	        int xC = (minX[i] + maxX[i]) / 2;
 	        int yC = (minY[i] + maxY[i]) / 2;
 
@@ -427,6 +429,17 @@ public class BlobTracking {
 		// System.err.println("Total Avgerage Hue, Sat: "+avg_h+" "+avg_s); // (Solution)
 	} // (Solution)
 
+
+	public boolean isDouble(int width, int height){
+		float ratio1 = (float) (width/height);
+		float ratio2 = (float) (height/width);
+
+		if (ratio1>rectThreshold || ratio2>rectThreshold){
+			return true;
+		}
+		return false;
+
+	}
 	/**
 	 * <p>Segment out a blob from the src image (if a good candidate exists).</p>
 	 *

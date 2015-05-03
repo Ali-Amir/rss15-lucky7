@@ -78,7 +78,7 @@ enum RoboFSM {
 
 	VISUAL_SERVO_SEARCH,
 
-  	RELEASING,
+  	ASSEMBLY,
 
   	OFF
 
