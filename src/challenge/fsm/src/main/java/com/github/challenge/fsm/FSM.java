@@ -207,7 +207,6 @@ public class FSM extends AbstractNodeMain {
 		int mode = msg.getServomode();
 		boolean collected = msg.getCollected();
 		boolean found = msg.getFound();
-		boolean assembled=msg.getAssembled();
 
 
 		switch (fsmState) {
@@ -278,7 +277,6 @@ public class FSM extends AbstractNodeMain {
 
 			case ASSEMBLY: {
 					fsmState=RobotFSM.SMART_PATHING;
-				}
 				break;
 			}
 		}
