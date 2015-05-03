@@ -158,7 +158,7 @@ public class Grasping extends AbstractNodeMain {
 
 	static final double EPS_SEARCH_STANDOFF = 0.01; // m
 	static final double SEARCH_STANDOFF = 0.5; // m
-	static final double APPROACH_STANDOFF = 0.4;
+	static final double APPROACH_STANDOFF = 0.34;
 
 	/**
 	 * <p>Indicates first iteration through position controller<\p>
