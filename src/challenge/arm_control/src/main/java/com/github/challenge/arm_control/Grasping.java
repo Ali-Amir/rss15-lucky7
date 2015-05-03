@@ -846,7 +846,9 @@ public class Grasping extends AbstractNodeMain {
   	private double desired_fixation_distance_approach = .285;
   	private double rotation_velocity_gain_approach = 0.2;
   	private double rotation_velocity_max_approach = 0.05;
-  	private double translation_error_tolerance_approach = .01;
+  	private double translation_error_tolerance_approach = .005;
+  	private double translation_velocity_gain_approach = 0.2;
+	private double translation_velocity_max_approach = .08;
 
 
 	/**
@@ -911,6 +913,8 @@ public class Grasping extends AbstractNodeMain {
 				blobTrack.translationErrorTolerance = translation_error_tolerance;
 				blobTrack.rotationVelocityGain = rotation_velocity_gain;
 				blobTrack.rotationVelocityMax = rotation_velocity_max;
+				blobTrack.translationVelocityGain = translation_velocity_gain;
+				blobTrack.translationVelocityMax = translation_velocity_max;
 
 				Image src = new Image(rawImage, width, height);
 
@@ -950,6 +954,9 @@ public class Grasping extends AbstractNodeMain {
 				blobTrack.translationErrorTolerance = translation_error_tolerance_approach;
 				blobTrack.rotationVelocityGain = rotation_velocity_gain_approach;
 				blobTrack.rotationVelocityMax = rotation_velocity_max_approach;
+
+				blobTrack.translationVelocityGain = translation_velocity_gain_approach;
+				blobTrack.translationVelocityMax = translation_velocity_max_approach;
 
 
 				Image src = new Image(rawImage, width, height);
