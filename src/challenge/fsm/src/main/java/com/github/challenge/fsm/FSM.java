@@ -277,8 +277,6 @@ public class FSM extends AbstractNodeMain {
 			}
 
 			case ASSEMBLY: {
-				if(assembled){
-					System.out.println("Structure Assembled");
 					fsmState=RobotFSM.SMART_PATHING;
 				}
 				break;

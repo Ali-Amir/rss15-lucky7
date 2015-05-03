@@ -338,7 +338,7 @@ public class Grasping extends AbstractNodeMain {
   	int counter = 0;
 	public void handle(ArmMsg msg) {
 		if (SERVO_MODE==INITIALIZED){
-			setGrasping(INITIALIZED, false, false,false);
+			setGrasping(INITIALIZED, false, false);
 		}
 
 		wristControl.update(msg.getPwms()[WRIST_INDEX]);
@@ -435,7 +435,7 @@ public class Grasping extends AbstractNodeMain {
 						// }
 
 						fsmState = RoboFSM.OFF;
-						setGrasping(OFF, true, true, false);
+						setGrasping(OFF, true, true;
 						// 	setGrasping(OFF, true);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
@@ -447,7 +447,7 @@ public class Grasping extends AbstractNodeMain {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("GRASPING: BLOCK IS RELEASED");
 						fsmState = RoboFSM.OFF;
-						setGrasping(OFF, false, false,false);
+						setGrasping(OFF, false, false);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
@@ -469,7 +469,7 @@ public class Grasping extends AbstractNodeMain {
 				} break;
 				case OFF: {
 					System.out.println("Structure Assembly finished"); 
-					setGrasping(OFF, false, false, true);
+					//setGrasping(OFF, false, false);
 				}
 					break;	
 			}
@@ -605,11 +605,11 @@ public class Grasping extends AbstractNodeMain {
 		motionPub.publish(motionMsg);
 	}
 
-	public void setGrasping(int graspingMode, boolean collected, boolean found, boolean assembled){
+	public void setGrasping(int graspingMode, boolean collected, boolean found){
 		GraspingMsg graspingMsg = graspingPub.newMessage();
 		graspingMsg.setServomode(graspingMode);
 		graspingMsg.setCollected(collected);
-		graspingMsg.setAssembled(assembled);
+		//graspingMsg.setAssembled(assembled);
 		graspingMsg.setFound(found);
 		graspingPub.publish(graspingMsg);
 	}
