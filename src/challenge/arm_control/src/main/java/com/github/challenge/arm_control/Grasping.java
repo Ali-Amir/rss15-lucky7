@@ -1161,7 +1161,8 @@ public class Grasping extends AbstractNodeMain {
 
 		final double poseGating = pwmToTheta(650);
 
-		final double poseSetShoulderToPull = pwmToTheta(1100);   
+		final double poseSetShoulderToPull = pwmToTheta(1100); 
+		final double poseSetShoulderRelease = pwmToTheta(1500);   
 		final double poseShoulderEngage = pwmToTheta(1000);                   //radians
 
 		public ShoulderController() {
@@ -1225,7 +1226,7 @@ public class Grasping extends AbstractNodeMain {
 				}
 
 				case RELEASE_BLOCK: {
-					returnVal = super.step(poseSetShoulderToPull);
+					returnVal = super.step(poseSetShoulderRelease);
 					if(isAtDesired()) {
 						System.out.println("GRASPING:   - Shoulder is at desired");
 					}
