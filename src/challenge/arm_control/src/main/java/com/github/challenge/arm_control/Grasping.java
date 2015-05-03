@@ -174,7 +174,7 @@ public class Grasping extends AbstractNodeMain {
 	 * <p>Distance to transport object (m)<\p>
 	 */
 	static final double TRANSPORT_DISTANCE = 0.5;
-	static final double APPROACH_DISTANCE = 0.45;
+	static final double APPROACH_DISTANCE = 0.48;
 
 
 	/**
@@ -317,6 +317,8 @@ public class Grasping extends AbstractNodeMain {
 		if (SERVO_MODE == COLLECTING){
 			fsmState = RoboFSM.INITIALIZE_ARM;
 		}
+
+
 	}
 
 	/**
@@ -378,21 +380,28 @@ public class Grasping extends AbstractNodeMain {
 					// }
 					System.out.println("GRASPING: COLLECTING");
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
-						try {
-						    Thread.sleep(1000);                 //1000 milliseconds is one second.
-						} catch(InterruptedException ex) {
-						    Thread.currentThread().interrupt();
-						}
 						
-						if (bumpPressed){
-							System.out.println("GRASPING: BLOCK IS COLLECTED");
-							fsmState = RoboFSM.OFF;
-							setGrasping(OFF, true);
-						} else {
-							System.out.println("GRASPING: BLOCK WAS NOT COLLECTED");
-							fsmState = RoboFSM.OFF;
-							setGrasping(OFF, false);
-						}
+     					//BUMP SENSOR LOGIC
+						// try {
+						//     Thread.sleep(1000);                 //1000 milliseconds is one second.
+						// } catch(InterruptedException ex) {
+						//     Thread.currentThread().interrupt();
+						// }
+						//BUMP SENSOR LOGIC
+						
+						// if (bumpPressed){
+						// 	System.out.println("GRASPING: BLOCK IS COLLECTED");
+						// 	fsmState = RoboFSM.OFF;
+						// 	setGrasping(OFF, true);
+						// } else {
+						// 	System.out.println("GRASPING: BLOCK WAS NOT COLLECTED");
+						// 	fsmState = RoboFSM.OFF;
+						// 	setGrasping(OFF, false);
+						// }
+
+						fsmState = RoboFSM.OFF;
+						setGrasping(OFF, true);
+						// 	setGrasping(OFF, true);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
@@ -947,7 +956,7 @@ public class Grasping extends AbstractNodeMain {
 
 		final double poseCollecting = pwmToTheta(1100);
 
-		final double poseGating = pwmToTheta(500);                   //radians
+		final double poseGating = pwmToTheta(650);                   //radians
 
 		public ShoulderController() {
 			super(servoPwmMin, servoPwmMax, thetaAtPwmMin, thetaAtPwmMax,
@@ -1050,7 +1059,7 @@ public class Grasping extends AbstractNodeMain {
 
 		double poseExtended = pwmToTheta(800);//thetaMin;
 		double poseCollecting = pwmToTheta(2400);//thetaMax;
-		double poseGating = pwmToTheta(2200);
+		double poseGating = pwmToTheta(2400);
 		//double poseReleasing = thetaMin;  //radians
 
 		public WristController() {
@@ -1176,9 +1185,9 @@ public class Grasping extends AbstractNodeMain {
 	}
 
   public void setBumpPressed(boolean value) {
-  	System.out.println("GRASPING: ////Bump Status////");
-  	System.out.println(bumpPressed);
-  	System.out.println("GRASPING: ////End Bump Status////");
+  	//System.out.println("GRASPING: ////Bump Status////");
+  	//System.out.println(bumpPressed);
+  	//System.out.println("GRASPING: ////End Bump Status////");
     this.bumpPressed = value;
   }
 

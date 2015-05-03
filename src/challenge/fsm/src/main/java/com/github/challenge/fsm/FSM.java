@@ -74,6 +74,11 @@ public class FSM extends AbstractNodeMain {
 	 */
 	Point2D.Double startPoint;
 
+	Point2D.Double assemblyPoint = new Point2D.Double();
+	Point2D.Double testPoint = new Point2D.Double(3.34, 0.73);
+
+
+
 	/**
 	 * <p>Target pose for robot at end of motion<\p>
 	 */
@@ -97,7 +102,7 @@ public class FSM extends AbstractNodeMain {
 	//END ALI!
 
 	private double targetTheta;
-	private double thetaThreshold = Math.PI/180 * 4.0;
+	private int blockCount = 0;
 
 	/**
 	 * <p>Constructor for Grasping object<\p>
@@ -105,6 +110,7 @@ public class FSM extends AbstractNodeMain {
 	public FSM() {
 		fsmState = RobotFSM.INITIALIZE;
 		System.out.println("FSM: FSM Initialized");
+
 	}
 
 	
@@ -122,7 +128,7 @@ public class FSM extends AbstractNodeMain {
 
 		//ALI!
 		graspingPub = node.newPublisher("command/Grasping", GraspingMsg._TYPE);
-		//navPub = node.newPublisher("command/Navigation", NavMsg._TYPE);
+		navPub = node.newPublisher("navigation/GoTo", RobotLocation._TYPE);
 
 		//navSub = node.newSubscriber("rss/NavStatus", NavMsg._TYPE);
 		//navSub.addMessageListener(new NavListener(this));
@@ -154,6 +160,9 @@ public class FSM extends AbstractNodeMain {
 
 			case INITIALIZE: {
 				setVelocity(0.0, 0.0);
+
+				// fsmState = RobotFSM.SMART_PATHING;
+				// setNavigation(testPoint);
 				break;
 			}
 
@@ -162,7 +171,13 @@ public class FSM extends AbstractNodeMain {
 			}
 
 			case SMART_PATHING: {
-				break;
+				double dx = Math.abs(currentPoint.x-testPoint.x);
+				double dy = Math.abs(currentPoint.y-testPoint.y);
+				double dist = Math.sqrt(dx*dx + dy*dy);
+				if (dist<.03){
+					fsmState = RobotFSM.COLLECTION;
+					setGrasping(COLLECTING);
+				}
 			}
 
 			case COLLECTION: {
@@ -186,7 +201,7 @@ public class FSM extends AbstractNodeMain {
 	static final int OFF = 5;
 
 	public void handle(GraspingMsg msg){
-		System.out.println("FSM: //GOT GRASPING MESSAGE//");
+		//System.out.println("FSM: //GOT GRASPING MESSAGE//");
 
 
 		int mode = msg.getServomode();
@@ -198,7 +213,6 @@ public class FSM extends AbstractNodeMain {
 			case INITIALIZE: {
 				fsmState = RobotFSM.COLLECTION;
 				System.out.println("FSM: //COLLECTION//");
-
 				setGrasping(COLLECTING);
 				break;
 			}
@@ -227,6 +241,12 @@ public class FSM extends AbstractNodeMain {
 						if (collected) {
 
 							System.out.println("FSM: BLOCK COLLECTED");
+
+							blockCount += 1;
+
+							if (blockCount>4){
+								fsmState = RobotFSM.SMART_PATHING;
+							}
 
 
 						} else {
@@ -260,81 +280,81 @@ public class FSM extends AbstractNodeMain {
 		}
 	}
 
-	/**
-	 * <p> Handle an Navigation Message<\p>
-	 */
+	// /**
+	//  * <p> Handle an Navigation Message<\p>
+	//  */
 
-	static final int NAV_INITIALIZED = 0;
-	static final int IN_PROGRESS = 1;
-	static final int FINISHED = 2;
+	// static final int NAV_INITIALIZED = 0;
+	// static final int IN_PROGRESS = 1;
+	// static final int FINISHED = 2;
 
-	public void handle(NavStatus msg){
+	// public void handle(NavStatus msg){
 
-		int status = msg.getStatus();
+	// 	int status = msg.getStatus();
 
-		switch (fsmState) {
+	// 	switch (fsmState) {
 
-			case INITIALIZE: {
-				// if (status=="Initialized"){
-				// 	startPoint = currentPoint;
-				// 	startTheta = currentTheta;
-				// 	targetPoint = new Point2D.Double();
-				// 	targetPoint.x = startPoint.x + 
-				// 	.5*Math.cos(startTheta);
-				// 	targetPoint.y = startPoint.y +
-				// 	.5*Math.sin(startTheta);
-				// 	targetTheta = startTheta;
+	// 		case INITIALIZE: {
+	// 			// if (status=="Initialized"){
+	// 			// 	startPoint = currentPoint;
+	// 			// 	startTheta = currentTheta;
+	// 			// 	targetPoint = new Point2D.Double();
+	// 			// 	targetPoint.x = startPoint.x + 
+	// 			// 	.5*Math.cos(startTheta);
+	// 			// 	targetPoint.y = startPoint.y +
+	// 			// 	.5*Math.sin(startTheta);
+	// 			// 	targetTheta = startTheta;
 
-				// 	setNavigationPoints(startPoint, targetPoint);
+	// 			// 	setNavigationPoints(startPoint, targetPoint);
 
-				// 	fsmState = RobotFSM.SMART_PATHING;
-				// }
-				break;
-			}
+	// 			// 	fsmState = RobotFSM.SMART_PATHING;
+	// 			// }
+	// 			break;
+	// 		}
 
-			case EXPLORATORY_PATHING: {
-				break;
-			}
+	// 		case EXPLORATORY_PATHING: {
+	// 			break;
+	// 		}
 
-			case SMART_PATHING: {
+	// 		case SMART_PATHING: {
 
-				switch(status) {
+	// 			switch(status) {
 
-					case IN_PROGRESS: {
-						break;
-					}
+	// 				case IN_PROGRESS: {
+	// 					break;
+	// 				}
 
-					case FINISHED: {
-						double thetaOffset = currentTheta - targetTheta;
+	// 				case FINISHED: {
+	// 					double thetaOffset = currentTheta - targetTheta;
 
-						double rotVel;
+	// 					double rotVel;
 						
-						if (thetaOffset<0){
-							rotVel = .5;
-						}
-						else{
-							rotVel = .5;
-						}
+	// 					if (thetaOffset<0){
+	// 						rotVel = .5;
+	// 					}
+	// 					else{
+	// 						rotVel = .5;
+	// 					}
 
-						if (Math.abs(thetaOffset)<thetaThreshold){
-							fsmState = RobotFSM.COLLECTION;
-							setGrasping(COLLECTING);
-						} else {
-							setVelocity(rotVel, 0);
-						}
-					}
-				}
-			}
+	// 					if (Math.abs(thetaOffset)<thetaThreshold){
+	// 						fsmState = RobotFSM.COLLECTION;
+	// 						setGrasping(COLLECTING);
+	// 					} else {
+	// 						setVelocity(rotVel, 0);
+	// 					}
+	// 				}
+	// 			}
+	// 		}
 
-			case COLLECTION: {
-				break;
-			}
+	// 		case COLLECTION: {
+	// 			break;
+	// 		}
 
-			case ASSEMBLY: {
-				break;
-			}
-		}
-	}
+	// 		case ASSEMBLY: {
+	// 			break;
+	// 		}
+	// 	}
+	// }
 
 	public void setVelocity(double rotVel, double transVel) {
 		MotionMsg motionMsg = motionPub.newMessage();
@@ -343,11 +363,11 @@ public class FSM extends AbstractNodeMain {
 		motionPub.publish(motionMsg);
 	}
 
-	public void setNavigationPoints(Point2D.Double targetPoint){
+	public void setNavigation(Point2D.Double targetPoint){
 		RobotLocation navMsg = navPub.newMessage();
 		navMsg.setX(targetPoint.getX());
 		navMsg.setY(targetPoint.getY());
-		navMsg.setTheta(-1.0);
+		navMsg.setTheta(-20.0);
 	 	navPub.publish(navMsg);
 	}
 
