@@ -13,7 +13,8 @@ double CurTime() {
 }
 
 Simulator::Simulator() {
-  x = y = theta = 0.0;
+  x = y = 0.6;
+  theta = 0.0;
 }
 
 void Simulator::simulateMotion(const MotionMsg::ConstPtr &mot) {

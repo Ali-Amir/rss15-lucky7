@@ -67,6 +67,8 @@ public class Odometry extends AbstractNodeMain {
 
 		pub = node.newPublisher("/rss/odometry", OdometryMsg._TYPE);
     msg = pub.newMessage();
+    msg.setX(0.6);
+    msg.setY(0.6);
 
 		encoderSub = node.newSubscriber("/rss/Encoder", EncoderMsg._TYPE);
 		encoderSub.addMessageListener(new EcoderListener(this));
