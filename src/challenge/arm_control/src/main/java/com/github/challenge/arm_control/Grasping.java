@@ -86,7 +86,7 @@ enum RoboFSM {
   	MOVE_BACKWARD,
 
   	REAPPROACH,
-  	PULL_BACK
+  	PULL_BACK,
 
   	OFF
 
