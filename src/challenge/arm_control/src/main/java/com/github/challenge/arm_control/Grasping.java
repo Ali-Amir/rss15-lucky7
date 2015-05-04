@@ -177,7 +177,7 @@ public class Grasping extends AbstractNodeMain {
 	 * <p>Indicates first iteration through position controller<\p>
 	 */
 	boolean startingMove = true;
-
+boolean rotating = true;
 	/**
 	 * <p> Indicate whether the block is collected or not <\p>
 	 */
@@ -206,7 +206,7 @@ public class Grasping extends AbstractNodeMain {
 	 */
 	static final double TRANSPORT_DISTANCE = 0.5;
 
-	static final double BACK_DISTANCE = 0.50;
+	static final double BACK_DISTANCE = 0.65;
 	
 	static final double APPROACH_DISTANCE = 0.15;
 
@@ -792,16 +792,34 @@ public class Grasping extends AbstractNodeMain {
 						targetTheta = startTheta;
 						startingMove = false;
 					}
-
+					if(rotating) {
+						startPoint = new Point2D.Double();
+						startPoint.x = msg.getX();
+						startPoint.y = msg.getY();
+						startTheta = msg.getTheta();
+						targetPoint = new Point2D.Double();
+						targetPoint.x = startPoint.x -
+						0.1*Math.cos(startTheta);
+						targetPoint.y = startPoint.y -
+						0.1*Math.sin(startTheta);
+						targetTheta = startTheta;
+						rotating = false;
+					}
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
 							targetPoint.y, DIR_BACKWARD)) {
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
 						startingMove = true;
-						setVelocity(0.0, 0.0);
-						//					Robot.setVelocity(0.0, 0.0);
-						fsmState = RoboFSM.SET_ARM_TO_GATE; 
+						setVelocity(0.0, 0.0);//					Robot.setVelocity(0.0, 0.0);
 					}
+					if(rotateTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
+							targetPoint.y, DIR_FORWARD)) {
+						// TBD
+						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
+						rotating = true;
+						setVelocity(0.0, 0.0);//					Robot.setVelocity(0.0, 0.0);
+						fsmState = RoboFSM.SET_ARM_TO_GATE;
+						}
 					break;
 				}
 			}
