@@ -498,7 +498,7 @@ public class Grasping extends AbstractNodeMain {
 		else if (SERVO_MODE == ASSEMBLING) {
 
 			switch (fsmState) {
-
+				
 				case SET_ARM_RETRACTED: {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() ) {
 						System.out.println("========================================================");
