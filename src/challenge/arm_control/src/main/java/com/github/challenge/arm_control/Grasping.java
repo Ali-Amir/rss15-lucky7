@@ -398,7 +398,7 @@ public class Grasping extends AbstractNodeMain {
 						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
 						//fsmState = RoboFSM.ENGAGE_BLOCK;<<
 						fsmState = RoboFSM.BLIND_APPROACH;
-						moveDistance = .19
+						moveDistance = .19;
 					}
 					break;
 				}
