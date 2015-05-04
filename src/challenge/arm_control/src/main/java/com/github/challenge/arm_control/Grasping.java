@@ -908,7 +908,7 @@ public class Grasping extends AbstractNodeMain {
 	private double translation_error_tolerance = .01;
 	private double translation_velocity_gain = 0.5;
 	private double translation_velocity_max = .10;
-	private double rotation_error_tolerance = Math.PI/180.0*1.0;
+	private double rotation_error_tolerance = Math.PI/180.0*0.3;
 	private double rotation_velocity_gain = 0.4;
 	private double rotation_velocity_max = 0.10;
 	private boolean use_gaussian_blur = false;//true;

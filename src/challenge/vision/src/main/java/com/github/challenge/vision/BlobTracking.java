@@ -244,8 +244,8 @@ public class BlobTracking {
     double py = cY;
     double area = tA;
 
-    double dForward_cm = -0.8587*py + 123.57;
-    double dLateralLeft_cm = -0.3968*px + 31.91;
+    double dForward_cm = -0.3361*py + 57.0385;
+    double dLateralLeft_cm = -0.1875*px + 18.4925;
 
     double[] results = new double[2];
     results[0] = dForward_cm/100.0; //dist
