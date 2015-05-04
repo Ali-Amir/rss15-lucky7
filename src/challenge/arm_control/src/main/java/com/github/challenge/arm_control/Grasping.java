@@ -161,7 +161,7 @@ public class Grasping extends AbstractNodeMain {
 
 	static final double EPS_SEARCH_STANDOFF = 0.01; // m
 	static final double SEARCH_STANDOFF = 0.5; // m
-	static final double APPROACH_STANDOFF = 0.27;
+	static final double APPROACH_STANDOFF = 0.31;
 
 	/**
 	 * <p>Indicates first iteration through position controller<\p>
@@ -915,7 +915,7 @@ public class Grasping extends AbstractNodeMain {
   	int videoCounter = 0;
 
 
-  	private double desired_fixation_distance_approach = .27;
+  	private double desired_fixation_distance_approach = .31;
   	private double rotation_velocity_gain_approach = 0.3;
   	private double rotation_velocity_max_approach = 0.05;
   	private double translation_error_tolerance_approach = .005;
