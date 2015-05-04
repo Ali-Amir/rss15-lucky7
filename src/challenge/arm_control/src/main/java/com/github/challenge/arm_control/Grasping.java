@@ -1313,6 +1313,7 @@ public class Grasping extends AbstractNodeMain {
 
 		public long step(ArmMsg msg) {
 			if(SERVO_MODE == COLLECTING) {return step_COLLECTING(msg);}
+			else if(SERVO_MODE == ASSEMBLING) {return step_ASSEMBLING(msg);}
 			else {return (long) 0;}
 		}
 
@@ -1404,7 +1405,94 @@ public class Grasping extends AbstractNodeMain {
 
 			return returnVal;
 		}
+		public long step_ASSEMBLING(ArmMsg msg) {
+			long returnVal;
 
+			switch (fsmState) {
+
+				case INITIALIZE_ARM: {
+					if (wristControl.isAtDesired()){
+						returnVal = super.step(poseGating);
+						if (isAtDesired()) {
+							System.out.println("GRASPING:   - Shoulder is initialized");
+						}
+					} else {
+						returnVal = super.step(poseRetracted);
+						System.out.println("GRASPING:   - Shoulder is waiting for wrist");
+					}	
+					
+					break;
+				}
+
+				case SET_ARM_TO_COLLECT: {
+					returnVal = super.step(poseCollecting);
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Shoulder is at desired");
+					}
+					break;
+				}
+
+				case SET_ARM_TO_PULL: {
+					returnVal = super.step(poseSetShoulderToPull);
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Shoulder is at desired");
+					}
+					break;
+				}
+
+				case ENGAGE_BLOCK: {
+					returnVal = super.step(poseShoulderEngage);
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Shoulder is at desired");
+					}
+					break;
+				}
+
+				case RELEASE_BLOCK: {
+					returnVal = super.step(poseSetShoulderRelease);
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Shoulder is at desired");
+					}
+					break;
+				}
+
+				case SET_ARM_TO_GATE: {
+					returnVal = super.step(poseGating);
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Shoulder is at desired");
+					}
+					break;
+				}
+
+				case SET_ARM_RETRACTED: {
+					returnVal = super.step(poseRetracted);
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Shoulder is at desired");
+					}
+					break;
+				}
+
+				case COLLECTING: {
+					System.out.println("GRASPING: *** COLLECTING OBJECT ***");
+					returnVal = super.step(poseGating);
+					break;
+				}
+
+				case RELEASING: {
+					System.out.println("GRASPING: *** LOWER OBJECT ***");
+					returnVal = super.step(poseRetracted);
+					//setDesired(poseExtended);
+					//returnVal = lowerShoulder(msg, returnVal);
+					break;
+				}
+
+				default : {
+					returnVal = super.step();
+				}
+			}
+
+			return returnVal;
+		}
 
 
 	}
@@ -1451,11 +1539,98 @@ public class Grasping extends AbstractNodeMain {
 
 		public long step(ArmMsg msg) {
 			if(SERVO_MODE == COLLECTING) {return step_COLLECTING(msg);}
+			else if(SERVO_MODE == ASSEMBLING) {return step_ASSEMBLING(msg);}
 			else {return (long) 0;}
 		}
 
 
 		public long step_COLLECTING(ArmMsg msg) {
+			long returnVal;
+
+			switch (fsmState) {
+
+				case INITIALIZE_ARM: {
+					returnVal = super.step(poseGating);
+					if (isAtDesired()) {
+						System.out.println("GRASPING:   - Wrist is initialized");
+					}
+					break;
+				}
+
+				case SET_ARM_TO_COLLECT: {
+					returnVal = super.step(poseCollecting);
+
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Wrist is ready to collect");
+					}
+
+					break;
+				}
+
+				case SET_ARM_TO_GATE: {
+					returnVal = super.step(poseGating);
+
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Wrist is in gating position");
+					}
+
+					break;
+				}
+
+
+
+				case SET_ARM_TO_PULL: {
+					returnVal = super.step(poseSetWristToPull);
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Shoulder is at desired");
+					}
+					break;
+				}
+
+				case ENGAGE_BLOCK: {
+					returnVal = super.step(poseWristEngage);
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Shoulder is at desired");
+					}
+					break;
+				}
+
+				case RELEASE_BLOCK: {
+					returnVal = super.step(poseSetWristToPull);
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Shoulder is at desired");
+					}
+					break;
+				}
+
+				case COLLECTING: {
+					returnVal = super.step(poseGating);
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Wrist is in gating position");
+					}
+
+					break;
+				}
+
+				case RELEASING: {
+					returnVal = super.step(poseGating);
+					if(isAtDesired()) {
+						System.out.println("GRASPING:   - Wrist is in gating position");
+					}
+
+					break;
+				}
+
+				default: {
+					returnVal = super.step();
+					break;
+				}
+			}
+
+			return returnVal;
+		}
+
+		public long step_ASSEMBLING(ArmMsg msg) {
 			long returnVal;
 
 			switch (fsmState) {
