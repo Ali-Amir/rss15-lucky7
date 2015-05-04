@@ -226,8 +226,8 @@ public class BlobTracking {
     double py = centroidY;
     double area = targetArea;
 
-    double dForward_cm = 0.01745*px - 0.337888*py + 55.736;
-    double dLateralLeft_cm = -0.18395*px -0.08606*py + 23.019;
+    double dForward_cm = -0.3361*py + 57.0385;
+    double dLateralLeft_cm = -0.1875*px + 18.4925;
 
     targetRange = dForward_cm/100.0;
     targetBearing = Math.atan2(dLateralLeft_cm, dForward_cm); 
