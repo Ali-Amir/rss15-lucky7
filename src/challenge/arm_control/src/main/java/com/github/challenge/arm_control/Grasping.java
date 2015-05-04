@@ -277,18 +277,21 @@ public class Grasping extends AbstractNodeMain {
 
 	private Subscriber<ArmMsg> armSub;
 	private Subscriber<BumpMsg> bumpSub;
-	private Subscriber<OdometryMsg> odoSub;
+	//private Subscriber<OdometryMsg> odoSub;
 	private Subscriber<sensor_msgs.Image> vidSub;
   private ServiceClient<LocFreeRequest, LocFreeResponse> freeCellClient;
 	@Override
 	public void onStart(ConnectedNode node){
-    try {
-      freeCellClient = 
-        node.newServiceClient("navigation/IsLocationFree", LocFree._TYPE);
-    } catch (Exception e) {
-      System.err.println("No SERVICE IsLocationFree found!!!!!!");
-      //e.printStacktrace();
+    while (true) {
+      try {
+        freeCellClient = 
+          node.newServiceClient("navigation/IsLocationFree", LocFree._TYPE);
+        break;
+      } catch (Exception e) {
+        //System.err.println("No SERVICE IsLocationFree found!!!!!!");
+      }
     }
+    System.out.println("Connected to islocationfree service!");
 
 		armPub = node.newPublisher("command/Arm", ArmMsg._TYPE);
 		motionPub = node.newPublisher("command/Motors", MotionMsg._TYPE);
@@ -303,8 +306,10 @@ public class Grasping extends AbstractNodeMain {
 		armSub.addMessageListener(new ArmListener(this));
 		bumpSub = node.newSubscriber("rss/BumpSensors", BumpMsg._TYPE);
 		bumpSub.addMessageListener(new BumpListener(this));
+    /*
 		odoSub = node.newSubscriber("rss/odometry", OdometryMsg._TYPE);
 		odoSub.addMessageListener(new OdometryListener(this));
+    */
 		locSub = node.newSubscriber("/localization/update", RobotLocation._TYPE);
 		locSub
 		.addMessageListener(new MessageListener<RobotLocation>() {
@@ -314,6 +319,7 @@ public class Grasping extends AbstractNodeMain {
         curLocY = message.getY();
         curLocTheta = message.getTheta();
         blobTrack.updateLocation(curLocX, curLocY, curLocTheta);
+        handle(message);
 			}
 		});
 		graspingSub = node.newSubscriber("command/Grasping", GraspingMsg._TYPE);
@@ -577,7 +583,7 @@ public class Grasping extends AbstractNodeMain {
 	/**
 	 * <p>Handle an OdometryMessage<\p>
 	 */
-	public void handle(OdometryMsg msg) {
+	public void handle(RobotLocation msg) {
 		//System.out.println("Odometry Message: (" + msg.getX() + " ," + msg.getY() + ", " + msg.getTheta() + ")");
 
 		// 

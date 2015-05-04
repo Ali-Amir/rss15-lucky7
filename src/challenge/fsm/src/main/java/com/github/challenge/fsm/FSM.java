@@ -90,7 +90,7 @@ public class FSM extends AbstractNodeMain {
 	private Publisher<MotionMsg> motionPub;
 	private Publisher<sensor_msgs.Image> vidPub;
 
-	private Subscriber<OdometryMsg> odoSub;
+	private Subscriber<RobotLocation> odoSub;
 	//ALI!
 	//private Subscriber<LocalizationMsg> locSub;
 
@@ -123,7 +123,7 @@ public class FSM extends AbstractNodeMain {
 		motionPub = node.newPublisher("command/Motors", MotionMsg._TYPE);
 		vidPub = node.newPublisher("/rss/blobVideo", sensor_msgs.Image._TYPE);
 
-		odoSub = node.newSubscriber("rss/odometry", OdometryMsg._TYPE);
+		odoSub = node.newSubscriber("/localization/update", RobotLocation._TYPE);
 		odoSub.addMessageListener(new OdometryListener(this));
 
 		//ALI!
@@ -150,7 +150,7 @@ public class FSM extends AbstractNodeMain {
 	/**
 	 * <p>Handle an OdometryMessage<\p>
 	 */
-	public void handle(OdometryMsg msg) {
+	public void handle(RobotLocation msg) {
 		//System.out.println("Odometry Message: (" + msg.getX() + " ," + msg.getY() + ", " + msg.getTheta() + ")");
 		currentPoint.x = msg.getX();
 		currentPoint.y = msg.getY();
