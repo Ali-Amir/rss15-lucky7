@@ -399,7 +399,7 @@ public class Grasping extends AbstractNodeMain {
 						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
 						//fsmState = RoboFSM.ENGAGE_BLOCK;<<
 						fsmState = RoboFSM.BLIND_APPROACH;
-						moveDistance = .19;
+						moveDistance = .21;
 					}
 					break;
 				}
@@ -409,7 +409,7 @@ public class Grasping extends AbstractNodeMain {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
 						fsmState = RoboFSM.MOVE_FORWARD;
-						moveDistance = 0.2;
+						moveDistance = 0.16;
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
