@@ -310,7 +310,7 @@ public class Grasping extends AbstractNodeMain {
 		odoSub = node.newSubscriber("rss/odometry", OdometryMsg._TYPE);
 		odoSub.addMessageListener(new OdometryListener(this));
     */
-		locSub = node.newSubscriber("/localization/update", RobotLocation._TYPE);
+		locSub = node.newSubscriber("localization/update", RobotLocation._TYPE);
 		locSub
 		.addMessageListener(new MessageListener<RobotLocation>() {
 			@Override
