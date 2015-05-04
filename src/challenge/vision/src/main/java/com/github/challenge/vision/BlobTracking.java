@@ -186,7 +186,6 @@ public class BlobTracking {
     doneSignal = new CountDownLatch(1);
     totalDetections = 0;
     totalResponses = 0;
-    targetDetected = false;
     boolean foundAtLeastOne = false;
     for (int i = 0; i < numLabels; ++i) {
       int b_w = maxX[i] - minX[i] + 1;
@@ -578,6 +577,7 @@ public class BlobTracking {
 		blobPixel(src, blobPixelGreenMask, targetGreenHueLevel, greenSaturationLevel); //(Solution)
 		max_area = -1;
 
+		targetDetected = false;
 
 		blobPresent(blobPixelRedMask, imageConnected, blobMask);
 		blobPresent(blobPixelBlueMask, imageConnected, blobMask);
@@ -636,6 +636,7 @@ public class BlobTracking {
 		blobPixel(src, blobPixelGreenMask, targetGreenHueLevel); //(Solution)
 		max_area = -1;
 
+		targetDetected = false;
 
 		blobPresent(blobPixelRedMask, imageConnected, blobMask);
 		blobPresent(blobPixelBlueMask, imageConnected, blobMask);
