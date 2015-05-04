@@ -1008,13 +1008,13 @@ public class Grasping extends AbstractNodeMain {
 						(blobTrack.targetBearing*180.0/Math.PI));
 
 				if (Math.abs(blobTrack.rotationVelocityCommand)<0.001 && Math.abs(blobTrack.targetRange-SEARCH_STANDOFF) < EPS_SEARCH_STANDOFF) {
-					//fsmState = RoboFSM.SET_ARM_RETRACTED;<<<<
+					fsmState = RoboFSM.SET_ARM_RETRACTED;
 					setVelocity(0.0, 0.0);
 				} else {
 			
 					// move robot towards target
 					
-					//setVelocity(blobTrack.rotationVelocityCommand, blobTrack.translationVelocityCommand);<<<
+					setVelocity(blobTrack.rotationVelocityCommand, blobTrack.translationVelocityCommand);
 
 					
 				}

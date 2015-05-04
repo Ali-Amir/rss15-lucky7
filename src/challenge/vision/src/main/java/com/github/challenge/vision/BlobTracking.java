@@ -161,9 +161,9 @@ public class BlobTracking {
 	        centroidX = xC;
 	        centroidY = yC;
 
-	        System.out.println("//PRINTING X, Y//");
-	        System.out.println(centroidX);
-	        System.out.println(centroidY);
+	        //System.out.println("//PRINTING X, Y//");
+	        //System.out.println(centroidX);
+	        //System.out.println(centroidY);
 
 	        int destIndex = 0;
 	        for (int j = 0; j < arraySize; ++j) {
