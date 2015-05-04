@@ -18,6 +18,7 @@ class Navigation {
   static constexpr double MAX_BLIND_TIME = 4.0;
   static constexpr double MAX_TRANS_VELOCITY = 0.10;
   static constexpr double MAX_ROT_VELOCITY = 0.130899694; // pi/4 / 5 sec
+  static constexpr double BUFFER_SIZE = 3e-2;
   static const int GRANULARITY = 600;
 
   Navigation();

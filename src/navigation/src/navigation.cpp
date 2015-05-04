@@ -382,7 +382,7 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
         }
       }
 
-      if (!bad) {
+      if (!bad || j <= 2) {
         _trans_velocity = 0.0;
         _rot_velocity = sgn(dtheta)*MAX_ROT_VELOCITY;
         CapVelocities();
@@ -445,14 +445,15 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
     double cury = stay;
     double cur_rad = sta_rad;
     bool ok = 1;
+    double total_dist_so_far = 0.0;
     for (int step = 0; step < GRANULARITY; ++step) {
       Point_3 cur_point(curx, cury, ObstacleMap::RadToRotation(cur_rad));
       Grid::CellId cur_cell;
-      if (!_world->GetCellId(cur_point, &cur_cell)) {
+      if (!_world->GetCellId(cur_point, &cur_cell) && total_dist_so_far > BUFFER_SIZE) {
         ok = false;
         break;
       }
-      if (_world->GetCell(cur_cell) == nullptr) {
+      if (_world->GetCell(cur_cell) == nullptr && total_dist_so_far > BUFFER_SIZE) {
         ok = false;
         break;
       }
@@ -460,6 +461,7 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
       //ROS_INFO("CELL: %.3lf %.3lf %.3lf is reachable", cell->xc, cell->yc, ObstacleMap::IdToRad(cell->rotId));
       curx = curx + dir*mul*cos(cur_rad)/GRANULARITY;
       cury = cury + dir*mul*sin(cur_rad)/GRANULARITY;
+      total_dist_so_far += fabs(mul/GRANULARITY);
       cur_rad = cur_rad + (tar_rad-sta_rad)/GRANULARITY;
     }
 
