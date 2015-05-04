@@ -318,7 +318,9 @@ public class Grasping extends AbstractNodeMain {
         curLocX = message.getX();
         curLocY = message.getY();
         curLocTheta = message.getTheta();
-        blobTrack.updateLocation(curLocX, curLocY, curLocTheta);
+        if (blobTrack != null) {
+          blobTrack.updateLocation(curLocX, curLocY, curLocTheta);
+        }
         handle(message);
 			}
 		});

@@ -79,14 +79,15 @@
                    type="fsm"
                    args="com.github.rosjava.challenge.fsm.FSM"
                    machine="workstation"
-                   output="screen"/>
+                   output="screen">
+      <param name="mapFileName" value="$(env CHALLENGE)/maps/challenge_2015.map" />
+  </node>
 
   <node name="grp" pkg="challenge"
                    type="arm_control"
                    args="com.github.rosjava.challenge.arm_control.Grasping"
                    machine="workstation"
                    output="screen"/>
-<!--
 
   <!--
   <node name="sim" pkg="simulate_orc"
