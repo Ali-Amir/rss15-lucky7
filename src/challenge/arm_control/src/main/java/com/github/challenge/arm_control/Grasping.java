@@ -90,6 +90,7 @@ enum RoboFSM {
 
   	MOVE_FORWARD,
   	MOVE_BACKWARD,
+  	ASSEMBLY_ROTATE;
   	BLIND_APPROACH,
 
   	REAPPROACH,
@@ -557,8 +558,6 @@ boolean rotating = true;
 						System.out.println("========================================================");
 						System.out.println("GRASPING: Arm is now initialized (in retracted state)");
 
-						// part 3b
-						fsmState = RoboFSM.OFF;
 					}
 					break;
 				}
@@ -776,6 +775,34 @@ boolean rotating = true;
 					System.out.println("Retracting Arm ");
 						break;
 				}
+				case ASSEMBLY_ROTATE: {
+					System.out.println("Assembly done: Rotating now");
+
+					if(rotating) {
+						startPoint = new Point2D.Double();
+						startPoint.x = msg.getX();
+						startPoint.y = msg.getY();
+						startTheta = msg.getTheta();
+						targetPoint = new Point2D.Double();
+						targetPoint.x = startPoint.x -
+						0.1*Math.cos(startTheta);
+						targetPoint.y = startPoint.y -
+						0.1*Math.sin(startTheta);
+						targetTheta = startTheta;
+						rotating = false;
+						fsmState = RoboFSM.OFF
+					}
+
+					if(rotateTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
+							targetPoint.y, DIR_FORWARD)) {
+						// TBD
+						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
+						rotating = true;
+						setVelocity(0.0, 0.0);//					Robot.setVelocity(0.0, 0.0);
+						}
+					break; 
+
+				}
 				case MOVE_BACKWARD: {
 			
 					System.out.println("GRASPING: *** MOVE_BACKWARD *** " + startingMove);
@@ -791,20 +818,9 @@ boolean rotating = true;
 						BACK_DISTANCE*Math.sin(startTheta);
 						targetTheta = startTheta;
 						startingMove = false;
+						fsmState=RoboFSM.ASSEMBLY_ROTATE;
 					}
-					if(rotating) {
-						startPoint = new Point2D.Double();
-						startPoint.x = msg.getX();
-						startPoint.y = msg.getY();
-						startTheta = msg.getTheta();
-						targetPoint = new Point2D.Double();
-						targetPoint.x = startPoint.x -
-						0.1*Math.cos(startTheta);
-						targetPoint.y = startPoint.y -
-						0.1*Math.sin(startTheta);
-						targetTheta = startTheta;
-						rotating = false;
-					}
+					
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
 							targetPoint.y, DIR_BACKWARD)) {
 						// TBD
@@ -812,14 +828,6 @@ boolean rotating = true;
 						startingMove = true;
 						setVelocity(0.0, 0.0);//					Robot.setVelocity(0.0, 0.0);
 					}
-					if(rotateTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, DIR_FORWARD)) {
-						// TBD
-						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
-						rotating = true;
-						setVelocity(0.0, 0.0);//					Robot.setVelocity(0.0, 0.0);
-						fsmState = RoboFSM.SET_ARM_TO_GATE;
-						}
 					break;
 				}
 			}
