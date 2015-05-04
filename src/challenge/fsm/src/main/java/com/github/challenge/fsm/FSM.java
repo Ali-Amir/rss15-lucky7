@@ -18,6 +18,7 @@ package com.github.rosjava.challenge.fsm;
 
 import java.awt.geom.Point2D;
 import java.util.*;
+import java.io.FileReader;
 
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
@@ -25,6 +26,7 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
+import org.ros.node.parameter.ParameterTree;
 
 import rss_msgs.ArmMsg;
 import rss_msgs.BumpMsg;
@@ -76,6 +78,7 @@ public class FSM extends AbstractNodeMain {
 
 	Point2D.Double assemblyPoint = new Point2D.Double();
 	Point2D.Double testPoint = new Point2D.Double(3.34, 0.73);
+  int queueInd = 0;
 
 
 
@@ -103,6 +106,16 @@ public class FSM extends AbstractNodeMain {
 
 	private double targetTheta;
 	private int blockCount = 0;
+  protected LinkedList<Block> blocks = new LinkedList<Block>();
+
+  protected Block[] queue = {
+    new Block(0.6, 0.6, "asd"),
+    new Block(2.3875, 1.1625, "asd"),
+    new Block(3.9125, 0.525, "asd"),
+    new Block(4.25, 2.5875, "asd"),
+    new Block(0.9375, 2.1, "asd"),
+  };
+
 
 	/**
 	 * <p>Constructor for Grasping object<\p>
@@ -115,7 +128,16 @@ public class FSM extends AbstractNodeMain {
 
 	
 
-
+  private class Block {
+    public double x;
+    public double y;
+    public String color;
+    Block(double x_, double y_, String color_) {
+      x = x_;
+      y = y_;
+      color = color_;
+    }
+  }
 	
 
 	@Override
@@ -123,7 +145,7 @@ public class FSM extends AbstractNodeMain {
 		motionPub = node.newPublisher("command/Motors", MotionMsg._TYPE);
 		vidPub = node.newPublisher("/rss/blobVideo", sensor_msgs.Image._TYPE);
 
-		odoSub = node.newSubscriber("/localization/update", RobotLocation._TYPE);
+		odoSub = node.newSubscriber("localization/update", RobotLocation._TYPE);
 		odoSub.addMessageListener(new OdometryListener(this));
 
 		//ALI!
@@ -139,12 +161,49 @@ public class FSM extends AbstractNodeMain {
 		//locSub = node.newSubscriber("module/Localization", LocalizationMsg._TYPE);
 		//locSub.addMessageListener(new LocalizationListener(this));
 		//END ALI!
+    
+    ParameterTree paramTree = node.getParameterTree();    
+    String mapFileName = paramTree.getString(node.resolveName("~/mapFileName"));
+    readAndInitBlocks(mapFileName);
 	}
 
 	@Override public GraphName getDefaultNodeName() {
 		return GraphName.of("rss/FSM");
 	}
 
+  protected void readAndInitBlocks(String mapFileName) {
+    try {
+      FileReader f = new FileReader(mapFileName);
+      Scanner scan = new Scanner(f); 
+      // Read start/goal points and world boundaries
+      scan.nextDouble(); scan.nextDouble(); 
+      scan.nextDouble(); scan.nextDouble(); 
+      scan.nextDouble(); scan.nextDouble(); scan.nextDouble(); scan.nextDouble(); 
+      // Read obstacles
+      int numObs = scan.nextInt();
+      for (int i = 0; i < numObs; ++i) {
+        int numVer = scan.nextInt();
+        for (int j = 0; j < numVer; ++j) {
+          scan.nextDouble(); scan.nextDouble();
+        }
+      }
+      int numBlocks = scan.nextInt();
+      for (int i = 0; i < numBlocks; ++i) {
+        double x, y;
+        x = scan.nextDouble();
+        y = scan.nextDouble();
+        String color;
+        color = scan.next();
+        addBlock(new Block(x, y, color));
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  protected void addBlock(Block block) {
+    blocks.add(block);
+  }
 
 
 	/**
@@ -156,6 +215,7 @@ public class FSM extends AbstractNodeMain {
 		currentPoint.y = msg.getY();
 		currentTheta = msg.getTheta();
 
+    synchronized(fsmState) {
 		switch (fsmState) {
 
 			case INITIALIZE: {
@@ -171,6 +231,15 @@ public class FSM extends AbstractNodeMain {
 			}
 
 			case SMART_PATHING: {
+        double distance = Math.sqrt(
+            (currentPoint.x-queue[queueInd].x)*(currentPoint.x-queue[queueInd].x) +
+            (currentPoint.y-queue[queueInd].y)*(currentPoint.y-queue[queueInd].y));
+        if (distance < 2e-1) {
+          queueInd = (queueInd + 1) % queue.length;
+        }
+        Point2D.Double tarPoint = new Point2D.Double(queue[queueInd].x, queue[queueInd].y);
+        setNavigation(tarPoint);
+        /*
 				double dx = Math.abs(currentPoint.x-testPoint.x);
 				double dy = Math.abs(currentPoint.y-testPoint.y);
 				double dist = Math.sqrt(dx*dx + dy*dy);
@@ -178,6 +247,7 @@ public class FSM extends AbstractNodeMain {
 					fsmState = RobotFSM.COLLECTION;
 					setGrasping(COLLECTING);
 				}
+        */
 			}
 
 			case COLLECTION: {
@@ -188,6 +258,7 @@ public class FSM extends AbstractNodeMain {
 				break;
 			}
 		}
+    }
 	}
 
 	
