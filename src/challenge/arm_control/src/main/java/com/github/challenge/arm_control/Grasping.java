@@ -90,7 +90,7 @@ enum RoboFSM {
 
   	MOVE_FORWARD,
   	MOVE_BACKWARD,
-  	ASSEMBLY_ROTATE;
+  	ASSEMBLY_ROTATE,
   	BLIND_APPROACH,
 
   	REAPPROACH,
@@ -792,7 +792,7 @@ boolean rotating = true;
 						0.1*Math.sin(startTheta);
 						targetTheta = startTheta;
 						rotating = false;
-						fsmState = RoboFSM.OFF
+						fsmState = RoboFSM.OFF;
 					}
 
 					if(rotateTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
