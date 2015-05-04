@@ -84,6 +84,7 @@ enum RoboFSM {
 
   	MOVE_FORWARD,
   	MOVE_BACKWARD,
+  	BLIND_APPROACH,
 
   	REAPPROACH,
   	PULL_BACK,
@@ -1010,7 +1011,7 @@ public class Grasping extends AbstractNodeMain {
 
 				if (Math.abs(blobTrack.rotationVelocityCommand)<0.001 && Math.abs(blobTrack.targetRange-SEARCH_STANDOFF) < EPS_SEARCH_STANDOFF) {
 					//fsmState = RoboFSM.SET_ARM_RETRACTED;<<
-					fsmState = RoboFSM.SET_BLADE_TO_PULL;
+					fsmState = RoboFSM.SET_ARM_TO_PULL;
 					setVelocity(0.0, 0.0);
 				} else {
 			
