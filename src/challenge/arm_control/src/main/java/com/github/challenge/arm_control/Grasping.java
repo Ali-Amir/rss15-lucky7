@@ -473,7 +473,7 @@ public class Grasping extends AbstractNodeMain {
 						// 	fsmState = RoboFSM.OFF;
 						// 	setGrasping(OFF, false);
 						// }
-
+						resetVS = true;
 						fsmState = RoboFSM.INITIALIZE_ARM;
 
 						// fsmState = RoboFSM.OFF;
@@ -764,7 +764,8 @@ public class Grasping extends AbstractNodeMain {
 					}
 					break;
 				}
-		}	}
+			}
+		}
 	}
 
 	public void setVelocity(double rotVel, double transVel) {
@@ -923,7 +924,7 @@ public class Grasping extends AbstractNodeMain {
   	private double translation_error_tolerance_approach = .005;
   	private double translation_velocity_gain_approach = 0.2;
 	private double translation_velocity_max_approach = .04;
-
+	private boolean resetVS = false;
 
 	/**
 	 * <p>Handle an image message. Perform blob tracking and
@@ -938,7 +939,7 @@ public class Grasping extends AbstractNodeMain {
       return;
     }
 		// on first camera message, create new BlobTracking instance
-		if ( blobTrack == null ) {
+		if ( blobTrack == null || resetVS == true ) {
 			System.out.println("GRASPING: Blobtracking");
 			blobTrack = new BlobTracking(width, height);
 
@@ -960,6 +961,7 @@ public class Grasping extends AbstractNodeMain {
 			blobTrack.rotationVelocityMax = rotation_velocity_max;
 			blobTrack.useGaussianBlur = use_gaussian_blur;
 			System.out.println("GRASPING: done");
+			resetVS = false;
 		}
 
 		
