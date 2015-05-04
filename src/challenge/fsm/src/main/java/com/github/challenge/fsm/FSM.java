@@ -212,9 +212,9 @@ public class FSM extends AbstractNodeMain {
 		switch (fsmState) {
 
 			case INITIALIZE: {
-				fsmState = RobotFSM.COLLECTION;
+				fsmState = RobotFSM.ASSEMBLY;
 				System.out.println("FSM: //COLLECTION//");
-				setGrasping(COLLECTING);
+				setGrasping(ASSEMBLING);
 				break;
 			}
 
