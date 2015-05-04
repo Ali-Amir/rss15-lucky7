@@ -148,9 +148,11 @@ RobotLocation Localization::currentPositionBelief() const {
 
 void Localization::PublishLocation() {
   RobotLocation currentBelief = currentPositionBelief();
+  /*
   ROS_INFO("Current belief: (%.3lf %.3lf|%.3lf) Odometry: (%.3lf %.3lf|%.3lf)\n",
       currentBelief.x, currentBelief.y, currentBelief.theta,
       _prev_odo_x, _prev_odo_y, _prev_odo_t);
+  */
   // TODO: remove
   currentBelief.x = _prev_odo_x;
   currentBelief.y = _prev_odo_y;
@@ -213,6 +215,10 @@ void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
   double dx = odo->x-_prev_odo_x;
   double dy = odo->y-_prev_odo_y;
   double dt = odo->theta-_prev_odo_t;
+  if (fabs(dx) < 1e-3 && fabs(dy) < 1e-3 && fabs(dt) < M_PI*0.1/180) {
+    return;
+  }
+
   _prev_odo_x = odo->x;
   _prev_odo_y = odo->y;
   _prev_odo_t = odo->theta;
@@ -261,8 +267,7 @@ Vector_2 Rotate(Vector_2 vec, double alfa) {
 }
 
 void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
-  ROS_DEBUG_STREAM("Got sonar update: " << son->sonarId << " range: " << son->range);
-  //return;
+  ROS_INFO_STREAM("Got sonar update: " << son->sonarId << " range: " << son->range);
   double start_time = curTime();
   double varD = 0.01;
   for (Particle &par : _particles) {
