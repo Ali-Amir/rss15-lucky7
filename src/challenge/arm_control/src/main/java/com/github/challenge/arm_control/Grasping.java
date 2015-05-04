@@ -498,9 +498,7 @@ public class Grasping extends AbstractNodeMain {
 		else if (SERVO_MODE == ASSEMBLING) {
 
 			switch (fsmState) {
-<<<<<<< HEAD
 				
-=======
 				case INITIALIZE_ARM: {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() ) {
 						System.out.println("========================================================");
@@ -523,8 +521,6 @@ public class Grasping extends AbstractNodeMain {
 					break;
 				}
 
-
->>>>>>> db0cafef700f60ae3ae4d87dc3a4073c46c2ad9f
 				case SET_ARM_RETRACTED: {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() ) {
 						System.out.println("========================================================");
