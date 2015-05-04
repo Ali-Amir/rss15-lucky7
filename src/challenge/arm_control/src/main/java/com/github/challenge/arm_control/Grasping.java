@@ -160,7 +160,7 @@ public class Grasping extends AbstractNodeMain {
 	 */
 	RoboFSM fsmState;
 
-	static final double EPS_SEARCH_STANDOFF = 0.01; // m
+	static final double EPS_SEARCH_STANDOFF = 0.005; // m
 	static final double SEARCH_STANDOFF = 0.5; // m
 	static final double APPROACH_STANDOFF = 0.31;
 
@@ -399,7 +399,7 @@ public class Grasping extends AbstractNodeMain {
 						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
 						//fsmState = RoboFSM.ENGAGE_BLOCK;<<
 						fsmState = RoboFSM.BLIND_APPROACH;
-						moveDistance = .2;
+						moveDistance = .21;
 					}
 					break;
 				}
@@ -908,7 +908,7 @@ public class Grasping extends AbstractNodeMain {
 	private double blob_size_threshold = 0.015;
 	private double target_radius = 0.1;
 	private double desired_fixation_distance = .5;
-	private double translation_error_tolerance = .01;
+	private double translation_error_tolerance = .005;
 	private double translation_velocity_gain = 0.5;
 	private double translation_velocity_max = .10;
 	private double rotation_error_tolerance = Math.PI/180.0*0.3;
