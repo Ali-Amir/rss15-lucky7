@@ -477,7 +477,7 @@ public class Grasping extends AbstractNodeMain {
 						//fsmState = RoboFSM.INITIALIZE_ARM;
 
 						fsmState = RoboFSM.OFF;
-						resetVS = true;
+						//resetVS = true;
 						setGrasping(OFF, true, true);
 							//setGrasping(OFF, true);
 						//fsmState = RoboFSM.BLIND_APPROACH;
@@ -1018,23 +1018,23 @@ public class Grasping extends AbstractNodeMain {
 				break;
 			}
 
-			case BACKGROUND_PROCESSING_STATE: {
+			// case BACKGROUND_PROCESSING_STATE: {
 
 
-				Image src = new Image(rawImage, width, height);
+			// 	Image src = new Image(rawImage, width, height);
 
-				Image dest = new Image(rawImage, width, height);
-				blockFound = blobTrack.apply_background(src, dest);
+			// 	Image dest = new Image(rawImage, width, height);
+			// 	blockFound = blobTrack.apply_background(src, dest);
 
 		
-				//System.out.println("GRASPING: BACKGROUND_PROCESSING");
+			// 	//System.out.println("GRASPING: BACKGROUND_PROCESSING");
 				
-				if (blockFound) {
-					setGrasping(COLLECTING, false, true);
+			// 	if (blockFound) {
+			// 		setGrasping(COLLECTING, false, true);
 					
-				} 
-				break;
-			}
+			// 	} 
+			// 	break;
+			// }
 		}
 	}
 
