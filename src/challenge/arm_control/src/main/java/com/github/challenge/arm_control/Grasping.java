@@ -22,6 +22,8 @@ import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.AbstractNodeMain;
+import org.ros.node.service.ServiceClient;
+import org.ros.node.service.ServiceResponseListener;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
@@ -30,6 +32,10 @@ import rss_msgs.BumpMsg;
 import rss_msgs.MotionMsg;
 import rss_msgs.OdometryMsg;
 import rss_msgs.GraspingMsg;
+import rss_msgs.LocFree;
+import rss_msgs.LocFreeRequest;
+import rss_msgs.LocFreeResponse;
+import rss_msgs.RobotLocation;
 
 //import com.github.rosjava.challenge.fsm.GraspingListener;
 
@@ -96,6 +102,9 @@ public class Grasping extends AbstractNodeMain {
 	 * lab<\p>
 	 */
 	public int SERVO_MODE;
+  protected double curLocX;
+  protected double curLocY;
+  protected double curLocTheta;
 	static final int INITIALIZED = -1;
 	static final int COLLECTING = 0;
 	static final int ASSEMBLING = 1;
@@ -233,6 +242,7 @@ public class Grasping extends AbstractNodeMain {
 
 	private Publisher<GraspingMsg> graspingPub;
 	private Subscriber<GraspingMsg> graspingSub;
+	private Subscriber<RobotLocation> locSub;
 
 	/**
 	 * <p>Constructor for Grasping object<\p>
@@ -249,13 +259,25 @@ public class Grasping extends AbstractNodeMain {
 	private Subscriber<BumpMsg> bumpSub;
 	private Subscriber<OdometryMsg> odoSub;
 	private Subscriber<sensor_msgs.Image> vidSub;
-
+  private ServiceClient<LocFreeRequest, LocFreeResponse> freeCellClient;
 	@Override
 	public void onStart(ConnectedNode node){
+    try {
+      freeCellClient = 
+        node.newServiceClient("navigation/IsLocationFree", LocFree._TYPE);
+    } catch (Exception e) {
+      System.err.println("No SERVICE IsLocationFree found!!!!!!");
+      //e.printStacktrace();
+    }
+
 		armPub = node.newPublisher("command/Arm", ArmMsg._TYPE);
 		motionPub = node.newPublisher("command/Motors", MotionMsg._TYPE);
 		vidPub = node.newPublisher("/rss/blobVideo", sensor_msgs.Image._TYPE);
 		graspingPub = node.newPublisher("rss/GraspingStatus", GraspingMsg._TYPE);
+
+    curLocX = 0.6;
+    curLocY = 0.6;
+    curLocTheta = 0.0;
 
 		armSub = node.newSubscriber("rss/ArmStatus", ArmMsg._TYPE);
 		armSub.addMessageListener(new ArmListener(this));
@@ -263,6 +285,17 @@ public class Grasping extends AbstractNodeMain {
 		bumpSub.addMessageListener(new BumpListener(this));
 		odoSub = node.newSubscriber("rss/odometry", OdometryMsg._TYPE);
 		odoSub.addMessageListener(new OdometryListener(this));
+		locSub = node.newSubscriber("/localization/update", RobotLocation._TYPE);
+		locSub
+		.addMessageListener(new MessageListener<RobotLocation>() {
+			@Override
+			public void onNewMessage(RobotLocation message) {
+        curLocX = message.getX();
+        curLocY = message.getY();
+        curLocTheta = message.getTheta();
+        blobTrack.updateLocation(curLocX, curLocY, curLocTheta);
+			}
+		});
 		graspingSub = node.newSubscriber("command/Grasping", GraspingMsg._TYPE);
 		graspingSub.addMessageListener(new GraspingListener(this));
 
@@ -760,7 +793,8 @@ public class Grasping extends AbstractNodeMain {
 		// on first camera message, create new BlobTracking instance
 		if ( blobTrack == null ) {
 			System.out.println("GRASPING: Blobtracking");
-			blobTrack = new BlobTracking(width, height);
+			blobTrack = new BlobTracking(width, height, freeCellClient);
+      blobTrack.updateLocation(curLocX, curLocY, curLocTheta);
 
 			blobTrack.targetRedHueLevel = target_red_hue_level;
 			blobTrack.targetBlueHueLevel = target_blue_hue_level;

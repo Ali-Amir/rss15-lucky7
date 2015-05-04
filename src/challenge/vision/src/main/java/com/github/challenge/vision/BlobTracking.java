@@ -2,6 +2,15 @@ package com.github.rosjava.challenge.vision;
 
 import java.awt.Color;
 import com.github.rosjava.challenge.gui.Image;
+import org.ros.node.service.ServiceClient;
+import org.ros.exception.RemoteException;
+import org.ros.node.service.ServiceResponseListener;
+import org.ros.node.NodeConfiguration;
+import org.ros.message.MessageFactory;
+import rss_msgs.LocFreeRequest;
+import rss_msgs.LocFreeResponse;
+import rss_msgs.RobotLocation;
+
 
 /**
  * BlobTracking performs image processing and tracking for the VisualServo
@@ -11,6 +20,11 @@ import com.github.rosjava.challenge.gui.Image;
  * @author previous TA's, prentice
  */
 public class BlobTracking {
+  public int[] blobImTemp;
+  protected double curLocX;
+  protected double curLocY;
+  protected double curLocTheta;
+  protected ServiceClient<LocFreeRequest, LocFreeResponse> free_cell_client;
 	protected int stepCounter = 0;
 	protected double lastStepTime = 0.0;
 
@@ -60,6 +74,8 @@ public class BlobTracking {
 	// (Solution)
 	public double translationVelocityCommand = 0.0; // (Solution)
 	public double rotationVelocityCommand = 0.0; // (Solution)
+  public int totalDetections;
+  public int totalResponses;
 
 	// Variables used for velocity controller that are available to calling
 	// process.  Visual results are valid only if targetDetected==true; motor
@@ -70,17 +86,23 @@ public class BlobTracking {
 	public double targetArea = 0.0; // set in blobPresent()
 	public double targetRange = 0.0; // set in blobFix()
 	public double targetBearing = 0.0; // set in blobFix()
-
+  private NodeConfiguration nodeConfiguration;
+  private MessageFactory messageFactory;
 	/**
 	 * <p>Create a BlobTracking object</p>
 	 *
 	 * @param width image width
 	 * @param height image height
 	 */
-	public BlobTracking(int width, int height) {
+	public BlobTracking(int width, int height,
+      ServiceClient<LocFreeRequest, LocFreeResponse> client) {
 
+    this.free_cell_client = client;
 		this.width = width;
 		this.height = height;
+
+    nodeConfiguration = NodeConfiguration.newPrivate();
+    messageFactory = nodeConfiguration.getTopicMessageFactory();
 
 		histogram = new float[width][3]; // (Solution)
 		// (Solution)
@@ -94,6 +116,25 @@ public class BlobTracking {
 		imageHsb = new float[width * height * 3]; // (Solution)
 	}
 
+  public void updateLocation(double newLocX, double newLocY, double newLocTheta) {
+    curLocX = newLocX;
+    curLocY = newLocY;
+    curLocTheta = newLocTheta;
+  }
+
+  private class Detection {
+    public double xC;
+    public double yC;
+    public double targetArea;
+    public int component;
+    Detection(double x, double y, double a, int comp) {
+      xC = x;
+      yC = y;
+      targetArea = a;
+      component = comp;
+    }
+  }
+
 	//(Solution)
 	//(Solution)
 	/** // (Solution)
@@ -101,8 +142,9 @@ public class BlobTracking {
 	 * build stats on this blob.</p> // (Solution)
 	 **/ // (Solution)
 	protected synchronized void blobPresent(int[] threshIm, int[] connIm, int[] blobIm) { // (Solution)
-    int arraySize = width*height;
+    final int arraySize = width*height;
     connIm = connComp.doLabel(threshIm, connIm, width, height);
+    final int[] connImFinal = connIm;
 
     int numLabels = connComp.getNumberOfLabels();
     int[] labelArea = new int[numLabels];
@@ -112,6 +154,7 @@ public class BlobTracking {
     int[] maxY = new int[numLabels];
     int[] sumX = new int[numLabels];
     int[] sumY = new int[numLabels];
+    blobImTemp = new int[arraySize];
 
     for (int i = 0; i < numLabels; ++i) {
       minX[i] = width;
@@ -133,6 +176,8 @@ public class BlobTracking {
       }
     }
 
+    totalDetections = 0;
+    totalResponses = 0;
     targetDetected = false;
     boolean foundAtLeastOne = false;
     for (int i = 0; i < numLabels; ++i) {
@@ -147,44 +192,70 @@ public class BlobTracking {
                             + " miny=" + minY[i] + " maxy=" + maxY[i]);
       }
       if (Math.abs(1.0 - aspectRatio) < 0.2 && r > 5) {
+      	if (b_w*b_h>max_area && !isDouble(b_w, b_h)) {
 
+          ++totalDetections;
 
+          double xC = (minX[i] + maxX[i]) / 2.0;
+          double yC = (minY[i] + maxY[i]) / 2.0;
+          double area = b_w * b_h;
 
-      	if (b_w*b_h>max_area && !isDouble(b_w, b_h)){
-	        int xC = (minX[i] + maxX[i]) / 2;
-	        int yC = (minY[i] + maxY[i]) / 2;
+          double[] rangeBear = getRangeBearing(xC, yC);
+          LocFreeRequest request =
+            messageFactory.newFromType(LocFreeRequest._TYPE);
+          double d = Math.min(0.4, rangeBear[0]);
+          request.setX(curLocX + Math.cos(curLocTheta)*d);
+          request.setY(curLocY + Math.sin(curLocTheta)*d);
+          request.setTheta(curLocTheta + rangeBear[1]);
 
+          final Detection det = new Detection(xC, yC, area, i);
+          free_cell_client.call(request, new ServiceResponseListener<LocFreeResponse>() {
+            @Override
+            public void onSuccess(LocFreeResponse message) {
+              synchronized(this) {
+                ++totalResponses;
+                if (det.targetArea>max_area) {
+                  // Set internal variables
+                  max_area = det.targetArea;
+                  targetDetected = true;
+                  targetArea = det.targetArea;
+                  centroidX = det.xC;
+                  centroidY = det.yC;
 
-	        // Set internal variables
-	        targetDetected = true;
-	        targetArea = b_w*b_h;
-	        centroidX = xC;
-	        centroidY = yC;
+                  int destIndex = 0;
+                  for (int j = 0; j < arraySize; ++j) {
+                    if (connImFinal[j]-1 == det.component) {
+                      blobImTemp[destIndex++] = 255;
+                    } else {
+                      blobImTemp[destIndex++] = 0;
+                    }
+                  }
+                }
+              }
+            }
 
-	        int destIndex = 0;
-	        for (int j = 0; j < arraySize; ++j) {
-	          if (connIm[j]-1 == i) {
-	            blobIm[destIndex++] = 255;
-	          } else {
-	            blobIm[destIndex++] = 0;
-	          }
-	        }
+            @Override
+            public void onFailure(RemoteException arg0) {
+              synchronized(this) {
+                ++totalResponses;
+              }
+              System.err.println("Failed to get response for LocFree requiest");
+            }
+          });
 	        /*
 	        System.out.println("Centroid coordinates: " + xC + ", " + yC);
 	        System.out.println("Area: " + b_w*b_h);
 	        System.out.println("");
 	        */
-	    }
-	    break;
-	    
-      }
-      /*
-      if (r > 10 && minArea / maxArea > 0.80) {
-        return true;
-      }
-      */
+        } // if b*b> max_area and not double block
+	    } // if aspect ratio is satisfied
+    } // for every connected component
+
+    while (totalDetections > totalResponses);
+    for (int i = 0; i < arraySize; ++i) {
+      blobIm[i] = blobImTemp[i];
     }
-	} // (Solution)
+	} // blobPresent method
 
 	// (Solution)
 	// (Solution)
@@ -235,10 +306,9 @@ public class BlobTracking {
   */
 	} //(Solution)
 
-	public double[] getRangeBearing(double cX, double cY, double tA) { //(Solution)
+	public double[] getRangeBearing(double cX, double cY) { //(Solution)
     double px = cX;
     double py = cY;
-    double area = tA;
 
     double dForward_cm = -0.8587*py + 123.57;
     double dLateralLeft_cm = -0.3968*px + 31.91;
@@ -247,12 +317,6 @@ public class BlobTracking {
     results[0] = dForward_cm/100.0; //dist
     results[1] = Math.atan2(dLateralLeft_cm, dForward_cm); //header
     return results;
-  /*
-		double deltaX = centroidX - width / 2.0; //(Solution)
-		targetRange = //(Solution)
-			focalPlaneDistance * targetRadius / Math.sqrt(targetArea / Math.PI); //(Solution)
-		targetBearing = Math.atan2(deltaX, focalPlaneDistance); //(Solution)
-  */
 	} //(Solution)
 
 
