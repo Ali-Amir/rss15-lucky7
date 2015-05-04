@@ -630,10 +630,10 @@ public class BlobTracking {
 			} // (Solution)
 			src = new Image(destArray, src.getWidth(), src.getHeight()); // (Solution)
 		}
-		blobPixel(src, blobPixelRedMask, targetRedHueLevel); //(Solution)
-		blobPixel(src, blobPixelBlueMask, targetBlueHueLevel); //(Solution)
-		blobPixel(src, blobPixelYellowMask, targetYellowHueLevel); //(Solution)
-		blobPixel(src, blobPixelGreenMask, targetGreenHueLevel); //(Solution)
+		blobPixel(src, blobPixelRedMask, targetRedHueLevel, redSaturationLevel); //(Solution)
+		blobPixel(src, blobPixelBlueMask, targetBlueHueLevel, blueSaturationLevel); //(Solution)
+		blobPixel(src, blobPixelYellowMask, targetYellowHueLevel, yellowSaturationLevel); //(Solution)
+		blobPixel(src, blobPixelGreenMask, targetGreenHueLevel, greenSaturationLevel); //(Solution)
 		max_area = -1;
 
 

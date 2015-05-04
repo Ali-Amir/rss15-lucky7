@@ -35,13 +35,13 @@ class WallMap {
   void BuildMapFromFile(const std::string &mapfile_location); 
   void ParseFromFile(const std::string &mapfile_location);
   void ParsePoint(
-      std::ifstream &stream,
+      FILE *fin,
       cgal_kernel::Point_2 *point);
   void ParseRect(
-      std::ifstream &stream,
+      FILE *fin,
       cgal_kernel::Iso_rectangle_2 *point);
   bool ParseObstacle(
-      std::ifstream &stream,
+      FILE *fin,
       CGAL::Polygon_2<cgal_kernel> *poly);
 
   void BuildTriangles();
