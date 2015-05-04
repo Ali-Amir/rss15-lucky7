@@ -473,12 +473,12 @@ public class Grasping extends AbstractNodeMain {
 						// 	fsmState = RoboFSM.OFF;
 						// 	setGrasping(OFF, false);
 						// }
-						resetVS = true;
-						fsmState = RoboFSM.INITIALIZE_ARM;
+						
+						//fsmState = RoboFSM.INITIALIZE_ARM;
 
-						// fsmState = RoboFSM.OFF;
-						// setGrasping(OFF, true, true);
-						// 	setGrasping(OFF, true);
+						fsmState = RoboFSM.OFF;
+						setGrasping(OFF, true, true);
+							//setGrasping(OFF, true);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;

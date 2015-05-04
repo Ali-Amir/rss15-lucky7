@@ -265,10 +265,15 @@ public class FSM extends AbstractNodeMain {
 								fsmState = RobotFSM.ASSEMBLY;
 							}
 
+							fsmState = RobotFSM.COLLECTION;
+							stopNavigation();
+							setGrasping(COLLECTING);
+
 
 						} else {
 							System.out.println("FSM: BLOCK NOT COLLECTED");
 						}
+
 						// if (collected){
 						// 	startPoint = currentPoint;
 						// 	startTheta = currentTheta;
