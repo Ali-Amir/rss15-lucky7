@@ -198,6 +198,7 @@ public class FSM extends AbstractNodeMain {
 	static final int GRASPING_INITIALIZED = -1;
 	static final int COLLECTING = 0;
 	static final int ASSEMBLING = 1;
+  static final int BACKGROUND_PROCESSING = 2;
 	static final int OFF = 5;
 
 	public void handle(GraspingMsg msg){
@@ -219,10 +220,26 @@ public class FSM extends AbstractNodeMain {
 			}
 
 			case EXPLORATORY_PATHING: {
+				switch (mode) {
+					case COLLECTING: {
+						fsmState = RobotFSM.COLLECTION;
+						stopNavigation();
+						setGrasping(COLLECTING);
+						break;
+					}
+				}
 				break;
 			}
 
 			case SMART_PATHING: {
+				switch (mode) {
+					case COLLECTING: {
+						fsmState = RobotFSM.COLLECTION;
+						stopNavigation();
+						setGrasping(COLLECTING);
+						break;
+					}
+				}
 				break;
 			}
 
@@ -246,13 +263,18 @@ public class FSM extends AbstractNodeMain {
 							blockCount += 1;
 
 							if (blockCount>4){
-								fsmState = RobotFSM.SMART_PATHING;
+								fsmState = RobotFSM.ASSEMBLY;
 							}
+
+							fsmState = RobotFSM.COLLECTION;
+							stopNavigation();
+							setGrasping(COLLECTING);
 
 
 						} else {
 							System.out.println("FSM: BLOCK NOT COLLECTED");
 						}
+
 						// if (collected){
 						// 	startPoint = currentPoint;
 						// 	startTheta = currentTheta;
@@ -276,7 +298,18 @@ public class FSM extends AbstractNodeMain {
 			}
 
 			case ASSEMBLY: {
-				break;
+				switch (mode) {
+
+					case ASSEMBLING: {
+						System.out.println("Starting to assembly blocks");
+						break;
+					}
+					case OFF:{
+					System.out.println("Assembly done");
+					fsmState=RobotFSM.SMART_PATHING;
+					break;
+					}
+				}
 			}
 		}
 	}

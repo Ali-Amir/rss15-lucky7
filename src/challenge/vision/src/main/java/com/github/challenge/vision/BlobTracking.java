@@ -1,6 +1,7 @@
 package com.github.rosjava.challenge.vision;
 
 import java.awt.Color;
+import java.util.concurrent.CountDownLatch;
 import com.github.rosjava.challenge.gui.Image;
 import org.ros.node.service.ServiceClient;
 import org.ros.exception.RemoteException;
@@ -76,6 +77,7 @@ public class BlobTracking {
 	public double rotationVelocityCommand = 0.0; // (Solution)
   public int totalDetections;
   public int totalResponses;
+  protected CountDownLatch doneSignal;
 
 	// Variables used for velocity controller that are available to calling
 	// process.  Visual results are valid only if targetDetected==true; motor
@@ -141,7 +143,7 @@ public class BlobTracking {
 	 * <p>Apply connected components analysis to pick out the largest blob. Then // (Solution)
 	 * build stats on this blob.</p> // (Solution)
 	 **/ // (Solution)
-	protected synchronized void blobPresent(int[] threshIm, int[] connIm, int[] blobIm) { // (Solution)
+	protected void blobPresent(int[] threshIm, int[] connIm, int[] blobIm) { // (Solution)
     final int arraySize = width*height;
     connIm = connComp.doLabel(threshIm, connIm, width, height);
     final int[] connImFinal = connIm;
@@ -176,6 +178,7 @@ public class BlobTracking {
       }
     }
 
+    doneSignal = new CountDownLatch(1);
     totalDetections = 0;
     totalResponses = 0;
     targetDetected = false;
@@ -187,10 +190,6 @@ public class BlobTracking {
       double minArea = Math.min(Math.PI*r*r, labelArea[i]*1.0);
       double maxArea = Math.max(Math.PI*r*r, labelArea[i]*1.0);
       double aspectRatio = 1.0*b_w/b_h;
-      if (r > 5) {
-        System.out.println("HERE: r="+ r + " minx=" + minX[i] + " maxx=" + maxX[i]
-                            + " miny=" + minY[i] + " maxy=" + maxY[i]);
-      }
       if (Math.abs(1.0 - aspectRatio) < 0.2 && r > 5) {
       	if (b_w*b_h>max_area && !isDouble(b_w, b_h)) {
 
@@ -214,7 +213,7 @@ public class BlobTracking {
             public void onSuccess(LocFreeResponse message) {
               synchronized(this) {
                 ++totalResponses;
-                if (det.targetArea>max_area) {
+                if (det.targetArea>max_area && message.getResult()) {
                   // Set internal variables
                   max_area = det.targetArea;
                   targetDetected = true;
@@ -231,6 +230,9 @@ public class BlobTracking {
                     }
                   }
                 }
+                if (totalResponses == totalDetections) {
+                  doneSignal.countDown();
+                }
               }
             }
 
@@ -238,6 +240,9 @@ public class BlobTracking {
             public void onFailure(RemoteException arg0) {
               synchronized(this) {
                 ++totalResponses;
+                if (totalResponses == totalDetections) {
+                  doneSignal.countDown();
+                }
               }
               System.err.println("Failed to get response for LocFree requiest");
             }
@@ -251,7 +256,12 @@ public class BlobTracking {
 	    } // if aspect ratio is satisfied
     } // for every connected component
 
-    while (totalDetections > totalResponses);
+    if (totalDetections > 0) {
+      try { 
+        doneSignal.await();
+      } catch (InterruptedException e) {
+      }
+    }
     for (int i = 0; i < arraySize; ++i) {
       blobIm[i] = blobImTemp[i];
     }
@@ -293,8 +303,8 @@ public class BlobTracking {
     double py = centroidY;
     double area = targetArea;
 
-    double dForward_cm = -0.8587*py + 123.57;
-    double dLateralLeft_cm = -0.3968*px + 31.91;
+    double dForward_cm = -0.3361*py + 57.0385;
+    double dLateralLeft_cm = -0.1875*px + 15.4925; //18
 
     targetRange = dForward_cm/100.0;
     targetBearing = Math.atan2(dLateralLeft_cm, dForward_cm); 
@@ -310,8 +320,8 @@ public class BlobTracking {
     double px = cX;
     double py = cY;
 
-    double dForward_cm = -0.8587*py + 123.57;
-    double dLateralLeft_cm = -0.3968*px + 31.91;
+    double dForward_cm = -0.3361*py + 57.0385;
+    double dLateralLeft_cm = -0.1875*px + 18.4925;
 
     double[] results = new double[2];
     results[0] = dForward_cm/100.0; //dist
@@ -590,6 +600,60 @@ public class BlobTracking {
 			// (Solution)
 			//Histogram.getHistogram(src, dest, true); // (Solution)
 			markBlob(src, dest); // (Solution) TODO
+			// (Solution)
+		//} // (Solution)
+		// End Student Code
+	}
+
+	public boolean apply_background(Image src, Image dest) {
+
+		stepTiming(); // monitors the frame rate
+
+		// Begin Student Code
+
+		//averageRGB(src); // (Solution)
+		//averageHSB(src); // (Solution)
+
+		if (useGaussianBlur) {// (Solution)
+			byte[] srcArray = src.toArray();// (Solution)
+			byte[] destArray = new byte[srcArray.length]; // (Solution)
+			if (approximateGaussian) { // (Solution)
+				GaussianBlur.applyBox(srcArray, destArray, src.getWidth(), src.getHeight());
+			} // (Solution)
+			else { // (Solution)
+				GaussianBlur.apply(srcArray, destArray, width, height); // (Solution)
+			} // (Solution)
+			src = new Image(destArray, src.getWidth(), src.getHeight()); // (Solution)
+		}
+		blobPixel(src, blobPixelRedMask, targetRedHueLevel); //(Solution)
+		blobPixel(src, blobPixelBlueMask, targetBlueHueLevel); //(Solution)
+		blobPixel(src, blobPixelYellowMask, targetYellowHueLevel); //(Solution)
+		blobPixel(src, blobPixelGreenMask, targetGreenHueLevel); //(Solution)
+		max_area = -1;
+
+
+		blobPresent(blobPixelRedMask, imageConnected, blobMask);
+		blobPresent(blobPixelBlueMask, imageConnected, blobMask);
+		blobPresent(blobPixelYellowMask, imageConnected, blobMask);
+		blobPresent(blobPixelGreenMask, imageConnected, blobMask);
+		 //(Solution)
+		if (targetDetected) { // (Solution)
+	    	return true;
+			// System.err.println("Bearing (Deg): " + (targetBearing*180.0/Math.PI)); // (Solution)
+			// System.err.println("Range (M): " + targetRange); // (Solution)
+		} else { // (Solution)
+			// System.err.println("no target"); // (Solution)
+			return false;
+		} // (Solution)
+		// (Solution)
+		// System.err.println("Tracking Velocity: " + // (Solution)
+		//		translationVelocityCommand + "m/s, " + // (Solution)
+		//		rotationVelocityCommand + "rad/s"); // (Solution)
+		// For a start, just copy src to dest. // (Solution)
+		//if (dest != null) { // (Solution)
+			// (Solution)
+			//Histogram.getHistogram(src, dest, true); // (Solution)
+			//markBlob(src, dest); // (Solution) TODO
 			// (Solution)
 		//} // (Solution)
 		// End Student Code

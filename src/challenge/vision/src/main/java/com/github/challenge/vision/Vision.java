@@ -50,6 +50,7 @@ public class Vision extends AbstractNodeMain implements Runnable {
   private double curLocX;
   private double curLocY;
   private double curLocTheta;
+	private Publisher<sensor_msgs.Image> vidPub;
 
 
 	/**
@@ -109,10 +110,21 @@ public class Vision extends AbstractNodeMain implements Runnable {
 
 			blobTrack.apply(src, dest);
 
+      sensor_msgs.Image pubImage = vidPub.newMessage();
+      pubImage.setWidth(width);
+      pubImage.setHeight(height);
+      pubImage.setEncoding("rgb8");
+      pubImage.setIsBigendian((byte)0);
+      pubImage.setStep(width*3);
+      pubImage.setData(org.jboss.netty.buffer.ChannelBuffers.
+                        copiedBuffer(org.jboss.netty.buffer.ChannelBuffers.LITTLE_ENDIAN, dest.toArray()));
+      vidPub.publish(pubImage);
+
 			// update newly formed vision message
-      gui.panel.setVisionImage(dest.toArray(), width, height);
+      //gui.panel.setVisionImage(dest.toArray(), width, height);
 
 			// Begin Student Code
+      /*
 			double transVelocity = 0;
 			double rotVelocity = 0;
       if (blobTrack.targetDetected) {
@@ -124,12 +136,15 @@ public class Vision extends AbstractNodeMain implements Runnable {
         rotVelocity = Math.min(Math.PI/20.0, blobTrack.targetBearing*0.2);
         rotVelocity = Math.max(-Math.PI/20.0, rotVelocity);
       }
+      */
 
 			// publish velocity messages to move the robot towards the target
+      /*
       MotionMsg msg = velocityPub.newMessage();
 			msg.setTranslationalVelocity(transVelocity);
 			msg.setRotationalVelocity(rotVelocity);
 			velocityPub.publish(msg);
+      */
 
 			// End Student Code
 		}
@@ -145,18 +160,22 @@ public class Vision extends AbstractNodeMain implements Runnable {
 	@Override
 	public void onStart(final ConnectedNode node) {
     ServiceClient<LocFreeRequest, LocFreeResponse> client;
-    try {
-      client = node.newServiceClient("navigation/IsLocationFree", LocFree._TYPE);
-    } catch (Exception e) {
-      client = null;
-      System.err.println("onStart Vision: NO SERVICE islocationfree FOUND!!!!");
-      //e.printStacktrace();
+    while (true) {
+      try {
+        client = node.newServiceClient("/navigation/IsLocationFree", LocFree._TYPE);
+        break;
+      } catch (Exception e) {
+        //System.err.println("onStart Vision: NO SERVICE islocationfree FOUND!!!!");
+        //e.printStacktrace();
+      }
     }
+    System.out.println("Initialized Vision!");
 		blobTrack = new BlobTracking(width, height, client);
     curLocX = 0.6;
     curLocY = 0.6;
     curLocTheta = 0.0;
     blobTrack.updateLocation(curLocX, curLocY, curLocTheta);
+		vidPub = node.newPublisher("/rss/blobVideo", sensor_msgs.Image._TYPE);
 
 		// initialize the ROS publication to command/Motors
 		velocityPub = node.newPublisher("command/Motors", MotionMsg._TYPE);
