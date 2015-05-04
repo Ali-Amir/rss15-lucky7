@@ -527,12 +527,14 @@ public class Grasping extends AbstractNodeMain {
 						System.out.println("ASSEMBLING: Arm is now initialized to releasing state");
 						fsmState = RoboFSM.MOVE_BACKWARD;
 					}
-				} break;
+					break;
+				} 
 				case OFF: {
 					System.out.println("Structure Assembly finished"); 
 					setGrasping(OFF, false, false);
-				}
 					break;	
+				}
+					
 			}
 		} 
 	}
