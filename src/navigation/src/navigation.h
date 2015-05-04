@@ -64,6 +64,7 @@ class Navigation {
  public:
   std::shared_ptr<cspace::ObstacleMap> _obs_map;
   rss_msgs::RobotLocation _cur_loc;
+  rss_msgs::RobotLocation _prev_target;
 };
 
 double NormalizeRad(double rad);
