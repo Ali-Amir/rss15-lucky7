@@ -242,7 +242,7 @@ Vector_2 Rotate(Vector_2 vec, double alfa) {
 
 void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
   ROS_INFO_STREAM("Got sonar update: " << son->sonarId << " range: " << son->range);
-  //return;
+  return;
   double start_time = curTime();
   double varD = 0.01;
   for (Particle &par : _particles) {
