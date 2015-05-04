@@ -498,6 +498,28 @@ public class Grasping extends AbstractNodeMain {
 		else if (SERVO_MODE == ASSEMBLING) {
 
 			switch (fsmState) {
+				case INITIALIZE_ARM: {
+					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() ) {
+						System.out.println("========================================================");
+						System.out.println("GRASPING: Arm is now initialized (in retracted state)");
+
+						// part 3b
+						fsmState = RoboFSM.SET_ARM_RETRACTED;
+					}
+					break;
+				}
+
+				case SET_ARM_TO_GATE: {
+					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() ) {
+						System.out.println("========================================================");
+						System.out.println("GRASPING: Arm is now initialized (in retracted state)");
+
+						// part 3b
+						fsmState = RoboFSM.OFF;
+					}
+					break;
+				}
+
 
 				case SET_ARM_RETRACTED: {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() ) {
@@ -705,18 +727,8 @@ public class Grasping extends AbstractNodeMain {
 		else if (SERVO_MODE == ASSEMBLING) {
 			switch (fsmState) {
 
-				case INITIALIZE_ARM: {
-					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() ) {
-						System.out.println("========================================================");
-						System.out.println("GRASPING: Arm is now initialized (in retracted state)");
-
-						// part 3b
-						fsmState = RoboFSM.OFF;
-					}
-					break;
-				}
+				
 				case SET_ARM_RETRACTED: {
-			
 					System.out.println("Retracting Arm ");
 						break;
 				}
@@ -744,7 +756,7 @@ public class Grasping extends AbstractNodeMain {
 						startingMove = true;
 						setVelocity(0.0, 0.0);
 						//					Robot.setVelocity(0.0, 0.0);
-						fsmState = RoboFSM.INITIALIZE_ARM; 
+						fsmState = RoboFSM.SET_ARM_TO_GATE; 
 					}
 					break;
 				}
