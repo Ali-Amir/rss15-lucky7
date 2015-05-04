@@ -525,7 +525,7 @@ public class BlobTracking {
 				} // (Solution)	
 			} // (Solution)
 		} // (Solution)
-    //System.out.println("There are " + cnt + " red pixels. Width="+width + " height=" + height);
+    System.out.println("There are " + cnt + " pixels for hue level = " + targetHueLevel + ". Width="+width + " height=" + height);
 		// (Solution)
 		// avg_h /= width * height; // (Solution)
 		// avg_s /= width * height; // (Solution)
