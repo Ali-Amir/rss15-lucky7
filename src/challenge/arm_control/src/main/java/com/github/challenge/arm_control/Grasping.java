@@ -196,7 +196,7 @@ public class Grasping extends AbstractNodeMain {
 	 */
 	static final double TRANSPORT_DISTANCE = 0.5;
 
-	static final double BACK_DISTANCE = 0.35;
+	static final double BACK_DISTANCE = 0.50;
 	
 	static final double APPROACH_DISTANCE = 0.15;
 
@@ -499,7 +499,7 @@ public class Grasping extends AbstractNodeMain {
 
 			switch (fsmState) {
 
-				case INITIALIZE_ARM: {
+				case SET_ARM_RETRACTED: {
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() ) {
 						System.out.println("========================================================");
 						System.out.println("ASSEMBLING: Arm is now initialized to releasing state");
@@ -705,11 +705,11 @@ public class Grasping extends AbstractNodeMain {
 		else if (SERVO_MODE == ASSEMBLING) {
 			switch (fsmState) {
 
-				case INITIALIZE_ARM: {
-					setVelocity(0.0, 0.0);
-					break;
+				case SET_ARM_RETRACTED: {
+			
+					System.out.println("Retracting Arm ");
+						break;
 				}
-				
 				case MOVE_BACKWARD: {
 			
 					System.out.println("GRASPING: *** MOVE_BACKWARD *** " + startingMove);
