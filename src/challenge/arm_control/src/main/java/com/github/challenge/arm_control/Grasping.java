@@ -206,7 +206,7 @@ public class Grasping extends AbstractNodeMain {
 	/**
 	 * <p>Translational velocity while moving (m/s).</p>
 	 **/
-	public static final double WHEEL_TV = 0.15;
+	public static final double WHEEL_TV = 0.10;
 
 	/**
 	 * <p>Proportional gain for rotation controller while moving.</p>
@@ -473,7 +473,7 @@ public class Grasping extends AbstractNodeMain {
 						// 	fsmState = RoboFSM.OFF;
 						// 	setGrasping(OFF, false);
 						// }
-						
+
 						//fsmState = RoboFSM.INITIALIZE_ARM;
 
 						fsmState = RoboFSM.OFF;
