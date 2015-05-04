@@ -943,7 +943,7 @@ public class Grasping extends AbstractNodeMain {
 	private double target_yellow_hue_level = 0.167;
 	private double target_green_hue_level = 0.42; 
 
-	private double hue_threshold= 0.05;
+	private double hue_threshold= 0.015;
 	private double saturation_level = 0.6;
 	private double blob_size_threshold = 0.015;
 	private double target_radius = 0.1;
