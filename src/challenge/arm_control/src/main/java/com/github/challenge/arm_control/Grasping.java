@@ -319,7 +319,9 @@ boolean rotating = true;
         curLocX = message.getX();
         curLocY = message.getY();
         curLocTheta = message.getTheta();
-        blobTrack.updateLocation(curLocX, curLocY, curLocTheta);
+        if (blobTrack != null) {
+          blobTrack.updateLocation(curLocX, curLocY, curLocTheta);
+        }
         handle(message);
 			}
 		});
@@ -1029,7 +1031,8 @@ boolean rotating = true;
 			System.out.println("Initializing blotTrack: done");
 		}
 
-		 idth, height);
+        Image src = new Image(rawImage, width, height);
+        Image dest = new Image(rawImage, width, height);
         blobTrack.apply(src, dest);
 
         sensor_msgs.Image pubImage = vidPub.newMessage();
@@ -1073,14 +1076,11 @@ boolean rotating = true;
 				// move robot towards target
 				setVelocity(blobTrack.rotationVelocityCommand, blobTrack.translationVelocityCommand);
 			}
-			break;
 		} else {
 	
-			if (blobTracking.targetDetected) {
+			if (blobTrack.targetDetected) {
 				setGrasping(COLLECTING, false, true);
 			} 
-
-			break;
 		
 		}
 	}
