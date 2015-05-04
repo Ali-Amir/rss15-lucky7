@@ -43,7 +43,7 @@
       <param name="mapFileName" value="$(env CHALLENGE)/maps/challenge_2015.map" />
       <param name="testLocalization" value="no" />
       <param name="testWheelVelocities" value="no" />
-      <param name="testNavigationInReality" value="yes" />
+      <param name="testNavigationInReality" value="no" />
   </node>
 
   <node name="loc" pkg="localization"

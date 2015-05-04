@@ -43,51 +43,18 @@
       <param name="mapFileName" value="$(env CHALLENGE)/maps/challenge_2015.map" />
       <param name="testLocalization" value="no" />
       <param name="testWheelVelocities" value="no" />
-      <param name="testNavigationInReality" value="no" />
+      <param name="testNavigationInReality" value="yes" />
   </node>
 
   <node name="loc" pkg="localization"
                    type="localization"
                    args=""
                    machine="workstation"
-                   output="log">
+                   output="screen">
       <param name="mapFileName" value="$(env CHALLENGE)/maps/challenge_2015.map" />
       <param name="testTriangulation" value="no" />
       <param name="leaveBreadCrumbs" value="yes" />
   </node>
-
-  <node name="vid" pkg="gscam"
-                   type="gscam"
-                   machine="workstation" /> 
-
-  <node name="rep" pkg="image_transport"
-                   type="republish"
-                   args="compressed in:=/camera/image_raw raw out:=/rss/video"
-                   machine="workstation"/>
-
-  <node name="view" pkg="image_view"
-                    type="image_view"
-                    args="image:=/rss/video"
-                    machine="workstation" />
-
-  <node name="blobview" pkg="image_view"
-                        type="image_view"
-                        args="image:=/rss/blobVideo"
-                        machine="workstation" />
-
-  <node name="fsm" pkg="challenge"
-                   type="fsm"
-                   args="com.github.rosjava.challenge.fsm.FSM"
-                   machine="workstation"
-                   output="screen">
-      <param name="mapFileName" value="$(env CHALLENGE)/maps/challenge_2015.map" />
-  </node>
-
-  <node name="grp" pkg="challenge"
-                   type="arm_control"
-                   args="com.github.rosjava.challenge.arm_control.Grasping"
-                   machine="workstation"
-                   output="screen"/>
 
   <!--
   <node name="sim" pkg="simulate_orc"

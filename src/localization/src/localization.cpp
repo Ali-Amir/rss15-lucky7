@@ -93,9 +93,15 @@ void Localization::InitializeParticles() {
   double dt = HEADING_TOLERANCE;
 
   default_random_engine generator;
+  /*
   uniform_real_distribution<double> xDist(sx-dx, sx+dx);
   uniform_real_distribution<double> yDist(sy-dy, sy+dy);
   uniform_real_distribution<double> tDist(st-dt, st+dt);
+  */
+
+  uniform_real_distribution<double> xDist(sx-dx, sx+dx);
+  uniform_real_distribution<double> yDist(sy-dy, sy+dy);
+  uniform_real_distribution<double> tDist(0.0, 2*M_PI);
 
   for (int i = 0; i < N; ++i) {
     double x = xDist(generator);
@@ -108,29 +114,43 @@ void Localization::InitializeParticles() {
 RobotLocation Localization::currentPositionBelief() const {
   double x = 0, y = 0, t = 0;
   double normalizer = 0.0;
+  double maxBelief = -1e18;
   for (auto par : _particles) {
+    if (par.belief > maxBelief) {
+      maxBelief = par.belief;
+      x = par.x;
+      y = par.y;
+      t = par.t;
+    }
+    /*
     double prob = exp(par.belief);
     x += par.x*prob;
     y += par.y*prob;
     par.t = NormalizeRad(par.t);
     t += par.t*prob;
     normalizer += prob;
+    */
   }
 
+  /*
   x /= normalizer;
   y /= normalizer;
   t /= normalizer;
   t = NormalizeRad(t);
+  */
 
   RobotLocation currentPosition;
   currentPosition.x = x;
   currentPosition.y = y;
-  currentPosition.theta = t;
+  currentPosition.theta = NormalizeRad(t);
   return currentPosition;
 }
 
 void Localization::PublishLocation() {
   RobotLocation currentBelief = currentPositionBelief();
+  ROS_INFO("Current belief: (%.3lf %.3lf|%.3lf) Odometry: (%.3lf %.3lf|%.3lf)\n",
+      currentBelief.x, currentBelief.y, currentBelief.theta,
+      _prev_odo_x, _prev_odo_y, _prev_odo_t);
   // TODO: remove
   currentBelief.x = _prev_odo_x;
   currentBelief.y = _prev_odo_y;
@@ -241,7 +261,7 @@ Vector_2 Rotate(Vector_2 vec, double alfa) {
 }
 
 void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
-  ROS_INFO_STREAM("Got sonar update: " << son->sonarId << " range: " << son->range);
+  ROS_DEBUG_STREAM("Got sonar update: " << son->sonarId << " range: " << son->range);
   //return;
   double start_time = curTime();
   double varD = 0.01;
@@ -253,7 +273,7 @@ void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
   }
   NormalizeBeliefs();
   PublishLocation();
-  ROS_INFO("onSonarUpdate: time passed %.3lf sec.", curTime()-start_time);
+  ROS_DEBUG("onSonarUpdate: time passed %.3lf sec.", curTime()-start_time);
 }
 
 double NormalizeRad(double rad) {

@@ -166,6 +166,21 @@ bool WithinReach(const RobotLocation &a, const RobotLocation &b) {
 void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
   double cur_time = ros::Time::now().toSec();
   ROS_DEBUG_THROTTLE(3, "Got a moveRobotTo command at navigation module.");
+  bool isSame = false;
+  if (target != nullptr) {
+    double dx = _prev_target.x-target->x;
+    double dy = _prev_target.y-target->y;
+    double dt = _prev_target.theta-target->theta;
+    if (fabs(dx) < 1e-2 && fabs(dy) < 1e-2 && fabs(dt) < 1e-2) {
+      isSame = true;
+    }
+    _prev_target = *target;
+  }
+
+  if (target != nullptr) {
+    //ROS_INFO("COMMAND TO GO TO: %.3lf %.3lf %.3lf. isSame: %d", 
+    //    target->x, target->y, target->theta, (int)isSame);
+  }
 
   if (!UsePreviousCommand() && !_stay_idle) {
     MotionMsg stop_comm;
@@ -177,9 +192,13 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
   int search_status = 1;
   vector<Grid::CellId> bfs_cells;
 
-  if (target != nullptr) {
+  if (target != nullptr && !isSame) {
     if (target->theta > 10.0) {
       _stay_idle = 1;
+      MotionMsg stop_comm;
+      stop_comm.translationalVelocity = 0.0;
+      stop_comm.rotationalVelocity = 0.0;
+      _motor_pub.publish(stop_comm);
     } else if (target->theta > -10.0) {
       _stay_idle = 0;
       bfs_cells = _world->ComputeInitCells(
@@ -205,6 +224,7 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
     _motor_pub.publish(stop_comm);
 
     if (search_status == 0) {
+      /*
       int cnt = 10;
       for (auto id : bfs_cells) {
         if (!cnt--) {
@@ -212,6 +232,7 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
         }
         ROS_INFO("One of the start points: rotId %d", id.rotId);
       }
+      */
       _world->_previous_start_ids = bfs_cells;
       _world->RunBfs(bfs_cells);
     }
