@@ -419,7 +419,7 @@ public class Grasping extends AbstractNodeMain {
 					System.out.println("GRASPING: SET_BLADE_TO_COLLECT");
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
-						fsmState = RoboFSM.VISUAL_SERVO_APPROACH;
+						fsmState = RoboFSM.OFF;
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
@@ -477,6 +477,7 @@ public class Grasping extends AbstractNodeMain {
 						//fsmState = RoboFSM.INITIALIZE_ARM;
 
 						fsmState = RoboFSM.OFF;
+						resetVS = true;
 						setGrasping(OFF, true, true);
 							//setGrasping(OFF, true);
 						//fsmState = RoboFSM.BLIND_APPROACH;
@@ -924,7 +925,6 @@ public class Grasping extends AbstractNodeMain {
   	private double translation_error_tolerance_approach = .005;
   	private double translation_velocity_gain_approach = 0.2;
 	private double translation_velocity_max_approach = .04;
-	private boolean resetVS = false;
 
 	/**
 	 * <p>Handle an image message. Perform blob tracking and
@@ -939,7 +939,7 @@ public class Grasping extends AbstractNodeMain {
       return;
     }
 		// on first camera message, create new BlobTracking instance
-		if ( blobTrack == null || resetVS == true ) {
+		if ( blobTrack == null) {
 			System.out.println("GRASPING: Blobtracking");
 			blobTrack = new BlobTracking(width, height);
 
@@ -961,10 +961,22 @@ public class Grasping extends AbstractNodeMain {
 			blobTrack.rotationVelocityMax = rotation_velocity_max;
 			blobTrack.useGaussianBlur = use_gaussian_blur;
 			System.out.println("GRASPING: done");
-			resetVS = false;
 		}
 
-		
+		Image src = new Image(rawImage, width, height);
+
+		Image dest = new Image(rawImage, width, height);
+		blobTrack.apply(src, dest);
+
+		sensor_msgs.Image pubImage = vidPub.newMessage();
+		pubImage.setWidth(width);
+		pubImage.setHeight(height);
+		pubImage.setEncoding("rgb8");
+		pubImage.setIsBigendian((byte)0);
+		pubImage.setStep(width*3);
+		pubImage.setData(org.jboss.netty.buffer.ChannelBuffers.
+                      copiedBuffer(org.jboss.netty.buffer.ChannelBuffers.LITTLE_ENDIAN, dest.toArray()));
+		vidPub.publish(pubImage);
 
 		// to calibrate standoff distance
 		// wait until breakbeam is tripped, then output that range
@@ -986,27 +998,7 @@ public class Grasping extends AbstractNodeMain {
 
 		switch (fsmState) {
 			case VISUAL_SERVO_SEARCH: {
-				blobTrack.desiredFixationDistance = desired_fixation_distance;
-				blobTrack.translationErrorTolerance = translation_error_tolerance;
-				blobTrack.rotationVelocityGain = rotation_velocity_gain;
-				blobTrack.rotationVelocityMax = rotation_velocity_max;
-				blobTrack.translationVelocityGain = translation_velocity_gain;
-				blobTrack.translationVelocityMax = translation_velocity_max;
-
-				Image src = new Image(rawImage, width, height);
-
-				Image dest = new Image(rawImage, width, height);
-				blobTrack.apply(src, dest);
-
-				sensor_msgs.Image pubImage = vidPub.newMessage();
-				pubImage.setWidth(width);
-				pubImage.setHeight(height);
-				pubImage.setEncoding("rgb8");
-				pubImage.setIsBigendian((byte)0);
-				pubImage.setStep(width*3);
-				pubImage.setData(org.jboss.netty.buffer.ChannelBuffers.
-		                      copiedBuffer(org.jboss.netty.buffer.ChannelBuffers.LITTLE_ENDIAN, dest.toArray()));
-				vidPub.publish(pubImage);
+				
 				System.out.println("GRASPING: VISUAL SERVO SEARCH");
 				System.out.println("GRASPING:   range, bearing:" + blobTrack.targetRange + ", " +
 						(blobTrack.targetBearing*180.0/Math.PI));
@@ -1017,49 +1009,6 @@ public class Grasping extends AbstractNodeMain {
 					setVelocity(0.0, 0.0);
 				} else {
 			
-					// move robot towards target
-					
-					setVelocity(blobTrack.rotationVelocityCommand, blobTrack.translationVelocityCommand);
-
-					
-				}
-				break;
-			}
-
-			case VISUAL_SERVO_APPROACH: {
-				blobTrack.desiredFixationDistance = desired_fixation_distance_approach;
-				blobTrack.translationErrorTolerance = translation_error_tolerance_approach;
-				blobTrack.rotationVelocityGain = rotation_velocity_gain_approach;
-				blobTrack.rotationVelocityMax = rotation_velocity_max_approach;
-
-				blobTrack.translationVelocityGain = translation_velocity_gain_approach;
-				blobTrack.translationVelocityMax = translation_velocity_max_approach;
-
-
-				Image src = new Image(rawImage, width, height);
-
-				Image dest = new Image(rawImage, width, height);
-				blobTrack.apply(src, dest);
-
-				sensor_msgs.Image pubImage = vidPub.newMessage();
-				pubImage.setWidth(width);
-				pubImage.setHeight(height);
-				pubImage.setEncoding("rgb8");
-				pubImage.setIsBigendian((byte)0);
-				pubImage.setStep(width*3);
-				pubImage.setData(org.jboss.netty.buffer.ChannelBuffers.
-		                      copiedBuffer(org.jboss.netty.buffer.ChannelBuffers.LITTLE_ENDIAN, dest.toArray()));
-				vidPub.publish(pubImage);
-				System.out.println("GRASPING: VISUAL SERVO APPORACH");
-				System.out.println("GRASPING:   range, bearing:" + blobTrack.targetRange + ", " +
-						(blobTrack.targetBearing*180.0/Math.PI));
-
-				if (Math.abs(blobTrack.rotationVelocityCommand)<0.001 && Math.abs(blobTrack.targetRange-APPROACH_STANDOFF) < EPS_SEARCH_STANDOFF) {
-					fsmState = RoboFSM.SET_ARM_TO_PULL;
-					setVelocity(0.0, 0.0);
-				} else {
-					//System.out.println("GRASPING:   trans, rot:" + blobTrack.translationVelocityCommand + ", " +
-							//blobTrack.rotationVelocityCommand);
 					// move robot towards target
 					
 					setVelocity(blobTrack.rotationVelocityCommand, blobTrack.translationVelocityCommand);
