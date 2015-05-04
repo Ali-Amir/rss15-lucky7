@@ -178,8 +178,8 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
   }
 
   if (target != nullptr) {
-    ROS_INFO("COMMAND TO GO TO: %.3lf %.3lf %.3lf. isSame: %d", 
-        target->x, target->y, target->theta, (int)isSame);
+    //ROS_INFO("COMMAND TO GO TO: %.3lf %.3lf %.3lf. isSame: %d", 
+    //    target->x, target->y, target->theta, (int)isSame);
   }
 
   if (!UsePreviousCommand() && !_stay_idle) {
