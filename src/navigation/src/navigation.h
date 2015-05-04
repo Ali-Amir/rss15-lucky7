@@ -4,6 +4,7 @@
 #include <ros/ros.h>
 
 #include <rss_msgs/RobotLocation.h>
+#include <rss_msgs/LocFree.h>
 
 #include "obstacle_map.h"
 #include "grid.h"
@@ -17,6 +18,7 @@ class Navigation {
   static constexpr double MAX_BLIND_TIME = 4.0;
   static constexpr double MAX_TRANS_VELOCITY = 0.10;
   static constexpr double MAX_ROT_VELOCITY = 0.130899694; // pi/4 / 5 sec
+  static constexpr double BUFFER_SIZE = 3e-2;
   static const int GRANULARITY = 600;
 
   Navigation();
@@ -30,6 +32,8 @@ class Navigation {
    * Method for handling move commands (to specified location). Sends commands to motion control module.
    **/
   void moveRobotTo(const rss_msgs::RobotLocation::ConstPtr& msg);
+  bool isLocationFree(rss_msgs::LocFree::Request &req,
+                      rss_msgs::LocFree::Response &res);
 
  private:
   void TestWheelVelocities();

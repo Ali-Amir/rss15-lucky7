@@ -50,6 +50,8 @@ enum RobotFSM{
 
 	COLLECTION,
 
+	RETURN_TO_ASSEMBLY,
+
 	ASSEMBLY
 
 }
@@ -90,7 +92,7 @@ public class FSM extends AbstractNodeMain {
 	private Publisher<MotionMsg> motionPub;
 	private Publisher<sensor_msgs.Image> vidPub;
 
-	private Subscriber<OdometryMsg> odoSub;
+	private Subscriber<RobotLocation> odoSub;
 	//ALI!
 	//private Subscriber<LocalizationMsg> locSub;
 
@@ -123,7 +125,7 @@ public class FSM extends AbstractNodeMain {
 		motionPub = node.newPublisher("command/Motors", MotionMsg._TYPE);
 		vidPub = node.newPublisher("/rss/blobVideo", sensor_msgs.Image._TYPE);
 
-		odoSub = node.newSubscriber("rss/odometry", OdometryMsg._TYPE);
+		odoSub = node.newSubscriber("/localization/update", RobotLocation._TYPE);
 		odoSub.addMessageListener(new OdometryListener(this));
 
 		//ALI!
@@ -150,7 +152,7 @@ public class FSM extends AbstractNodeMain {
 	/**
 	 * <p>Handle an OdometryMessage<\p>
 	 */
-	public void handle(OdometryMsg msg) {
+	public void handle(RobotLocation msg) {
 		//System.out.println("Odometry Message: (" + msg.getX() + " ," + msg.getY() + ", " + msg.getTheta() + ")");
 		currentPoint.x = msg.getX();
 		currentPoint.y = msg.getY();
@@ -198,6 +200,7 @@ public class FSM extends AbstractNodeMain {
 	static final int GRASPING_INITIALIZED = -1;
 	static final int COLLECTING = 0;
 	static final int ASSEMBLING = 1;
+  static final int BACKGROUND_PROCESSING = 2;
 	static final int OFF = 5;
 
 	public void handle(GraspingMsg msg){
@@ -214,7 +217,7 @@ public class FSM extends AbstractNodeMain {
 			case INITIALIZE: {
 				fsmState = RobotFSM.SMART_PATHING;
 				System.out.println("FSM: //COLLECTION//");
-				setGrasping(COLLECTING);
+				setGrasping(BACKGROUND_PROCESSING);
 				break;
 			}
 
@@ -262,14 +265,12 @@ public class FSM extends AbstractNodeMain {
 							blockCount += 1;
 
 							if (blockCount>4){
-								fsmState = RobotFSM.ASSEMBLY;
+								fsmState = RobotFSM.RETURN_TO_ASSEMBLY;
+							} else {
+								fsmState = RobotFSM.SMART_PATHING;
 							}
 
-							fsmState = RobotFSM.COLLECTION;
-							stopNavigation();
-							setGrasping(COLLECTING);
-
-
+						
 						} else {
 							System.out.println("FSM: BLOCK NOT COLLECTED");
 						}

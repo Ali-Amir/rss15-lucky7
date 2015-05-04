@@ -116,8 +116,10 @@ void Navigation::TestWheelVelocities() {
 }
 
 void Navigation::updateRobotLocation(const RobotLocation::ConstPtr &loc) {
-  ROS_INFO_STREAM_THROTTLE(10, "GOT POSITION UPDATE! TIME: " << CurTime()-_time << ". "
-    << "Current location: (" << loc->x << " " << loc->y << " : " << ObstacleMap::RadToRotation(loc->theta) << ")");
+  ROS_INFO_STREAM_THROTTLE(10, "GOT POSITION UPDATE! TIME: "
+      << CurTime()-_time << ". "
+      << "Current location: (" << loc->x << " " << loc->y << " : "
+      << ObstacleMap::RadToRotation(loc->theta) << ")");
 
   _cur_loc = *loc;
 
@@ -134,40 +136,15 @@ void Navigation::updateRobotLocation(const RobotLocation::ConstPtr &loc) {
   }
 }
 
-void Navigation::PublishGUICSObstacles(int lvl) {
-  if (_prevLevel >= 0) {
-    const auto &polys = _obs_map->_lvl_obstacles[_prevLevel];
-    for (const shared_ptr<Polygon_2> &poly : polys) {
-      GUIPolyMsg new_poly;
-      new_poly.numVertices = poly->size();
-      for (int i = 0; i < poly->size(); ++i) {
-        new_poly.x.push_back(int(CGAL::to_double((*poly)[i].x())*1e3)/1e3);
-        new_poly.y.push_back(int(CGAL::to_double((*poly)[i].y())*1e3)/1e3);
-      }
-      new_poly.c.r = 255;
-      new_poly.c.g = 255;
-      new_poly.c.b = 255;
-      new_poly.closed = 1;
-      _guipoly_pub.publish(new_poly);
-    }
-  }
-  {
-    const auto &polys = _obs_map->_lvl_obstacles[lvl];
-    for (const shared_ptr<Polygon_2> &poly : polys) {
-      GUIPolyMsg new_poly;
-      new_poly.numVertices = poly->size();
-      for (int i = 0; i < poly->size(); ++i) {
-        new_poly.x.push_back(int(CGAL::to_double((*poly)[i].x())*1e3)/1e3);
-        new_poly.y.push_back(int(CGAL::to_double((*poly)[i].y())*1e3)/1e3);
-      }
-      new_poly.c.r = 255;
-      new_poly.c.g = 0;
-      new_poly.c.b = 0;
-      new_poly.closed = 1;
-      _guipoly_pub.publish(new_poly);
-    }
-    _prevLevel = lvl;
-  }
+bool Navigation::isLocationFree(
+    LocFree::Request &req, LocFree::Response &res) {
+  Grid::CellId cur_cell_id;
+  assert(_world->GetCellId(Point_3(req.x, req.y,
+                           ObstacleMap::RadToRotation(req.theta)),
+                           &cur_cell_id));
+  const Grid::Cell *cur_cell(_world->GetCell(cur_cell_id));
+  res.result = cur_cell != nullptr;
+  return true;
 }
 
 bool Navigation::UsePreviousCommand() {
@@ -405,7 +382,7 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
         }
       }
 
-      if (!bad) {
+      if (!bad || j <= 2) {
         _trans_velocity = 0.0;
         _rot_velocity = sgn(dtheta)*MAX_ROT_VELOCITY;
         CapVelocities();
@@ -468,14 +445,15 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
     double cury = stay;
     double cur_rad = sta_rad;
     bool ok = 1;
+    double total_dist_so_far = 0.0;
     for (int step = 0; step < GRANULARITY; ++step) {
       Point_3 cur_point(curx, cury, ObstacleMap::RadToRotation(cur_rad));
       Grid::CellId cur_cell;
-      if (!_world->GetCellId(cur_point, &cur_cell)) {
+      if (!_world->GetCellId(cur_point, &cur_cell) && total_dist_so_far > BUFFER_SIZE) {
         ok = false;
         break;
       }
-      if (_world->GetCell(cur_cell) == nullptr) {
+      if (_world->GetCell(cur_cell) == nullptr && total_dist_so_far > BUFFER_SIZE) {
         ok = false;
         break;
       }
@@ -483,6 +461,7 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
       //ROS_INFO("CELL: %.3lf %.3lf %.3lf is reachable", cell->xc, cell->yc, ObstacleMap::IdToRad(cell->rotId));
       curx = curx + dir*mul*cos(cur_rad)/GRANULARITY;
       cury = cury + dir*mul*sin(cur_rad)/GRANULARITY;
+      total_dist_so_far += fabs(mul/GRANULARITY);
       cur_rad = cur_rad + (tar_rad-sta_rad)/GRANULARITY;
     }
 
@@ -525,6 +504,42 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
       ROS_INFO("COMMANDING TO GO FROM (%.2lf,%.2lf,%.3lf) to (%.2lf,%.2lf,%.3lf)", stax,stay,ObstacleMap::RadToRotation(sta_rad), tarx,tary,ObstacleMap::RadToRotation(tar_rad));
       return;
     }
+  }
+}
+
+void Navigation::PublishGUICSObstacles(int lvl) {
+  if (_prevLevel >= 0) {
+    const auto &polys = _obs_map->_lvl_obstacles[_prevLevel];
+    for (const shared_ptr<Polygon_2> &poly : polys) {
+      GUIPolyMsg new_poly;
+      new_poly.numVertices = poly->size();
+      for (int i = 0; i < poly->size(); ++i) {
+        new_poly.x.push_back(int(CGAL::to_double((*poly)[i].x())*1e3)/1e3);
+        new_poly.y.push_back(int(CGAL::to_double((*poly)[i].y())*1e3)/1e3);
+      }
+      new_poly.c.r = 255;
+      new_poly.c.g = 255;
+      new_poly.c.b = 255;
+      new_poly.closed = 1;
+      _guipoly_pub.publish(new_poly);
+    }
+  }
+  {
+    const auto &polys = _obs_map->_lvl_obstacles[lvl];
+    for (const shared_ptr<Polygon_2> &poly : polys) {
+      GUIPolyMsg new_poly;
+      new_poly.numVertices = poly->size();
+      for (int i = 0; i < poly->size(); ++i) {
+        new_poly.x.push_back(int(CGAL::to_double((*poly)[i].x())*1e3)/1e3);
+        new_poly.y.push_back(int(CGAL::to_double((*poly)[i].y())*1e3)/1e3);
+      }
+      new_poly.c.r = 255;
+      new_poly.c.g = 0;
+      new_poly.c.b = 0;
+      new_poly.closed = 1;
+      _guipoly_pub.publish(new_poly);
+    }
+    _prevLevel = lvl;
   }
 }
 

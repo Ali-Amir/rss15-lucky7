@@ -99,7 +99,6 @@ add_executable(navigation src/server.cpp
                           src/navigation.cpp
                           src/obstacle_map.cpp
                           src/cspace_tools.cpp
-                          #src/random_net.cpp
                           src/grid.cpp)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lCGAL -std=c++11 -frounding-math -lgmp -lglpk -lCGAL_Core -O2")

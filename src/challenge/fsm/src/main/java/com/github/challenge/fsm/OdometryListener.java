@@ -17,9 +17,9 @@
 package com.github.rosjava.challenge.fsm;
 
 import org.ros.message.MessageListener;
-import rss_msgs.OdometryMsg;
+import rss_msgs.RobotLocation;
 
-public class OdometryListener implements MessageListener<OdometryMsg> {
+public class OdometryListener implements MessageListener<RobotLocation> {
 
 	private FSM grasp;
 
@@ -28,7 +28,7 @@ public class OdometryListener implements MessageListener<OdometryMsg> {
 	}
 
 	@Override
-	public void onNewMessage(OdometryMsg msg) {
+	public void onNewMessage(RobotLocation msg) {
 		grasp.handle(msg);
 	}
 

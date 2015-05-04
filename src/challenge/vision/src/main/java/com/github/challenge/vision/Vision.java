@@ -21,9 +21,15 @@ import java.util.concurrent.ArrayBlockingQueue;
 import org.ros.message.MessageListener;
 import rss_msgs.MotionMsg;
 import rss_msgs.OdometryMsg;
+import rss_msgs.RobotLocation;
+import rss_msgs.LocFree;
+import rss_msgs.LocFreeRequest;
+import rss_msgs.LocFreeResponse;
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
+import org.ros.node.service.ServiceClient;
+import org.ros.node.service.ServiceResponseListener;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
@@ -41,6 +47,11 @@ public class Vision extends AbstractNodeMain implements Runnable {
 
 	private static final int height = 120;
 
+  private double curLocX;
+  private double curLocY;
+  private double curLocTheta;
+	private Publisher<sensor_msgs.Image> vidPub;
+
 
 	/**
 	 * <p>The blob tracker.</p>
@@ -54,6 +65,7 @@ public class Vision extends AbstractNodeMain implements Runnable {
 
 	protected boolean firstUpdate = true;
 
+	public Subscriber<RobotLocation> locSub;
 	public Subscriber<sensor_msgs.Image> vidSub;
 	public Subscriber<OdometryMsg> odoSub;
 	
@@ -80,7 +92,6 @@ public class Vision extends AbstractNodeMain implements Runnable {
 	 * @param rawImage a received camera message
 	 */
 	public void handle(byte[] rawImage) {
-
 		visionImage.offer(rawImage);
 	}
 
@@ -99,10 +110,21 @@ public class Vision extends AbstractNodeMain implements Runnable {
 
 			blobTrack.apply(src, dest);
 
+      sensor_msgs.Image pubImage = vidPub.newMessage();
+      pubImage.setWidth(width);
+      pubImage.setHeight(height);
+      pubImage.setEncoding("rgb8");
+      pubImage.setIsBigendian((byte)0);
+      pubImage.setStep(width*3);
+      pubImage.setData(org.jboss.netty.buffer.ChannelBuffers.
+                        copiedBuffer(org.jboss.netty.buffer.ChannelBuffers.LITTLE_ENDIAN, dest.toArray()));
+      vidPub.publish(pubImage);
+
 			// update newly formed vision message
-            gui.panel.setVisionImage(dest.toArray(), width, height);
+      //gui.panel.setVisionImage(dest.toArray(), width, height);
 
 			// Begin Student Code
+      /*
 			double transVelocity = 0;
 			double rotVelocity = 0;
       if (blobTrack.targetDetected) {
@@ -114,15 +136,16 @@ public class Vision extends AbstractNodeMain implements Runnable {
         rotVelocity = Math.min(Math.PI/20.0, blobTrack.targetBearing*0.2);
         rotVelocity = Math.max(-Math.PI/20.0, rotVelocity);
       }
-			
-			
+      */
+
 			// publish velocity messages to move the robot towards the target
+      /*
       MotionMsg msg = velocityPub.newMessage();
 			msg.setTranslationalVelocity(transVelocity);
 			msg.setRotationalVelocity(rotVelocity);
 			velocityPub.publish(msg);
-			
-			
+      */
+
 			// End Student Code
 		}
 	}
@@ -136,13 +159,23 @@ public class Vision extends AbstractNodeMain implements Runnable {
 	 */
 	@Override
 	public void onStart(final ConnectedNode node) {
-		blobTrack = new BlobTracking(width, height);
-
-		// Begin Student Code
-
-		// set parameters on blobTrack as you desire
-
-
+    ServiceClient<LocFreeRequest, LocFreeResponse> client;
+    while (true) {
+      try {
+        client = node.newServiceClient("/navigation/IsLocationFree", LocFree._TYPE);
+        break;
+      } catch (Exception e) {
+        //System.err.println("onStart Vision: NO SERVICE islocationfree FOUND!!!!");
+        //e.printStacktrace();
+      }
+    }
+    System.out.println("Initialized Vision!");
+		blobTrack = new BlobTracking(width, height, client);
+    curLocX = 0.6;
+    curLocY = 0.6;
+    curLocTheta = 0.0;
+    blobTrack.updateLocation(curLocX, curLocY, curLocTheta);
+		vidPub = node.newPublisher("/rss/blobVideo", sensor_msgs.Image._TYPE);
 
 		// initialize the ROS publication to command/Motors
 		velocityPub = node.newPublisher("command/Motors", MotionMsg._TYPE);
@@ -150,6 +183,18 @@ public class Vision extends AbstractNodeMain implements Runnable {
 
 
 		final boolean reverseRGB = node.getParameterTree().getBoolean("reverse_rgb", false);
+
+		locSub = node.newSubscriber("/localization/update", RobotLocation._TYPE);
+		locSub
+		.addMessageListener(new MessageListener<RobotLocation>() {
+			@Override
+			public void onNewMessage(RobotLocation message) {
+        curLocX = message.getX();
+        curLocY = message.getY();
+        curLocTheta = message.getTheta();
+        blobTrack.updateLocation(curLocX, curLocY, curLocTheta);
+			}
+		});
 
 		vidSub = node.newSubscriber("/rss/video", sensor_msgs.Image._TYPE);
 		vidSub

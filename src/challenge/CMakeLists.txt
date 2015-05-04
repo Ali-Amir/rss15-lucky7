@@ -28,13 +28,13 @@ catkin_package(
   message_runtime
 )
 
-add_message_files(
-  DIRECTORY
-  ../rss_msgs/msg
-  FILES
-  MotionMsg.msg
-  BumpMsg.msg
-)
+#add_message_files(
+#  DIRECTORY
+#  ../rss_msgs/msg
+#  FILES
+#  MotionMsg.msg
+#  BumpMsg.msg
+#)
 
 ##############################################################################
 # Installation

@@ -9,7 +9,8 @@ project(rss_msgs)
 # Catkin
 ##############################################################################
 
-find_package(catkin REQUIRED rosjava_build_tools gencpp genmsg message_generation)
+include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+find_package(catkin REQUIRED rosjava_build_tools gencpp genjava genmsg message_generation)
 
 add_message_files(
   DIRECTORY msg
@@ -25,6 +26,12 @@ add_message_files(
   ResetMsg.msg
   SonarMsg.msg
   RobotLocation.msg
+)
+
+add_service_files(
+  DIRECTORY srv
+  FILES
+  LocFree.srv
 )
 
 generate_messages()

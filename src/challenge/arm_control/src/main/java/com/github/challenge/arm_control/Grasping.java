@@ -22,6 +22,8 @@ import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.AbstractNodeMain;
+import org.ros.node.service.ServiceClient;
+import org.ros.node.service.ServiceResponseListener;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
@@ -30,6 +32,10 @@ import rss_msgs.BumpMsg;
 import rss_msgs.MotionMsg;
 import rss_msgs.OdometryMsg;
 import rss_msgs.GraspingMsg;
+import rss_msgs.LocFree;
+import rss_msgs.LocFreeRequest;
+import rss_msgs.LocFreeResponse;
+import rss_msgs.RobotLocation;
 
 //import com.github.rosjava.challenge.fsm.GraspingListener;
 
@@ -103,6 +109,9 @@ public class Grasping extends AbstractNodeMain {
 	 * lab<\p>
 	 */
 	public int SERVO_MODE;
+  protected double curLocX;
+  protected double curLocY;
+  protected double curLocTheta;
 	static final int INITIALIZED = -1;
 	static final int COLLECTING = 0;
 	static final int ASSEMBLING = 1;
@@ -253,6 +262,7 @@ public class Grasping extends AbstractNodeMain {
 
 	private Publisher<GraspingMsg> graspingPub;
 	private Subscriber<GraspingMsg> graspingSub;
+	private Subscriber<RobotLocation> locSub;
 
 	/**
 	 * <p>Constructor for Grasping object<\p>
@@ -267,22 +277,51 @@ public class Grasping extends AbstractNodeMain {
 
 	private Subscriber<ArmMsg> armSub;
 	private Subscriber<BumpMsg> bumpSub;
-	private Subscriber<OdometryMsg> odoSub;
+	//private Subscriber<OdometryMsg> odoSub;
 	private Subscriber<sensor_msgs.Image> vidSub;
-
+  private ServiceClient<LocFreeRequest, LocFreeResponse> freeCellClient;
 	@Override
 	public void onStart(ConnectedNode node){
+    while (true) {
+      try {
+        freeCellClient = 
+          node.newServiceClient("navigation/IsLocationFree", LocFree._TYPE);
+        break;
+      } catch (Exception e) {
+        //System.err.println("No SERVICE IsLocationFree found!!!!!!");
+      }
+    }
+    System.out.println("Connected to islocationfree service!");
+
 		armPub = node.newPublisher("command/Arm", ArmMsg._TYPE);
 		motionPub = node.newPublisher("command/Motors", MotionMsg._TYPE);
 		vidPub = node.newPublisher("/rss/blobVideo", sensor_msgs.Image._TYPE);
 		graspingPub = node.newPublisher("rss/GraspingStatus", GraspingMsg._TYPE);
 
+    curLocX = 0.6;
+    curLocY = 0.6;
+    curLocTheta = 0.0;
+
 		armSub = node.newSubscriber("rss/ArmStatus", ArmMsg._TYPE);
 		armSub.addMessageListener(new ArmListener(this));
 		bumpSub = node.newSubscriber("rss/BumpSensors", BumpMsg._TYPE);
 		bumpSub.addMessageListener(new BumpListener(this));
+    /*
 		odoSub = node.newSubscriber("rss/odometry", OdometryMsg._TYPE);
 		odoSub.addMessageListener(new OdometryListener(this));
+    */
+		locSub = node.newSubscriber("/localization/update", RobotLocation._TYPE);
+		locSub
+		.addMessageListener(new MessageListener<RobotLocation>() {
+			@Override
+			public void onNewMessage(RobotLocation message) {
+        curLocX = message.getX();
+        curLocY = message.getY();
+        curLocTheta = message.getTheta();
+        blobTrack.updateLocation(curLocX, curLocY, curLocTheta);
+        handle(message);
+			}
+		});
 		graspingSub = node.newSubscriber("command/Grasping", GraspingMsg._TYPE);
 		graspingSub.addMessageListener(new GraspingListener(this));
 
@@ -477,7 +516,7 @@ public class Grasping extends AbstractNodeMain {
 						//fsmState = RoboFSM.INITIALIZE_ARM;
 
 						fsmState = RoboFSM.OFF;
-						//resetVS = true;
+
 						setGrasping(OFF, true, true);
 							//setGrasping(OFF, true);
 						//fsmState = RoboFSM.BLIND_APPROACH;
@@ -544,7 +583,7 @@ public class Grasping extends AbstractNodeMain {
 	/**
 	 * <p>Handle an OdometryMessage<\p>
 	 */
-	public void handle(OdometryMsg msg) {
+	public void handle(RobotLocation msg) {
 		//System.out.println("Odometry Message: (" + msg.getX() + " ," + msg.getY() + ", " + msg.getTheta() + ")");
 
 		// 
@@ -941,7 +980,8 @@ public class Grasping extends AbstractNodeMain {
 		// on first camera message, create new BlobTracking instance
 		if ( blobTrack == null) {
 			System.out.println("GRASPING: Blobtracking");
-			blobTrack = new BlobTracking(width, height);
+			blobTrack = new BlobTracking(width, height, freeCellClient);
+      blobTrack.updateLocation(curLocX, curLocY, curLocTheta);
 
 			blobTrack.targetRedHueLevel = target_red_hue_level;
 			blobTrack.targetBlueHueLevel = target_blue_hue_level;
@@ -960,23 +1000,21 @@ public class Grasping extends AbstractNodeMain {
 			blobTrack.rotationVelocityGain = rotation_velocity_gain;
 			blobTrack.rotationVelocityMax = rotation_velocity_max;
 			blobTrack.useGaussianBlur = use_gaussian_blur;
-			System.out.println("GRASPING: done");
+			System.out.println("Initializing blotTrack: done");
 		}
 
-		Image src = new Image(rawImage, width, height);
+		 idth, height);
+        blobTrack.apply(src, dest);
 
-		Image dest = new Image(rawImage, width, height);
-		blobTrack.apply(src, dest);
-
-		sensor_msgs.Image pubImage = vidPub.newMessage();
-		pubImage.setWidth(width);
-		pubImage.setHeight(height);
-		pubImage.setEncoding("rgb8");
-		pubImage.setIsBigendian((byte)0);
-		pubImage.setStep(width*3);
-		pubImage.setData(org.jboss.netty.buffer.ChannelBuffers.
-                      copiedBuffer(org.jboss.netty.buffer.ChannelBuffers.LITTLE_ENDIAN, dest.toArray()));
-		vidPub.publish(pubImage);
+        sensor_msgs.Image pubImage = vidPub.newMessage();
+        pubImage.setWidth(width);
+        pubImage.setHeight(height);
+        pubImage.setEncoding("rgb8");
+        pubImage.setIsBigendian((byte)0);
+        pubImage.setStep(width*3);
+        pubImage.setData(org.jboss.netty.buffer.ChannelBuffers.
+                          copiedBuffer(org.jboss.netty.buffer.ChannelBuffers.LITTLE_ENDIAN, dest.toArray()));
+        vidPub.publish(pubImage);
 
 		// to calibrate standoff distance
 		// wait until breakbeam is tripped, then output that range
@@ -996,45 +1034,28 @@ public class Grasping extends AbstractNodeMain {
 		// TODO: if we lose target during SEARCH, nothing
 		// TODO: if we lose target during APPROACH, go back to search
 
-		switch (fsmState) {
-			case VISUAL_SERVO_SEARCH: {
-				
-				System.out.println("GRASPING: VISUAL SERVO SEARCH");
-				System.out.println("GRASPING:   range, bearing:" + blobTrack.targetRange + ", " +
-						(blobTrack.targetBearing*180.0/Math.PI));
+        if (fsmState==RoboFSM.VISUAL_SERVO_SEARCH){
+        	System.out.println("GRASPING: VISUAL SERVO SEARCH");
+			System.out.println("GRASPING:   range, bearing:" + blobTrack.targetRange + ", " +
+					(blobTrack.targetBearing*180.0/Math.PI));
 
-				if (Math.abs(blobTrack.rotationVelocityCommand)<0.001 && Math.abs(blobTrack.targetRange-SEARCH_STANDOFF) < EPS_SEARCH_STANDOFF) {
-					//fsmState = RoboFSM.SET_ARM_RETRACTED;<<
-					fsmState = RoboFSM.SET_ARM_TO_PULL;
-					setVelocity(0.0, 0.0);
-				} else {
-			
-					// move robot towards target
-					
-					setVelocity(blobTrack.rotationVelocityCommand, blobTrack.translationVelocityCommand);
-
-					
-				}
-				break;
+			if (Math.abs(blobTrack.rotationVelocityCommand)<0.001 && Math.abs(blobTrack.targetRange-SEARCH_STANDOFF) < EPS_SEARCH_STANDOFF) {
+				//fsmState = RoboFSM.SET_ARM_RETRACTED;<<
+				fsmState = RoboFSM.SET_ARM_TO_PULL;
+				setVelocity(0.0, 0.0);
+			} else {
+				// move robot towards target
+				setVelocity(blobTrack.rotationVelocityCommand, blobTrack.translationVelocityCommand);
 			}
+			break;
+		} else {
+	
+			if (blobTracking.targetDetected) {
+				setGrasping(COLLECTING, false, true);
+			} 
 
-			// case BACKGROUND_PROCESSING_STATE: {
-
-
-			// 	Image src = new Image(rawImage, width, height);
-
-			// 	Image dest = new Image(rawImage, width, height);
-			// 	blockFound = blobTrack.apply_background(src, dest);
-
+			break;
 		
-			// 	//System.out.println("GRASPING: BACKGROUND_PROCESSING");
-				
-			// 	if (blockFound) {
-			// 		setGrasping(COLLECTING, false, true);
-					
-			// 	} 
-			// 	break;
-			// }
 		}
 	}
 
