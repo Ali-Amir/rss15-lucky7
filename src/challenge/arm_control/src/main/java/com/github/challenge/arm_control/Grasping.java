@@ -396,8 +396,9 @@ public class Grasping extends AbstractNodeMain {
 					System.out.println("GRASPING: SET_BLADE_TO_PULL");
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
-						fsmState = RoboFSM.ENGAGE_BLOCK;
-						//fsmState = RoboFSM.BLIND_APPROACH;
+						//fsmState = RoboFSM.ENGAGE_BLOCK;<<
+						fsmState = RoboFSM.BLIND_APPROACH;
+						moveDistance = .19
 					}
 					break;
 				}
@@ -628,7 +629,7 @@ public class Grasping extends AbstractNodeMain {
 					break;
 				}
 
-				case REAPPROACH: {
+				case BLIND_APPROACH: {
 
 					System.out.println("GRASPING: MOVE FORWARD");
 					// TODO
@@ -662,7 +663,7 @@ public class Grasping extends AbstractNodeMain {
 						startingMove = true;
 						setVelocity(0.0, 0.0);
 						//					Robot.setVelocity(0.0, 0.0);
-						fsmState = RoboFSM.COLLECTING; 
+						fsmState = RoboFSM.ENGAGE_BLOCK; 
 					}
 					break;
 				}
@@ -1008,7 +1009,8 @@ public class Grasping extends AbstractNodeMain {
 						(blobTrack.targetBearing*180.0/Math.PI));
 
 				if (Math.abs(blobTrack.rotationVelocityCommand)<0.001 && Math.abs(blobTrack.targetRange-SEARCH_STANDOFF) < EPS_SEARCH_STANDOFF) {
-					fsmState = RoboFSM.SET_ARM_RETRACTED;
+					//fsmState = RoboFSM.SET_ARM_RETRACTED;<<
+					fsmState = RoboFSM.SET_BLADE_TO_PULL;
 					setVelocity(0.0, 0.0);
 				} else {
 			
