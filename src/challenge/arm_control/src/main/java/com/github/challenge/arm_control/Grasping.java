@@ -591,7 +591,7 @@ public class Grasping extends AbstractNodeMain {
 			switch (fsmState) {
 
 				case INITIALIZE_ARM: {
-					setVelocity(0.0, 0.0);
+					//setVelocity(0.0, 0.0);
 					break;
 				}
 
