@@ -436,7 +436,7 @@ boolean rotating = true;
 				}
 
 				case SET_ARM_TO_PULL: {
-					System.out.println("GRASPING: SET_BLADE_TO_PULL");
+					//System.out.println("GRASPING: SET_BLADE_TO_PULL");
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
 						//fsmState = RoboFSM.ENGAGE_BLOCK;<<
@@ -635,7 +635,7 @@ boolean rotating = true;
 				// }
 				case MOVE_FORWARD: {
 
-					System.out.println("GRASPING: MOVE FORWARD");
+					//System.out.println("GRASPING: MOVE FORWARD");
 					// TODO
 					//if (Math.abs(blobTrack.target
 					// check distance to target and decrease standoff
@@ -643,7 +643,8 @@ boolean rotating = true;
 					// if object is lost, go back to VSSEARCH
 
 					//this is just a placeholder for moving forward.
-					System.out.println("GRASPING: *** MOVE_FORWARD *** " + startingMove);
+          // TODO: logging
+					//System.out.println("GRASPING: *** MOVE_FORWARD *** " + startingMove);
 					if(startingMove) {
 						startPoint = new Point2D.Double();
 						startPoint.x = msg.getX();
@@ -673,7 +674,7 @@ boolean rotating = true;
 
 				case BLIND_APPROACH: {
 
-					System.out.println("GRASPING: MOVE FORWARD");
+					//System.out.println("GRASPING: MOVE FORWARD");
 					// TODO
 					//if (Math.abs(blobTrack.target
 					// check distance to target and decrease standoff
@@ -681,7 +682,7 @@ boolean rotating = true;
 					// if object is lost, go back to VSSEARCH
 
 					//this is just a placeholder for moving forward.
-					System.out.println("GRASPING: *** MOVE_FORWARD *** " + startingMove);
+					//System.out.println("GRASPING: *** MOVE_FORWARD *** " + startingMove);
 					if(startingMove) {
 						startPoint = new Point2D.Double();
 						startPoint.x = msg.
@@ -916,13 +917,15 @@ boolean rotating = true;
 	 */
 	private boolean moveTowardTarget(double x, double y, double heading,
 			double tX, double tY, int direction) {
+    /*
 		System.out.println("GRASPING:   - current: x:" + x + " y:" + y);
 		System.out.println("GRASPING:   - target: x:" + tX + " y:" + tY);
+    */
 
 		// distance to target
 		double tD = Math.sqrt((x-tX)*(x-tX) + (y-tY)*(y-tY));
 		double tD1 = Math.hypot((x-tX), (x-tY));
-		System.out.println("GRASPING:   Distance to target: " + tD + " td1: " + tD1);
+		//System.out.println("GRASPING:   Distance to target: " + tD + " td1: " + tD1);
 
 		if (direction == DIR_BACKWARD) {
 			heading = heading - Math.PI;
@@ -1080,6 +1083,7 @@ boolean rotating = true;
 			if (Math.abs(blobTrack.rotationVelocityCommand)<0.001 && Math.abs(blobTrack.targetRange-SEARCH_STANDOFF) < EPS_SEARCH_STANDOFF) {
 				//fsmState = RoboFSM.SET_ARM_RETRACTED;<<
 				fsmState = RoboFSM.SET_ARM_TO_PULL;
+			  System.out.println("GRASPING: SET_BLADE_TO_PULL");
 				setVelocity(0.0, 0.0);
 			} else {
 				// move robot towards target

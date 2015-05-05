@@ -2,7 +2,7 @@
   <machine name="workstation" address="localhost"/>
   
   <node name="gui" pkg="challenge"
-                   type="navigation"
+                   type="gui"
                    args="com.github.rosjava.challenge.gui.MapGUI"
                    machine="workstation"
                    output="screen"/>

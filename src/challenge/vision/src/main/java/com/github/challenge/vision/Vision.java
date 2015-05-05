@@ -193,6 +193,11 @@ public class Vision extends AbstractNodeMain implements Runnable {
         curLocY = message.getY();
         curLocTheta = message.getTheta();
         blobTrack.updateLocation(curLocX, curLocY, curLocTheta);
+				if (firstUpdate) {
+					firstUpdate = false;
+					gui.panel.resetWorldToView(message.getX(), message.getY());
+				}
+				gui.panel.setRobotPose(message.getX(), message.getY(), message.getTheta());
 			}
 		});
 
@@ -219,11 +224,6 @@ public class Vision extends AbstractNodeMain implements Runnable {
 		odoSub.addMessageListener(new MessageListener<OdometryMsg>() {
 			@Override
 			public void onNewMessage(OdometryMsg message) {
-				if (firstUpdate) {
-					firstUpdate = false;
-					gui.panel.resetWorldToView(message.getX(), message.getY());
-				}
-				gui.panel.setRobotPose(message.getX(), message.getY(), message.getTheta());
 			}
 		});
 		Thread runningStuff = new Thread(this);

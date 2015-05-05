@@ -21,7 +21,6 @@ import rss_msgs.RobotLocation;
  * @author previous TA's, prentice
  */
 public class BlobTracking {
-  public int[] blobImTemp;
   protected double curLocX;
   protected double curLocY;
   protected double curLocTheta;
@@ -148,7 +147,7 @@ public class BlobTracking {
 	 * <p>Apply connected components analysis to pick out the largest blob. Then // (Solution)
 	 * build stats on this blob.</p> // (Solution)
 	 **/ // (Solution)
-	protected void blobPresent(int[] threshIm, int[] connIm, int[] blobIm) { // (Solution)
+	protected void blobPresent(int[] threshIm, int[] connIm) { // (Solution)
     final int arraySize = width*height;
     connIm = connComp.doLabel(threshIm, connIm, width, height);
     final int[] connImFinal = connIm;
@@ -161,7 +160,6 @@ public class BlobTracking {
     int[] maxY = new int[numLabels];
     int[] sumX = new int[numLabels];
     int[] sumY = new int[numLabels];
-    blobImTemp = new int[arraySize];
 
     for (int i = 0; i < numLabels; ++i) {
       minX[i] = width;
@@ -228,9 +226,9 @@ public class BlobTracking {
                   int destIndex = 0;
                   for (int j = 0; j < arraySize; ++j) {
                     if (connImFinal[j]-1 == det.component) {
-                      blobImTemp[destIndex++] = 255;
+                      blobMask[destIndex++] = 255;
                     } else {
-                      blobImTemp[destIndex++] = 0;
+                      blobMask[destIndex++] = 0;
                     }
                   }
                 }
@@ -265,9 +263,6 @@ public class BlobTracking {
         doneSignal.await();
       } catch (InterruptedException e) {
       }
-    }
-    for (int i = 0; i < arraySize; ++i) {
-      blobIm[i] = blobImTemp[i];
     }
 	} // blobPresent method
 
@@ -484,47 +479,30 @@ public class BlobTracking {
 	 * @param src dest image (int) //(Solution)
 	 **/ //(Solution)
 	protected void blobPixel(Image src, int[] mask, double targetHueLevel, double targetSatLevel) { //(Solution)
-		//(Solution)
 		int maskIndex = 0; //(Solution)
-		//(Solution)
-		//// use to accumulate for avg hue and saturation (Solution)
-		//double avg_h = 0.0; // (Solution)
-		//double avg_s = 0.0; // (Solution)
-		// (Solution)
-        int cnt = 0;
+    int cnt = 0;
 		for (int y = 0; y < height; y++) { // (Solution)
 			for (int x = 0; x < width; x++) { // (Solution)
 				int pix = src.getPixel(x, y); // (Solution)
-				float[] hsb = Color.RGBtoHSB(Image.pixelRed(pix)&0xFF, // (Solution)
-						Image.pixelGreen(pix)&0xFF, // (Solution)
-						Image.pixelBlue(pix)&0xFF, null); // (Solution)
-				// (Solution)
-				//avg_h += pix.getHue(); // (Solution)
-				//avg_s += pix.getSaturation(); // (Solution)
-				// (Solution)
+				float[] hsb = Color.RGBtoHSB(
+            Image.pixelRed(pix)&0xFF,
+						Image.pixelGreen(pix)&0xFF,
+						Image.pixelBlue(pix)&0xFF, null);
 				double hdist = Math.abs(hsb[0] - targetHueLevel); // (Solution)
 
-				if (targetHueLevel == 0.0){
-					if (hdist < 0) hdist *= -1; // (Solution)
-					// handle colorspace wraparound (Solution)
-					if (hdist > 0.5) { // (Solution)
-						hdist = 1.0 - hdist; // (Solution)
-					} 
-				}
+        if (hdist > 0.5) {
+          hdist = 1.0 - hdist;
+        } 
 
-				// (Solution)
-				// (Solution)
-				// classify pixel based on saturation level (Solution)
-				// and hue distance (Solution)
-				if (hsb[1] > targetSatLevel && hdist < hueThreshold && hsb[2] > 0.3) { // (Solution)
-         			++cnt;
-					mask[maskIndex++] = 255; // (Solution)
-				} else { // (Solution)
-					mask[maskIndex++] = 0; // (Solution)
-				} // (Solution)	
-			} // (Solution)
-		} // (Solution)
-    System.out.println("There are " + cnt + " pixels for hue level = " + targetHueLevel + ". Width="+width + " height=" + height);
+				if (hsb[1] > targetSatLevel && hdist < hueThreshold && hsb[2] > 0.1) {
+          ++cnt;
+					mask[maskIndex++] = 255;
+				} else {
+					mask[maskIndex++] = 0;
+				}
+			}
+		}
+    //System.out.println("There are " + cnt + " pixels for hue level = " + targetHueLevel + ". Width="+width + " height=" + height); TODO
 		// (Solution)
 		// avg_h /= width * height; // (Solution)
 		// avg_s /= width * height; // (Solution)
@@ -579,10 +557,10 @@ public class BlobTracking {
 
 		targetDetected = false;
 
-		blobPresent(blobPixelRedMask, imageConnected, blobMask);
-		blobPresent(blobPixelBlueMask, imageConnected, blobMask);
-		blobPresent(blobPixelYellowMask, imageConnected, blobMask);
-		blobPresent(blobPixelGreenMask, imageConnected, blobMask);
+		blobPresent(blobPixelRedMask, imageConnected);
+		blobPresent(blobPixelBlueMask, imageConnected);
+		blobPresent(blobPixelYellowMask, imageConnected);
+		blobPresent(blobPixelGreenMask, imageConnected);
 		 //(Solution)
 		if (targetDetected) { // (Solution)
       System.out.println("Target detected!");
@@ -638,10 +616,10 @@ public class BlobTracking {
 
 		targetDetected = false;
 
-		blobPresent(blobPixelRedMask, imageConnected, blobMask);
-		blobPresent(blobPixelBlueMask, imageConnected, blobMask);
-		blobPresent(blobPixelYellowMask, imageConnected, blobMask);
-		blobPresent(blobPixelGreenMask, imageConnected, blobMask);
+		blobPresent(blobPixelRedMask, imageConnected);
+		blobPresent(blobPixelBlueMask, imageConnected);
+		blobPresent(blobPixelYellowMask, imageConnected);
+		blobPresent(blobPixelGreenMask, imageConnected);
 		 //(Solution)
 		if (targetDetected) { // (Solution)
 	    	return true;

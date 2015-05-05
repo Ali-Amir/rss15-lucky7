@@ -91,17 +91,21 @@ void Localization::InitializeParticles() {
   double dy = DISTANCE_TOLERANCE;
   double st = 0.0;
   double dt = HEADING_TOLERANCE;
+  _prev_odo_x = sx;
+  _prev_odo_y = sy;
+  _prev_odo_t = 0.0;
+  ROS_INFO("Init x: %.3lf y: %.3lf", sx, sy);
 
   default_random_engine generator;
-  /*
   uniform_real_distribution<double> xDist(sx-dx, sx+dx);
   uniform_real_distribution<double> yDist(sy-dy, sy+dy);
   uniform_real_distribution<double> tDist(st-dt, st+dt);
-  */
 
+  /*
   uniform_real_distribution<double> xDist(sx-dx, sx+dx);
   uniform_real_distribution<double> yDist(sy-dy, sy+dy);
   uniform_real_distribution<double> tDist(0.0, 2*M_PI);
+  */
 
   for (int i = 0; i < N; ++i) {
     double x = xDist(generator);
@@ -143,20 +147,21 @@ RobotLocation Localization::currentPositionBelief() const {
   currentPosition.x = x;
   currentPosition.y = y;
   currentPosition.theta = NormalizeRad(t);
+  ROS_INFO("Belief is: %.3lf", exp(maxBelief));
   return currentPosition;
 }
 
 void Localization::PublishLocation() {
   RobotLocation currentBelief = currentPositionBelief();
-  /*
   ROS_INFO("Current belief: (%.3lf %.3lf|%.3lf) Odometry: (%.3lf %.3lf|%.3lf)\n",
       currentBelief.x, currentBelief.y, currentBelief.theta,
       _prev_odo_x, _prev_odo_y, _prev_odo_t);
-  */
   // TODO: remove
+  /*
   currentBelief.x = _prev_odo_x;
   currentBelief.y = _prev_odo_y;
   currentBelief.theta = _prev_odo_t;
+  */
   _location_pub.publish(currentBelief);
 
   if (_leaveBreadCrumbs) {
@@ -197,17 +202,18 @@ double logGaussian(double x, double mu, double var) {
   return -0.5*log(2.0*M_PI*var) - (x-mu)*(x-mu)/var/2.0;
 }
 double logGaussian(double x, double y, double mux, double muy, double var) {
-  return -0.5*log(2.0*M_PI*var) - ((x-mux)*(x-mux)+(y-muy)*(y-muy))/var/2.0;
+  return -1.0*log(2.0*M_PI*var) - ((x-mux)*(x-mux)+(y-muy)*(y-muy))/var/2.0;
 }
 
 void Localization::NormalizeBeliefs() {
   // Normalize the result
-  double normalizer = 0.0;
+  double normalizer = -1e18;
   for (const Particle &par : _particles) {
-    normalizer += exp(par.belief);
+    normalizer = max(normalizer, par.belief);
+    //normalizer += exp(par.belief);
   }
   for (Particle &par : _particles) {
-    par.belief -= log(normalizer);
+    par.belief -= normalizer;
   }
 }
 
@@ -216,6 +222,7 @@ void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
   double dy = odo->y-_prev_odo_y;
   double dt = odo->theta-_prev_odo_t;
   if (fabs(dx) < 1e-3 && fabs(dy) < 1e-3 && fabs(dt) < M_PI*0.1/180) {
+    PublishLocation();
     return;
   }
 
@@ -225,10 +232,11 @@ void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
   _prev_odo_time = curTime();
 
   double start_time = curTime();
-  ROS_DEBUG_STREAM("onOdometryUpdate: " << dx << " " << dy << " dt: " << dt << " at time: " << curTime()-_time);
+  ROS_DEBUG_STREAM("onOdometryUpdate: " << dx << " " << dy <<
+      " dt: " << dt << " at time: " << curTime()-_time);
 
-  double varD = pow(min(0.01, 0.001 + sqrt(dx*dx+dy*dy)/3.0), 2.0);
-  double varT = pow(min(0.17453292519, 0.17453292519/20.0+fabs(dt)), 2.0);
+  double varD = pow(0.001, 2.0);
+  double varT = pow(0.017453293, 2.0);
 
   default_random_engine gen;
   normal_distribution<double> xyDist(0.0, varD);
@@ -237,7 +245,8 @@ void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
   vector<Particle> new_particles;
   for (const Particle &par : _particles) {
     new_particles.push_back(Particle(par.x+dx, par.y+dy, par.t+dt,
-          par.belief + logGaussian(0.0, 0.0, 0.0, 0.0, varD) + logGaussian(0.0, 0.0, varT)));
+          par.belief + logGaussian(0.0, 0.0, 0.0, 0.0, varD) +
+          logGaussian(0.0, 0.0, varT)));
     // Generate 10 random points to account for noise.
     for (int i = 0; i < 10; ++i) {
       double x = xyDist(gen) + par.x+dx;
@@ -267,9 +276,13 @@ Vector_2 Rotate(Vector_2 vec, double alfa) {
 }
 
 void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
+  // Skip if sonar is out of range.
+  if (son->range < 0.2 || son->range > 1.8) {
+    return;
+  }
   ROS_INFO_STREAM("Got sonar update: " << son->sonarId << " range: " << son->range);
   double start_time = curTime();
-  double varD = 0.01;
+  double varD = 1.0;
   for (Particle &par : _particles) {
     Vector_2 dir(Rotate(SONAR_DIR[son->sonarId], par.t));
     Point_2 sonarLoc(Point_2(par.x, par.y) + Rotate(SONAR_POS[son->sonarId], par.t));
