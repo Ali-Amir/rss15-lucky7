@@ -39,7 +39,7 @@
                    type="navigation"
                    args=""
                    machine="workstation"
-                   output="screen">
+                   output="log">
       <param name="calculateFromScratch" value="no" />
       <param name="precalcPath" value="$(env CHALLENGE)/maps/challenge_2015.dec" />
       <param name="mapFileName" value="$(env CHALLENGE)/maps/challenge_2015.map" />

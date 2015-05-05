@@ -592,7 +592,7 @@ boolean rotating = true;
 			switch (fsmState) {
 
 				case INITIALIZE_ARM: {
-					setVelocity(0.0, 0.0);
+					//setVelocity(0.0, 0.0);
 					break;
 				}
 
@@ -967,12 +967,16 @@ boolean rotating = true;
 
 
 	private double target_red_hue_level = 0.00;
-	private double target_blue_hue_level = 0.64; 
-	private double target_yellow_hue_level = 0.167;
-	private double target_green_hue_level = 0.42; 
+	private double target_blue_hue_level = 0.63; 
+	private double target_yellow_hue_level = 0.15;
+	private double target_green_hue_level = 0.4; 
+
+	public double target_red_sat_level=0.5; // (Solution)
+	public double target_blue_sat_level=0.35; // (Solution)
+	public double target_yellow_sat_level=0.5; // (Solution)
+	public double target_green_sat_level=0.5; // (Solution)
 
 	private double hue_threshold= 0.05;
-	private double saturation_level = 0.6;
 	private double blob_size_threshold = 0.015;
 	private double target_radius = 0.1;
 	private double desired_fixation_distance = .5;
@@ -1016,8 +1020,13 @@ boolean rotating = true;
 			blobTrack.targetYellowHueLevel = target_yellow_hue_level;
 			blobTrack.targetGreenHueLevel = target_green_hue_level;
 
+			blobTrack.redSaturationLevel = target_red_sat_level;
+			blobTrack.blueSaturationLevel = target_blue_sat_level;
+			blobTrack.yellowSaturationLevel = target_yellow_sat_level;
+			blobTrack.greenSaturationLevel = target_green_sat_level;
+
+
 			blobTrack.hueThreshold = hue_threshold;
-			blobTrack.saturationLevel = saturation_level;
 			blobTrack.blobSizeThreshold = blob_size_threshold;
 			blobTrack.targetRadius = target_radius;
 			blobTrack.desiredFixationDistance = desired_fixation_distance;

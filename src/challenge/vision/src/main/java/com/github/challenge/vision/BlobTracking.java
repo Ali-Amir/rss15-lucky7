@@ -46,15 +46,20 @@ public class BlobTracking {
 	protected float imageHsb[] = null; //(Solution)
 	// (Solution)
 	public double targetRedHueLevel=0.0; // (Solution)
-	public double targetBlueHueLevel=0.66; 
-	public double targetGreenHueLevel=0.33; 
-	public double targetYellowHueLevel=0.167;
+	public double targetBlueHueLevel=0.63; 
+	public double targetGreenHueLevel=0.4; 
+	public double targetYellowHueLevel=0.15;
+
+	public double redSaturationLevel=0.5; // (Solution)
+	public double blueSaturationLevel=0.35; // (Solution)
+	public double greenSaturationLevel=0.5; // (Solution)
+	public double yellowSaturationLevel=0.5; // (Solution)
 
 	public double max_area = -1;
 
 	public double targetRadius=28; // (Solution)
 	public double hueThreshold=0.05; // (Solution)
-	public double saturationLevel=0.6; // (Solution)
+	
 	public double blobSizeThreshold=400.0/128.0/128.0; // (Solution)
 	public double desiredFixationDistance=0.4; // (Solution)
 	public double translationErrorTolerance=0.05; // (Solution)
@@ -181,7 +186,6 @@ public class BlobTracking {
     doneSignal = new CountDownLatch(1);
     totalDetections = 0;
     totalResponses = 0;
-    targetDetected = false;
     boolean foundAtLeastOne = false;
     for (int i = 0; i < numLabels; ++i) {
       int b_w = maxX[i] - minX[i] + 1;
@@ -479,7 +483,7 @@ public class BlobTracking {
 	 * @param src source image (float) //(Solution)
 	 * @param src dest image (int) //(Solution)
 	 **/ //(Solution)
-	protected void blobPixel(Image src, int[] mask, double targetHueLevel) { //(Solution)
+	protected void blobPixel(Image src, int[] mask, double targetHueLevel, double targetSatLevel) { //(Solution)
 		//(Solution)
 		int maskIndex = 0; //(Solution)
 		//(Solution)
@@ -512,7 +516,7 @@ public class BlobTracking {
 				// (Solution)
 				// classify pixel based on saturation level (Solution)
 				// and hue distance (Solution)
-				if (hsb[1] > saturationLevel && hdist < hueThreshold && hsb[2] > 0.3) { // (Solution)
+				if (hsb[1] > targetSatLevel && hdist < hueThreshold && hsb[2] > 0.3) { // (Solution)
          			++cnt;
 					mask[maskIndex++] = 255; // (Solution)
 				} else { // (Solution)
@@ -520,7 +524,7 @@ public class BlobTracking {
 				} // (Solution)	
 			} // (Solution)
 		} // (Solution)
-    //System.out.println("There are " + cnt + " red pixels. Width="+width + " height=" + height);
+    System.out.println("There are " + cnt + " pixels for hue level = " + targetHueLevel + ". Width="+width + " height=" + height);
 		// (Solution)
 		// avg_h /= width * height; // (Solution)
 		// avg_s /= width * height; // (Solution)
@@ -567,12 +571,13 @@ public class BlobTracking {
 			} // (Solution)
 			src = new Image(destArray, src.getWidth(), src.getHeight()); // (Solution)
 		}
-		blobPixel(src, blobPixelRedMask, targetRedHueLevel); //(Solution)
-		blobPixel(src, blobPixelBlueMask, targetBlueHueLevel); //(Solution)
-		blobPixel(src, blobPixelYellowMask, targetYellowHueLevel); //(Solution)
-		blobPixel(src, blobPixelGreenMask, targetGreenHueLevel); //(Solution)
+		blobPixel(src, blobPixelRedMask, targetRedHueLevel, redSaturationLevel); //(Solution)
+		blobPixel(src, blobPixelBlueMask, targetBlueHueLevel, blueSaturationLevel); //(Solution)
+		blobPixel(src, blobPixelYellowMask, targetYellowHueLevel, yellowSaturationLevel); //(Solution)
+		blobPixel(src, blobPixelGreenMask, targetGreenHueLevel, greenSaturationLevel); //(Solution)
 		max_area = -1;
 
+		targetDetected = false;
 
 		blobPresent(blobPixelRedMask, imageConnected, blobMask);
 		blobPresent(blobPixelBlueMask, imageConnected, blobMask);
@@ -625,12 +630,13 @@ public class BlobTracking {
 			} // (Solution)
 			src = new Image(destArray, src.getWidth(), src.getHeight()); // (Solution)
 		}
-		blobPixel(src, blobPixelRedMask, targetRedHueLevel); //(Solution)
-		blobPixel(src, blobPixelBlueMask, targetBlueHueLevel); //(Solution)
-		blobPixel(src, blobPixelYellowMask, targetYellowHueLevel); //(Solution)
-		blobPixel(src, blobPixelGreenMask, targetGreenHueLevel); //(Solution)
+		blobPixel(src, blobPixelRedMask, targetRedHueLevel, redSaturationLevel); //(Solution)
+		blobPixel(src, blobPixelBlueMask, targetBlueHueLevel, blueSaturationLevel); //(Solution)
+		blobPixel(src, blobPixelYellowMask, targetYellowHueLevel, yellowSaturationLevel); //(Solution)
+		blobPixel(src, blobPixelGreenMask, targetGreenHueLevel, greenSaturationLevel); //(Solution)
 		max_area = -1;
 
+		targetDetected = false;
 
 		blobPresent(blobPixelRedMask, imageConnected, blobMask);
 		blobPresent(blobPixelBlueMask, imageConnected, blobMask);

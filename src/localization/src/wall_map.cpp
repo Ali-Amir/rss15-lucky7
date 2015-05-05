@@ -49,18 +49,24 @@ void WallMap::BuildMapFromFile(const string &mapfile_location) {
 void WallMap::ParseFromFile(const string &mapfile_location) {
   ROS_INFO("WallMap: Parsing from file: %s", mapfile_location.c_str());
 
+  FILE *fin;
+  fin = fopen(mapfile_location.c_str(), "r");
+
   ifstream mapstream;
   mapstream.open(mapfile_location, ifstream::in);
-  ParsePoint(mapstream, &_robot_start);
+  ParsePoint(fin, &_robot_start);
   Point_2 tmp_point;
-  ParsePoint(mapstream, &tmp_point);
+  ParsePoint(fin, &tmp_point);
   Iso_rectangle_2 rect;
-  ParseRect(mapstream, &rect);
+  ParseRect(fin, &rect);
 
   _raw_obstacles.clear();
-  for (int obstacleNumber = 0;; ++obstacleNumber) {
+  int numObstacles;
+  ROS_ASSERT(fscanf(fin, "%d", &numObstacles) == 1);
+  for (int obstacleNumber = 0; obstacleNumber < numObstacles;
+       ++obstacleNumber) {
     Polygon_2 poly;
-    if (!ParseObstacle(mapstream, &poly)) {
+    if (!ParseObstacle(fin, &poly)) {
       break;
     }
     _raw_obstacles.push_back(poly);
@@ -115,31 +121,24 @@ void WallMap::ParseFromFile(const string &mapfile_location) {
   }
 
   ROS_INFO("WallMap: Parsing done!");
+  fclose(fin);
 }
 
 /***
  * Parses a 2d point from input stream.
  **/
-void WallMap::ParsePoint(ifstream &stream, Point_2 *point) {
-  char buff[1024];
-  stream.getline(buff, 1024);
+void WallMap::ParsePoint(FILE *fin, Point_2 *point) {
   double x, y;
-  stringstream line;
-  line << string(buff);
-  line >> x >> y;
+  ROS_ASSERT(fscanf(fin, "%lf%lf", &x, &y) == 2);
   *point = Point_2(x, y);
 }
 
 /***
  * Parses world boundary rectangle from input stream.
  **/
-void WallMap::ParseRect(ifstream &stream, Iso_rectangle_2 *rect) {
-  char buff[1024];
-  stream.getline(buff, 1024);
-  stringstream line;
-  line << string(buff);
+void WallMap::ParseRect(FILE *fin, Iso_rectangle_2 *rect) {
   double x, y, size_x, size_y;
-  line >> x >> y >> size_x >> size_y;
+  ROS_ASSERT(fscanf(fin, "%lf%lf%lf%lf", &x, &y, &size_x, &size_y)==4);
   Point_2 corner(x, y), size(size_x, size_y);
   *rect = Iso_rectangle_2(corner, corner+Vector_2(size.x(), size.y()));
 }
@@ -147,24 +146,15 @@ void WallMap::ParseRect(ifstream &stream, Iso_rectangle_2 *rect) {
 /***
  * Parses raw obstacles from input stream.
  **/
-bool WallMap::ParseObstacle(ifstream &stream, Polygon_2 *poly) {
-  if (stream.eof()) {
-    return false;
-  }
-
+bool WallMap::ParseObstacle(FILE *fin, Polygon_2 *poly) {
   *poly = Polygon_2();
 
-  char buff[1024];
-  stream.getline(buff, 1024);
-  stringstream line;
-  line << string(buff);
-  double x, y;
-  while (line >> x >> y) {
+  int n;
+  ROS_ASSERT(fscanf(fin, "%d", &n)==1);
+  for (int i = 0; i < n; ++i) {
+    double x, y;
+    ROS_ASSERT(fscanf(fin, "%lf%lf", &x, &y)==2);
     poly->insert(poly->vertices_end(), Point_2(x, y));
-  }
-
-  if (poly->is_empty()) {
-    return false;
   }
 
   return true;
