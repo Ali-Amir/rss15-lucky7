@@ -1185,7 +1185,13 @@ boolean rotating = true;
 		} else {
 	
 			if (blobTrack.targetDetected) {
-				setGrasping(COLLECTING, false, true);
+
+				if (blobTrack.targetNotRisky){
+					setGrasping(COLLECTING, true, true);
+				} else {
+					setGrasping(COLLECTING, false, true);
+				}
+				
 			} 
 		
 		}

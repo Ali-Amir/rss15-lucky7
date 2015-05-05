@@ -207,7 +207,6 @@ public class FSM extends AbstractNodeMain {
     blocks.add(block);
   }
 
-
 	/**
 	 * <p>Handle an OdometryMessage<\p>
 	 */
@@ -279,7 +278,7 @@ public class FSM extends AbstractNodeMain {
 
 
 		int mode = msg.getServomode();
-		boolean collected = msg.getCollected();
+		boolean notRisky = msg.getCollected();
 		boolean found = msg.getFound();
 
 
@@ -296,8 +295,12 @@ public class FSM extends AbstractNodeMain {
 				switch (mode) {
 					case COLLECTING: {
 						fsmState = RobotFSM.COLLECTION;
-						stopNavigation();
-						setGrasping(COLLECTING);
+						stopNavigation();a
+						if (notRisky){
+							setGrasping(COLLECTING);
+						} else {
+							setGrasping(WALL_COLLECTING);
+						}
 						break;
 					}
 				}
@@ -308,8 +311,12 @@ public class FSM extends AbstractNodeMain {
 				switch (mode) {
 					case COLLECTING: {
 						fsmState = RobotFSM.COLLECTION;
-						stopNavigation();
-						setGrasping(COLLECTING);
+						stopNavigation();a
+						if (notRisky){
+							setGrasping(COLLECTING);
+						} else {
+							setGrasping(WALL_COLLECTING);
+						}
 						break;
 					}
 				}
@@ -333,7 +340,7 @@ public class FSM extends AbstractNodeMain {
 
 							System.out.println("FSM: BLOCK COLLECTED");
 
-							blockCount += 1;
+							//blockCount += 1;
 
 							if (blockCount>4){
 								fsmState = RobotFSM.RETURN_TO_ASSEMBLY;
