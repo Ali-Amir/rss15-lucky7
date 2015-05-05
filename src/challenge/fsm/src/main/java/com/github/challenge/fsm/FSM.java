@@ -295,7 +295,7 @@ public class FSM extends AbstractNodeMain {
 				switch (mode) {
 					case COLLECTING: {
 						fsmState = RobotFSM.COLLECTION;
-						stopNavigation();a
+						stopNavigation();
 						if (notRisky){
 							setGrasping(COLLECTING);
 						} else {
@@ -311,7 +311,7 @@ public class FSM extends AbstractNodeMain {
 				switch (mode) {
 					case COLLECTING: {
 						fsmState = RobotFSM.COLLECTION;
-						stopNavigation();a
+						stopNavigation();
 						if (notRisky){
 							setGrasping(COLLECTING);
 						} else {
