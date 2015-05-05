@@ -271,6 +271,7 @@ public class FSM extends AbstractNodeMain {
 	static final int COLLECTING = 0;
 	static final int ASSEMBLING = 1;
   static final int BACKGROUND_PROCESSING = 2;
+  static final int WALL_COLLECTING = 3;
 	static final int OFF = 5;
 
 	public void handle(GraspingMsg msg){
@@ -336,7 +337,7 @@ public class FSM extends AbstractNodeMain {
 
 					case OFF: {
 
-						if (collected) {
+						if (notRisky) {
 
 							System.out.println("FSM: BLOCK COLLECTED");
 
