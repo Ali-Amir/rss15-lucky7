@@ -49,15 +49,15 @@ public class BlobTracking {
 	public double targetGreenHueLevel=0.36; 
 	public double targetYellowHueLevel=0.15;
 
-	public double redSaturationLevel=0.5; // (Solution)
-	public double blueSaturationLevel=0.35; // (Solution)
-	public double greenSaturationLevel=0.5; // (Solution)
-	public double yellowSaturationLevel=0.5; // (Solution)
+	public double redSaturationLevel=0.45; // (Solution)
+	public double blueSaturationLevel=0.30; // (Solution)
+	public double greenSaturationLevel=0.45; // (Solution)
+	public double yellowSaturationLevel=0.45; // (Solution)
 
 	public double max_area = -1;
 
 	public double targetRadius=28; // (Solution)
-	public double hueThreshold=0.08; // (Solution)
+	public double hueThreshold=0.10; // (Solution)
 	
 	public double blobSizeThreshold=400.0/128.0/128.0; // (Solution)
 	public double desiredFixationDistance=0.4; // (Solution)
@@ -195,7 +195,7 @@ public class BlobTracking {
       double aveArea = (minArea + maxArea)/2.0;
       double aspectRatio = 1.0*b_w/b_h;
       double fractionFilled = labelArea[i]*1.0/aveArea;
-      if (Math.abs(1.0 - aspectRatio) < 0.2 && r > 5.0 && fractionFilled > 0.6) {
+      if (Math.abs(1.0 - aspectRatio) < 0.2 && r > 5.0 && fractionFilled > 0.5) {
       	if (b_w*b_h>max_area && !isDouble(b_w, b_h)) {
 
           ++totalDetections;
