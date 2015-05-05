@@ -2,11 +2,11 @@
 APP{"guvcview 2.0.1"}
 # control data
 #Brightness
-ID{0x00980900};CHK{0:255:1:128}=VAL{128}
+ID{0x00980900};CHK{0:255:1:128}=VAL{113}
 #Contrast
-ID{0x00980901};CHK{0:255:1:32}=VAL{32}
+ID{0x00980901};CHK{0:255:1:32}=VAL{20}
 #Saturation
-ID{0x00980902};CHK{0:255:1:32}=VAL{32}
+ID{0x00980902};CHK{0:255:1:32}=VAL{29}
 #White Balance Temperature, Auto
 ID{0x0098090c};CHK{0:1:1:1}=VAL{0}
 #Gain
@@ -14,9 +14,9 @@ ID{0x00980913};CHK{0:255:1:0}=VAL{0}
 #Power Line Frequency
 ID{0x00980918};CHK{0:2:1:2}=VAL{2}
 #White Balance Temperature
-ID{0x0098091a};CHK{0:10000:10:4000}=VAL{1740}
+ID{0x0098091a};CHK{0:10000:10:4000}=VAL{2460}
 #Sharpness
-ID{0x0098091b};CHK{0:255:1:48}=VAL{48}
+ID{0x0098091b};CHK{0:255:1:48}=VAL{35}
 #Backlight Compensation
 ID{0x0098091c};CHK{0:1:1:1}=VAL{0}
 #Exposure, Auto

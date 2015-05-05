@@ -45,19 +45,19 @@ public class BlobTracking {
 	protected float imageHsb[] = null; //(Solution)
 	// (Solution)
 	public double targetRedHueLevel=0.0; // (Solution)
-	public double targetBlueHueLevel=0.60; 
-	public double targetGreenHueLevel=0.36; 
-	public double targetYellowHueLevel=0.15;
+	public double targetBlueHueLevel=0.6; 
+	public double targetGreenHueLevel=0.4; 
+	public double targetYellowHueLevel=0.16;
 
-	public double redSaturationLevel=0.45; // (Solution)
-	public double blueSaturationLevel=0.30; // (Solution)
+	public double redSaturationLevel=0.42; // (Solution)
+	public double blueSaturationLevel=0.25; // (Solution)
 	public double greenSaturationLevel=0.45; // (Solution)
-	public double yellowSaturationLevel=0.45; // (Solution)
+	public double yellowSaturationLevel=0.5; // (Solution)
 
 	public double max_area = -1;
 
 	public double targetRadius=28; // (Solution)
-	public double hueThreshold=0.10; // (Solution)
+	public double hueThreshold=0.12; // (Solution)
 	
 	public double blobSizeThreshold=400.0/128.0/128.0; // (Solution)
 	public double desiredFixationDistance=0.4; // (Solution)
@@ -148,7 +148,7 @@ public class BlobTracking {
 	 * <p>Apply connected components analysis to pick out the largest blob. Then // (Solution)
 	 * build stats on this blob.</p> // (Solution)
 	 **/ // (Solution)
-	protected void blobPresent(int[] threshIm, int[] connIm) { // (Solution)
+	protected synchronized void blobPresent(int[] threshIm, int[] connIm) { // (Solution)
     final int arraySize = width*height;
     connIm = connComp.doLabel(threshIm, connIm, width, height);
     final int[] connImFinal = connIm;
@@ -507,11 +507,12 @@ public class BlobTracking {
           hdist = 1.0 - hdist;
         } 
 
-        /*
         if (x == width/2 && y == height/2) {
           System.out.println("Pixel center: (" + hsb[0] + "," + hsb[1] + "," + hsb[2] + ")");
+          System.out.println("red: " + (Image.pixelRed(pix)&0xFF) +
+                             "green: " + (Image.pixelGreen(pix)&0xFF) +
+                             "blue: " + (Image.pixelBlue(pix)&0xFF));
         }
-        */
 
 				if (hsb[1] > targetSatLevel && hdist < hueThreshold) {
           ++cnt;
@@ -607,58 +608,4 @@ public class BlobTracking {
 		// End Student Code
 	}
 
-	public boolean apply_background(Image src, Image dest) {
-
-		stepTiming(); // monitors the frame rate
-
-		// Begin Student Code
-
-		//averageRGB(src); // (Solution)
-		//averageHSB(src); // (Solution)
-
-		if (useGaussianBlur) {// (Solution)
-			byte[] srcArray = src.toArray();// (Solution)
-			byte[] destArray = new byte[srcArray.length]; // (Solution)
-			if (approximateGaussian) { // (Solution)
-				GaussianBlur.applyBox(srcArray, destArray, src.getWidth(), src.getHeight());
-			} // (Solution)
-			else { // (Solution)
-				GaussianBlur.apply(srcArray, destArray, width, height); // (Solution)
-			} // (Solution)
-			src = new Image(destArray, src.getWidth(), src.getHeight()); // (Solution)
-		}
-		blobPixel(src, blobPixelRedMask, targetRedHueLevel, redSaturationLevel); //(Solution)
-		blobPixel(src, blobPixelBlueMask, targetBlueHueLevel, blueSaturationLevel); //(Solution)
-		blobPixel(src, blobPixelYellowMask, targetYellowHueLevel, yellowSaturationLevel); //(Solution)
-		blobPixel(src, blobPixelGreenMask, targetGreenHueLevel, greenSaturationLevel); //(Solution)
-		max_area = -1;
-
-		targetDetected = false;
-
-		blobPresent(blobPixelRedMask, imageConnected);
-		blobPresent(blobPixelBlueMask, imageConnected);
-		blobPresent(blobPixelYellowMask, imageConnected);
-		blobPresent(blobPixelGreenMask, imageConnected);
-		 //(Solution)
-		if (targetDetected) { // (Solution)
-	    	return true;
-			// System.err.println("Bearing (Deg): " + (targetBearing*180.0/Math.PI)); // (Solution)
-			// System.err.println("Range (M): " + targetRange); // (Solution)
-		} else { // (Solution)
-			// System.err.println("no target"); // (Solution)
-			return false;
-		} // (Solution)
-		// (Solution)
-		// System.err.println("Tracking Velocity: " + // (Solution)
-		//		translationVelocityCommand + "m/s, " + // (Solution)
-		//		rotationVelocityCommand + "rad/s"); // (Solution)
-		// For a start, just copy src to dest. // (Solution)
-		//if (dest != null) { // (Solution)
-			// (Solution)
-			//Histogram.getHistogram(src, dest, true); // (Solution)
-			//markBlob(src, dest); // (Solution) TODO
-			// (Solution)
-		//} // (Solution)
-		// End Student Code
-	}
 }
