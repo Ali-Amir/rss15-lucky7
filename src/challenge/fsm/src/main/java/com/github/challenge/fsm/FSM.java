@@ -78,9 +78,11 @@ public class FSM extends AbstractNodeMain {
 	 */
 	Point2D.Double startPoint;
 
-	Point2D.Double assemblyPoint = new Point2D.Double();
+	Point2D.Double assemblyPoint = new Point2D.Double(0.6, 0.6);
+	int assemblyXMod = .2;
+
 	Point2D.Double testPoint = new Point2D.Double(3.34, 0.73);
-  int queueInd = 0;
+  	int queueInd = 0;
 
 
 
@@ -255,6 +257,18 @@ public class FSM extends AbstractNodeMain {
 				break;
 			}
 
+			case RETURN_TO_ASSEMBLY: {
+				double distance = Math.sqrt(
+            	(currentPoint.x-assemblyPoint.x)*(currentPoint.x-assemblyPoint.x) +
+            	(currentPoint.y-assemblyPoint.y)*(currentPoint.y-assemblyPoint.y));
+		        if (distance < 2e-1 && Math.abs(currentTheta-Math.PI) < Math.PI/180*3.0 {
+		          fsmState = RobotFSM.ASSEMBLY;
+		          setGrasping(ASSEMBLING);
+		          assemblyPoint.x += assemblyXMod;
+		        }
+				setNavigationTheta(assemblyPoint, Math.PI);
+			}
+
 			case ASSEMBLY: {
 				break;
 			}
@@ -341,9 +355,10 @@ public class FSM extends AbstractNodeMain {
 
 							System.out.println("FSM: BLOCK COLLECTED");
 
-							//blockCount += 1;
+							blockCount += 1;
 
 							if (blockCount>4){
+								blockCount = 0;
 								fsmState = RobotFSM.RETURN_TO_ASSEMBLY;
 							} else {
 								fsmState = RobotFSM.SMART_PATHING;
@@ -481,6 +496,14 @@ public class FSM extends AbstractNodeMain {
 		navMsg.setX(targetPoint.getX());
 		navMsg.setY(targetPoint.getY());
 		navMsg.setTheta(-20.0);
+	 	navPub.publish(navMsg);
+	}
+
+	public void setNavigationTheta(Point2D.Double targetPoint, double theta){
+		RobotLocation navMsg = navPub.newMessage();
+		navMsg.setX(targetPoint.getX());
+		navMsg.setY(targetPoint.getY());
+		navMsg.setTheta(theta);
 	 	navPub.publish(navMsg);
 	}
 
