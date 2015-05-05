@@ -2,11 +2,11 @@
 APP{"guvcview 2.0.1"}
 # control data
 #Brightness
-ID{0x00980900};CHK{0:255:1:128}=VAL{128}
+ID{0x00980900};CHK{0:255:1:128}=VAL{126}
 #Contrast
-ID{0x00980901};CHK{0:255:1:32}=VAL{32}
+ID{0x00980901};CHK{0:255:1:32}=VAL{37}
 #Saturation
-ID{0x00980902};CHK{0:255:1:32}=VAL{32}
+ID{0x00980902};CHK{0:255:1:32}=VAL{30}
 #White Balance Temperature, Auto
 ID{0x0098090c};CHK{0:1:1:1}=VAL{0}
 #Gain

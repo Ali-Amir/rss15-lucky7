@@ -45,8 +45,8 @@ public class BlobTracking {
 	protected float imageHsb[] = null; //(Solution)
 	// (Solution)
 	public double targetRedHueLevel=0.0; // (Solution)
-	public double targetBlueHueLevel=0.63; 
-	public double targetGreenHueLevel=0.4; 
+	public double targetBlueHueLevel=0.60; 
+	public double targetGreenHueLevel=0.36; 
 	public double targetYellowHueLevel=0.15;
 
 	public double redSaturationLevel=0.5; // (Solution)
@@ -57,7 +57,7 @@ public class BlobTracking {
 	public double max_area = -1;
 
 	public double targetRadius=28; // (Solution)
-	public double hueThreshold=0.05; // (Solution)
+	public double hueThreshold=0.08; // (Solution)
 	
 	public double blobSizeThreshold=400.0/128.0/128.0; // (Solution)
 	public double desiredFixationDistance=0.4; // (Solution)
@@ -188,11 +188,13 @@ public class BlobTracking {
     for (int i = 0; i < numLabels; ++i) {
       int b_w = maxX[i] - minX[i] + 1;
       int b_h = maxY[i] - minY[i] + 1;
-      int r = (b_w + b_h) / 4;
+      double r = (b_w + b_h) / 4.0;
       double minArea = Math.min(Math.PI*r*r, labelArea[i]*1.0);
       double maxArea = Math.max(Math.PI*r*r, labelArea[i]*1.0);
+      double aveArea = (minArea + maxArea)/2.0;
       double aspectRatio = 1.0*b_w/b_h;
-      if (Math.abs(1.0 - aspectRatio) < 0.2 && r > 5) {
+      double fractionFilled = labelArea[i]*1.0/aveArea;
+      if (Math.abs(1.0 - aspectRatio) < 0.2 && r > 5.0 && fractionFilled > 0.6) {
       	if (b_w*b_h>max_area && !isDouble(b_w, b_h)) {
 
           ++totalDetections;
@@ -494,7 +496,13 @@ public class BlobTracking {
           hdist = 1.0 - hdist;
         } 
 
-				if (hsb[1] > targetSatLevel && hdist < hueThreshold && hsb[2] > 0.1) {
+        /*
+        if (x == width/2 && y == height/2) {
+          System.out.println("Pixel center: (" + hsb[0] + "," + hsb[1] + "," + hsb[2] + ")");
+        }
+        */
+
+				if (hsb[1] > targetSatLevel && hdist < hueThreshold) {
           ++cnt;
 					mask[maskIndex++] = 255;
 				} else {
@@ -563,7 +571,7 @@ public class BlobTracking {
 		blobPresent(blobPixelGreenMask, imageConnected);
 		 //(Solution)
 		if (targetDetected) { // (Solution)
-      System.out.println("Target detected!");
+      //System.out.println("Target detected!");
 			blobFix(); // (Solution)
 			computeTranslationVelocityCommand(); // (Solution)
 			computeRotationVelocityCommand(); // (Solution)
