@@ -65,6 +65,7 @@
                    args="compressed in:=/camera/image_raw raw out:=/rss/video"
                    machine="workstation"/>
 
+  <!--
   <node name="view" pkg="image_view"
                     type="image_view"
                     args="image:=/rss/video"
@@ -74,6 +75,7 @@
                         type="image_view"
                         args="image:=/rss/blobVideo"
                         machine="workstation" />
+  -->
 
   <node name="fsm" pkg="challenge"
                    type="fsm"

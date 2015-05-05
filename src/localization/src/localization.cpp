@@ -117,8 +117,13 @@ void Localization::InitializeParticles() {
 
 RobotLocation Localization::currentPositionBelief() const {
   double x = 0, y = 0, t = 0;
-  double normalizer = 0.0;
+  //double normalizer = 0.0;
   double maxBelief = -1e18;
+  maxBelief = _particles[0].belief;
+  x = _particles[0].x;
+  y = _particles[0].y;
+  t = _particles[0].t;
+  /*
   for (auto par : _particles) {
     if (par.belief > maxBelief) {
       maxBelief = par.belief;
@@ -126,6 +131,7 @@ RobotLocation Localization::currentPositionBelief() const {
       y = par.y;
       t = par.t;
     }
+    */
     /*
     double prob = exp(par.belief);
     x += par.x*prob;
@@ -133,8 +139,8 @@ RobotLocation Localization::currentPositionBelief() const {
     par.t = NormalizeRad(par.t);
     t += par.t*prob;
     normalizer += prob;
-    */
   }
+  */
 
   /*
   x /= normalizer;
@@ -208,11 +214,13 @@ double logGaussian(double x, double y, double mux, double muy, double var) {
 
 void Localization::NormalizeBeliefs() {
   // Normalize the result
-  double normalizer = -1e18;
+  double normalizer = _particles[0].belief;
+  /*
   for (const Particle &par : _particles) {
     normalizer = max(normalizer, par.belief);
     //normalizer += exp(par.belief);
   }
+  */
   for (Particle &par : _particles) {
     par.belief -= normalizer;
   }
@@ -300,6 +308,9 @@ double NormalizeRad(double rad) {
   rad = fmod(rad, 2*M_PI);
   if (rad < 0) {
     rad += 2*M_PI;
+  }
+  if (rad > M_PI) {
+    rad -= 2*M_PI;
   }
   return rad;
 }
