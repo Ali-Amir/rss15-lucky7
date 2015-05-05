@@ -296,7 +296,6 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
         }
       }
       ROS_ASSERT(ok);
-    }
     */
 
     ROS_ASSERT(cur_cell != nullptr && cur_cell->HasPathToGoal());
@@ -305,7 +304,6 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
     vector<Point_3> path;
     path.push_back(Point_3(_cur_loc.x, _cur_loc.y, ObstacleMap::RadToRotation(_cur_loc.theta)));
     for (; cur_cell->to_goal_next != nullptr; cur_cell = cur_cell->to_goal_next) {
-      //ROS_INFO("Point: %.3lf %.3lf angle: %.3lf", cur_cell->xc, cur_cell->yc, ObstacleMap::IdToRotation(cur_cell->rotId));
       path.push_back(Point_3(cur_cell->xc, cur_cell->yc,
                              ObstacleMap::IdToRotation(cur_cell->rotId)));
     }
@@ -322,31 +320,15 @@ void Navigation::moveRobotTo(const RobotLocation::ConstPtr &target) {
 
     // Calculate translational/rotational velocities
     GetSmoothPathVelocities(path);
-    //ROS_INFO("Publishing the path of size: %d", int(smooth_path.size()));
-
-    /*
-    GUIPolyMsg path_poly;
-    path_poly.numVertices = smooth_path.size();
-    for (const Point_3 &p : smooth_path) {
-      ROS_INFO("Point: %.3lf %.3lf angle: %.3lf", CGAL::to_double(p.x()), CGAL::to_double(p.y()), CGAL::to_double(p.z()));
-      path_poly.x.push_back(CGAL::to_double(p.x()));
-      path_poly.y.push_back(CGAL::to_double(p.y()));
-    }
-    path_poly.c.r = 255;
-    path_poly.c.g = 0;
-    path_poly.c.b = 0;
-    _guipoly_pub.publish(path_poly);
-    */
 
     MotionMsg mot_msg;
     mot_msg.translationalVelocity = _trans_velocity;
     mot_msg.rotationalVelocity = _rot_velocity;
     _motor_pub.publish(mot_msg);
+
+    ROS_INFO_THROTTLE(10, "Commanding: %.3lf %.3lf time until next: %.3lf",
+        _trans_velocity, _rot_velocity, _time_until-CurTime());
   }
-
-  ROS_INFO_THROTTLE(10, "Commanding: %.3lf %.3lf time until next: %.3lf",
-      _trans_velocity, _rot_velocity, _time_until-CurTime());
-
 }
 
 void Navigation::CapVelocities() {

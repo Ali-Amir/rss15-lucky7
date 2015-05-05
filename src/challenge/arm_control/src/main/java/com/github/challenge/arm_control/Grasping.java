@@ -113,6 +113,8 @@ public class Grasping extends AbstractNodeMain {
   protected double curLocX;
   protected double curLocY;
   protected double curLocTheta;
+  protected double prevRotVel;
+  protected double prevTransVel;
 	static final int INITIALIZED = -1;
 	static final int COLLECTING = 0;
 	static final int ASSEMBLING = 1;
@@ -666,7 +668,7 @@ boolean rotating = true;
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
 						startingMove = true;
 						setVelocity(0.0, 0.0);
-						//					Robot.setVelocity(0.0, 0.0);
+						//Robot.setVelocity(0.0, 0.0);
 						fsmState = RoboFSM.COLLECTING; 
 					}
 					break;
@@ -838,6 +840,12 @@ boolean rotating = true;
 	}
 
 	public void setVelocity(double rotVel, double transVel) {
+    if (Math.abs(rotVel-prevRotVel) < 1e-5 &&
+        Math.abs(transVel-prevTransVel) < 1e-4) {
+      return;
+    }
+    prevRotVel = rotVel;
+    prevTransVel = transVel;
 		MotionMsg motionMsg = motionPub.newMessage();
 		motionMsg.setRotationalVelocity(rotVel);
 		motionMsg.setTranslationalVelocity(transVel);

@@ -147,13 +147,14 @@ RobotLocation Localization::currentPositionBelief() const {
   currentPosition.x = x;
   currentPosition.y = y;
   currentPosition.theta = NormalizeRad(t);
-  ROS_INFO("Belief is: %.3lf", exp(maxBelief));
+  //ROS_INFO("Belief is: %.3lf", exp(maxBelief));
   return currentPosition;
 }
 
 void Localization::PublishLocation() {
   RobotLocation currentBelief = currentPositionBelief();
-  ROS_INFO("Current belief: (%.3lf %.3lf|%.3lf) Odometry: (%.3lf %.3lf|%.3lf)\n",
+  ROS_INFO_THROTTLE(2,
+      "Current belief: (%.3lf %.3lf|%.3lf) Odometry: (%.3lf %.3lf|%.3lf)\n",
       currentBelief.x, currentBelief.y, currentBelief.theta,
       _prev_odo_x, _prev_odo_y, _prev_odo_t);
   // TODO: remove
@@ -280,7 +281,8 @@ void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
   if (son->range < 0.2 || son->range > 1.8) {
     return;
   }
-  ROS_INFO_STREAM("Got sonar update: " << son->sonarId << " range: " << son->range);
+  ROS_INFO_STREAM_THROTTLE(2,
+      "Got sonar update: " << son->sonarId << " range: " << son->range);
   double start_time = curTime();
   double varD = 1.0;
   for (Particle &par : _particles) {

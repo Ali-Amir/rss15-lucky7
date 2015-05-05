@@ -50,7 +50,7 @@
                    type="localization"
                    args=""
                    machine="workstation"
-                   output="log">
+                   output="screen">
       <param name="mapFileName" value="$(env CHALLENGE)/maps/challenge_2015.map" />
       <param name="testTriangulation" value="no" />
       <param name="leaveBreadCrumbs" value="yes" />
