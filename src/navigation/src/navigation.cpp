@@ -403,6 +403,9 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
         }
       }
 
+      // Check if we can just do the turn or in case
+      // these we are trying to reach next point for some reason
+      // forcefully turn around.
       if (!bad || j <= 2) {
         _trans_velocity = 0.0;
         _rot_velocity = sgn(dtheta)*MAX_ROT_VELOCITY;
@@ -510,20 +513,52 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
 
     // If a circular path is possible, just use its parameters for the command.
     if (ok) {
-      double dtheta = NormalizeRad(tar_rad-sta_rad);
-      if (dtheta > M_PI) dtheta -= 2.0*M_PI;
-
-      _trans_velocity = dir*MAX_TRANS_VELOCITY;
-      _rot_velocity = sgn(dtheta)*fabs(_trans_velocity)/radius;
-      CapVelocities();
-      if (is_straight) {
-        _time_until = min(MAX_BLIND_TIME, d*0.9/fabs(_trans_velocity)) + CurTime();
-      } else {
-        _time_until = min(MAX_BLIND_TIME, fabs(dtheta*radius*0.9/_trans_velocity))
-                        + CurTime();
+      // Try to turn around first if possible.
+      if (dir < 0.0) {
+        bool bad = 0;
+        double starot = CGAL::to_double(path[0].z());
+        double starad = ObstacleMap::RotationToRad(starot);
+        double dtheta = M_PI;
+        for (int step = 0; step < GRANULARITY; ++step) {
+          Point_3 cur_point(stax, stay,
+              ObstacleMap::RadToRotation(starad+step*dtheta/GRANULARITY));
+          Grid::CellId cur_cell;
+          if (!_world->GetCellId(cur_point, &cur_cell)) {
+            bad = 1;
+          }
+          if (_world->GetCell(cur_cell) == nullptr) {
+            bad = 1;
+          }
+        }
+        // If it is possible, just do it to go facing forward.
+        if (!bad) {
+          _trans_velocity = 0.0;
+          _rot_velocity = MAX_ROT_VELOCITY;
+          _time_until = min(MAX_BLIND_TIME, fabs(dtheta/_rot_velocity))
+                          + CurTime();
+        }
       }
-      ROS_INFO("COMMANDING TO GO FROM (%.2lf,%.2lf,%.3lf) to (%.2lf,%.2lf,%.3lf)", stax,stay,ObstacleMap::RadToRotation(sta_rad), tarx,tary,ObstacleMap::RadToRotation(tar_rad));
-      return;
+
+      // Follow the circle path
+      {
+        double dtheta = NormalizeRad(tar_rad-sta_rad);
+        if (dtheta > M_PI) dtheta -= 2.0*M_PI;
+
+        _trans_velocity = dir*MAX_TRANS_VELOCITY;
+        _rot_velocity = sgn(dtheta)*fabs(_trans_velocity)/radius;
+        CapVelocities();
+        if (is_straight) {
+          _time_until = min(MAX_BLIND_TIME, d*0.9/fabs(_trans_velocity))
+                          + CurTime();
+        } else {
+          _time_until = min(MAX_BLIND_TIME, fabs(dtheta*radius*0.9/_trans_velocity))
+                          + CurTime();
+        }
+        ROS_INFO("COMMANDING TO GO FROM (%.2lf,%.2lf,%.3lf) to (%.2lf,%.2lf,%.3lf)",
+            stax,stay,ObstacleMap::RadToRotation(sta_rad), tarx,tary,
+            ObstacleMap::RadToRotation(tar_rad));
+        return;
+      }
     }
   }
 }
