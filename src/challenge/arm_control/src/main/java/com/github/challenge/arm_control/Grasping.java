@@ -444,7 +444,7 @@ boolean rotating = true;
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
 						fsmState = RoboFSM.MOVE_FORWARD;
-						moveDistance = 0.35;
+						moveDistance = 0.30;
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
@@ -703,7 +703,7 @@ boolean rotating = true;
 					}
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, startTheta)) {
+							targetPoint.y, startTheta, 0.03)) {
 						System.out.println("GRASPING: We are within range of target");
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
@@ -750,7 +750,7 @@ boolean rotating = true;
 					}
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, startTheta)) {
+							targetPoint.y, startTheta, TARGET_THRESHOLD)) {
 						System.out.println("GRASPING: We are within range of target");
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
@@ -789,7 +789,7 @@ boolean rotating = true;
 					}
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, startTheta)) {
+							targetPoint.y, startTheta, TARGET_THRESHOLD)) {
 						System.out.println("GRASPING: We are within range of target");
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
@@ -819,7 +819,7 @@ boolean rotating = true;
 					}
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, startTheta)) {
+							targetPoint.y, startTheta, TARGET_THRESHOLD)) {
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
 						startingMove = true;
@@ -848,7 +848,7 @@ boolean rotating = true;
 					}
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, startTheta)) {
+							targetPoint.y, startTheta, TARGET_THRESHOLD)) {
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
 						startingMove = true;
@@ -915,7 +915,7 @@ boolean rotating = true;
 					}
 					
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, startTheta)) {
+							targetPoint.y, startTheta, TARGET_THRESHOLD)) {
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
 						startingMove = true;
@@ -1008,7 +1008,7 @@ boolean rotating = true;
 	 * a forward (1) or backward (-1) direction.<\p>
 	 */
 	private boolean moveTowardTarget(double x, double y, double heading,
-			double tX, double tY, double desiredHeading) {
+			double tX, double tY, double desiredHeading, double targetThreshold) {
 		System.out.println("GRASPING:   - current: x:" + x + " y:" + y);
 		System.out.println("GRASPING:   - target: x:" + tX + " y:" + tY);
 
@@ -1022,7 +1022,7 @@ boolean rotating = true;
 		}
     */
 
-		if (tD < TARGET_THRESHOLD) {
+		if (tD < targetThreshold) {
 			return true;
 		} else {
 			//cosine and sine of actual heading
@@ -1105,6 +1105,7 @@ boolean rotating = true;
 			blobTrack = new BlobTracking(width, height, freeCellClient);
       blobTrack.updateLocation(curLocX, curLocY, curLocTheta);
 
+      /*j
 			blobTrack.targetRedHueLevel = target_red_hue_level;
 			blobTrack.targetBlueHueLevel = target_blue_hue_level;
 			blobTrack.targetYellowHueLevel = target_yellow_hue_level;
@@ -1114,9 +1115,10 @@ boolean rotating = true;
 			blobTrack.blueSaturationLevel = target_blue_sat_level;
 			blobTrack.yellowSaturationLevel = target_yellow_sat_level;
 			blobTrack.greenSaturationLevel = target_green_sat_level;
+      */
 
 
-			blobTrack.hueThreshold = hue_threshold;
+			//blobTrack.hueThreshold = hue_threshold;
 			blobTrack.blobSizeThreshold = blob_size_threshold;
 			blobTrack.targetRadius = target_radius;
 			blobTrack.desiredFixationDistance = desired_fixation_distance;
