@@ -138,12 +138,24 @@ void Navigation::updateRobotLocation(const RobotLocation::ConstPtr &loc) {
 
 bool Navigation::isLocationFree(
     LocFree::Request &req, LocFree::Response &res) {
-  Grid::CellId cur_cell_id;
-  assert(_world->GetCellId(Point_3(req.x, req.y,
-                           ObstacleMap::RadToRotation(req.theta)),
-                           &cur_cell_id));
-  const Grid::Cell *cur_cell(_world->GetCell(cur_cell_id));
-  res.result = cur_cell != nullptr;
+  // Check safe
+  {
+    Grid::CellId cur_cell_id;
+    assert(_world->GetCellId(Point_3(req.x, req.y,
+                             ObstacleMap::RadToRotation(req.theta)),
+                             &cur_cell_id));
+    const Grid::Cell *cur_cell(_world->GetCell(cur_cell_id));
+    res.result = cur_cell != nullptr;
+  }
+  // Check risky
+  {
+    Grid::CellId cur_cell_id;
+    assert(_world->GetCellId(Point_3(req.xr, req.yr,
+                             ObstacleMap::RadToRotation(req.thetar)),
+                             &cur_cell_id));
+    const Grid::Cell *cur_cell(_world->GetCell(cur_cell_id));
+    res.resultr = cur_cell != nullptr;
+  }
   return true;
 }
 

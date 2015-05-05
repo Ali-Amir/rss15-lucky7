@@ -1,5 +1,9 @@
 float64 x
 float64 y
 float64 theta
+float64 xr
+float64 yr
+float64 thetar
 ---
 bool result
+bool resultr
