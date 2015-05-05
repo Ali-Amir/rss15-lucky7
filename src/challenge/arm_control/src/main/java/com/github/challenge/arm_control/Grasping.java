@@ -113,6 +113,8 @@ public class Grasping extends AbstractNodeMain {
   protected double curLocX;
   protected double curLocY;
   protected double curLocTheta;
+  protected double prevRotVel;
+  protected double prevTransVel;
 	static final int INITIALIZED = -1;
 	static final int COLLECTING = 0;
 	static final int ASSEMBLING = 1;
@@ -218,7 +220,7 @@ boolean rotating = true;
 	/**
 	 * <p>Translational velocity while moving (m/s).</p>
 	 **/
-	public static final double WHEEL_TV = 0.10;
+	public static final double WHEEL_TV = 0.12;
 
 	/**
 	 * <p>Proportional gain for rotation controller while moving.</p>
@@ -233,7 +235,7 @@ boolean rotating = true;
 	/**
 	 * <p>Target reached threshold (m).</p>
 	 **/
-	public static final double TARGET_THRESHOLD = 0.01;
+	public static final double TARGET_THRESHOLD = 0.02;
 
 	/**
 	 * <p>Target reached threshold (m).</p>
@@ -516,7 +518,7 @@ boolean rotating = true;
 				}
 
 				case SET_ARM_TO_PULL: {
-					System.out.println("GRASPING: SET_BLADE_TO_PULL");
+					//System.out.println("GRASPING: SET_BLADE_TO_PULL");
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
 						//fsmState = RoboFSM.ENGAGE_BLOCK;<<
@@ -723,7 +725,7 @@ boolean rotating = true;
 
 				case MOVE_FORWARD: {
 
-					System.out.println("GRASPING: MOVE FORWARD");
+					//System.out.println("GRASPING: MOVE FORWARD");
 					// TODO
 					//if (Math.abs(blobTrack.target
 					// check distance to target and decrease standoff
@@ -731,7 +733,8 @@ boolean rotating = true;
 					// if object is lost, go back to VSSEARCH
 
 					//this is just a placeholder for moving forward.
-					System.out.println("GRASPING: *** MOVE_FORWARD *** " + startingMove);
+          // TODO: logging
+					//System.out.println("GRASPING: *** MOVE_FORWARD *** " + startingMove);
 					if(startingMove) {
 						startPoint = new Point2D.Double();
 						startPoint.x = msg.getX();
@@ -747,13 +750,13 @@ boolean rotating = true;
 					}
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, DIR_FORWARD)) {
+							targetPoint.y, startTheta)) {
 						System.out.println("GRASPING: We are within range of target");
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
 						startingMove = true;
 						setVelocity(0.0, 0.0);
-						//					Robot.setVelocity(0.0, 0.0);
+						//Robot.setVelocity(0.0, 0.0);
 						fsmState = RoboFSM.COLLECTING; 
 					}
 					break;
@@ -761,7 +764,7 @@ boolean rotating = true;
 
 				case BLIND_APPROACH: {
 
-					System.out.println("GRASPING: MOVE FORWARD");
+					//System.out.println("GRASPING: MOVE FORWARD");
 					// TODO
 					//if (Math.abs(blobTrack.target
 					// check distance to target and decrease standoff
@@ -769,7 +772,7 @@ boolean rotating = true;
 					// if object is lost, go back to VSSEARCH
 
 					//this is just a placeholder for moving forward.
-					System.out.println("GRASPING: *** MOVE_FORWARD *** " + startingMove);
+					//System.out.println("GRASPING: *** MOVE_FORWARD *** " + startingMove);
 					if(startingMove) {
 						startPoint = new Point2D.Double();
 						startPoint.x = msg.
@@ -786,7 +789,7 @@ boolean rotating = true;
 					}
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, DIR_FORWARD)) {
+							targetPoint.y, startTheta)) {
 						System.out.println("GRASPING: We are within range of target");
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
@@ -816,7 +819,7 @@ boolean rotating = true;
 					}
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, DIR_BACKWARD)) {
+							targetPoint.y, startTheta)) {
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
 						startingMove = true;
@@ -845,7 +848,7 @@ boolean rotating = true;
 					}
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, DIR_BACKWARD)) {
+							targetPoint.y, startTheta)) {
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
 						startingMove = true;
@@ -912,7 +915,7 @@ boolean rotating = true;
 					}
 					
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, DIR_BACKWARD)) {
+							targetPoint.y, startTheta)) {
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
 						startingMove = true;
@@ -925,6 +928,12 @@ boolean rotating = true;
 	}
 
 	public void setVelocity(double rotVel, double transVel) {
+    if (Math.abs(rotVel-prevRotVel) < 1e-5 &&
+        Math.abs(transVel-prevTransVel) < 1e-4) {
+      return;
+    }
+    prevRotVel = rotVel;
+    prevTransVel = transVel;
 		MotionMsg motionMsg = motionPub.newMessage();
 		motionMsg.setRotationalVelocity(rotVel);
 		motionMsg.setTranslationalVelocity(transVel);
@@ -952,16 +961,13 @@ boolean rotating = true;
 		System.out.println("GRASPING:   - target: x:" + tX + " y:" + tY);
 
 		// distance to target
-		double tD = Math.sqrt((x-tX)*(x-tX) + (y-tY)*(y-tY));
-		double tD1 = Math.hypot((x-tX), (x-tY));
-		System.out.println("GRASPING:   Distance to target: " + tD + " td1: " + tD1);
+		double tD = Math.hypot((x-tX), (y-tY));
+		//System.out.println("GRASPING:   Distance to target: " + tD);
 
 		if (direction == DIR_BACKWARD) {
 			heading = heading - Math.PI;
 		}
 
-		
-		
 		//cosine and sine of actual heading
 		double cActual = Math.cos(heading);
 		double sActual = Math.sin(heading);
@@ -980,9 +986,7 @@ boolean rotating = true;
 			return true;
 		}
 		else {
-			System.out.println("GRASPING:  thetaError: " + thetaError);
 			double rv = WHEEL_RV_GAIN * thetaError;
-			System.out.println("GRASPING:  RV: " + rv);
 			if (rv > WHEEL_MAX_RV) {
 				rv = WHEEL_MAX_RV;
 			}
@@ -990,7 +994,8 @@ boolean rotating = true;
 				rv = -WHEEL_MAX_RV;
 			}
 
-			System.out.println("GRASPING:  clamped RV:" + rv);
+			System.out.println("GRASPING:  thetaError: " + thetaError + " rv: " + rv
+          + " transDistance: " + tD);
 
 			setVelocity(rv, 0);
 				
@@ -1003,39 +1008,36 @@ boolean rotating = true;
 	 * a forward (1) or backward (-1) direction.<\p>
 	 */
 	private boolean moveTowardTarget(double x, double y, double heading,
-			double tX, double tY, int direction) {
+			double tX, double tY, double desiredHeading) {
 		System.out.println("GRASPING:   - current: x:" + x + " y:" + y);
 		System.out.println("GRASPING:   - target: x:" + tX + " y:" + tY);
 
 		// distance to target
-		double tD = Math.sqrt((x-tX)*(x-tX) + (y-tY)*(y-tY));
-		double tD1 = Math.hypot((x-tX), (x-tY));
-		System.out.println("GRASPING:   Distance to target: " + tD + " td1: " + tD1);
+		double tD = Math.hypot((x-tX), (y-tY));
+		//System.out.println("GRASPING:   Distance to target: " + tD);
 
+    /*
 		if (direction == DIR_BACKWARD) {
 			heading = heading - Math.PI;
 		}
+    */
 
 		if (tD < TARGET_THRESHOLD) {
 			return true;
-		}
-		else {
+		} else {
 			//cosine and sine of actual heading
 			double cActual = Math.cos(heading);
 			double sActual = Math.sin(heading);
+      double actualDirection = Math.signum(cActual*(tX-x)+sActual*(tY-y));
 
 			//cosine and sine of desired heading
-			double cDesired = (tX-x)/tD;
-			double sDesired = (tY-y)/tD;
+      double thetaError = (desiredHeading - heading)%(2.0*Math.PI);
+      if (thetaError > Math.PI) {
+        thetaError -= 2.0*Math.PI;
+      }
 
-			//cosine and sine of error angle
-			double cError = cDesired*cActual+sDesired*sActual;
-			double sError = sDesired*cActual-cDesired*sActual;
-
-			double thetaError = Math.atan2(sError, cError);
-			System.out.println("GRASPING:  thetaError: " + thetaError);
-			double rv = WHEEL_RV_GAIN * thetaError;
-			System.out.println("GRASPING:  RV: " + rv);
+			double rv = WHEEL_RV_GAIN * thetaError * 0.1;
+			//System.out.println("GRASPING:  RV: " + rv);
 			if (rv > WHEEL_MAX_RV) {
 				rv = WHEEL_MAX_RV;
 			}
@@ -1043,12 +1045,12 @@ boolean rotating = true;
 				rv = -WHEEL_MAX_RV;
 			}
 
-			System.out.println("GRASPING:  clamped RV:" + rv);
+			double tv = tD * WHEEL_TV * actualDirection * 2.0;
+			
+			System.out.println("GRASPING:  thetaError: " + thetaError + " rv: " + rv
+          + " tv: " + tv + " transDistance: " + tD);
 
-			double tv = tD/TRANSPORT_DISTANCE * WHEEL_TV * direction;
-			
 			setVelocity(rv, tv);
-			
 		}
 		return false;
 	}
@@ -1160,20 +1162,21 @@ boolean rotating = true;
 		// TODO: if we lose target during SEARCH, nothing
 		// TODO: if we lose target during APPROACH, go back to search
 
-        if (fsmState==RoboFSM.VISUAL_SERVO_SEARCH){
-        	System.out.println("GRASPING: VISUAL SERVO SEARCH");
-			System.out.println("GRASPING:   range, bearing:" + blobTrack.targetRange + ", " +
+    if (fsmState==RoboFSM.VISUAL_SERVO_SEARCH){
+      System.out.println("GRASPING: VISUAL SERVO SEARCH");
+			System.out.println("GRASPING:   range, bearing:" +
+          blobTrack.targetRange + ", " +
 					(blobTrack.targetBearing*180.0/Math.PI));
 
 			if (Math.abs(blobTrack.rotationVelocityCommand)<0.001 && Math.abs(blobTrack.targetRange-SEARCH_STANDOFF) < EPS_SEARCH_STANDOFF) {
 				//fsmState = RoboFSM.SET_ARM_RETRACTED;<<
+
 
 				if (SERVO_MODE == WALL_COLLECTING){
 					fsmState = RoboFSM.SET_ARM_TO_PULL;
 				} else {
 					fsmState = RoboFSM.SET_ARM_TO_COLLECT;
 				}
-				
 				setVelocity(0.0, 0.0);
 			} else {
 				// move robot towards target

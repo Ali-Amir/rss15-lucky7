@@ -60,6 +60,12 @@ public class SonarPublisher implements Runnable {
 			msg.setIsFront(isFront);
       msg.setSonarId(sonarId);
 			pub.publish(msg);
+
+      try {
+        Thread.sleep(50);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
 		}
 	}
 }

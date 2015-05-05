@@ -24,6 +24,7 @@ import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 import rss_msgs.MotionMsg;
 import rss_msgs.OdometryMsg;
+import rss_msgs.RobotLocation;
 
 
 public class VisionGUI extends AbstractNodeMain {
@@ -33,7 +34,7 @@ public class VisionGUI extends AbstractNodeMain {
 	 */
 	public ConnectedNode node;
 
-	private Subscriber<OdometryMsg> odoSub;
+	private Subscriber<RobotLocation> odoSub;
 	private Subscriber<sensor_msgs.Image> vidSub;
 
   public VisionGUIPanel panel;
@@ -69,7 +70,7 @@ public class VisionGUI extends AbstractNodeMain {
 
 		final boolean reverseRGB = node.getParameterTree().getBoolean("reverse_rgb", false);
 
-		vidSub = node.newSubscriber("/rss/video", "sensor_msgs/Image");
+		vidSub = node.newSubscriber("/rss/blobVideo", "sensor_msgs/Image");
 		vidSub.addMessageListener(new MessageListener<sensor_msgs.Image>() {
 			@Override
 			public void onNewMessage(sensor_msgs.Image message) {
@@ -86,11 +87,11 @@ public class VisionGUI extends AbstractNodeMain {
 		}
 		);
 
-		odoSub = node.newSubscriber("/rss/odometry", "rss_msgs/OdometryMsg");
+		odoSub = node.newSubscriber("localization/update", RobotLocation._TYPE);
 		odoSub.addMessageListener(
-				new MessageListener<rss_msgs.OdometryMsg>() {
+				new MessageListener<RobotLocation>() {
 					@Override
-					public void onNewMessage(rss_msgs.OdometryMsg message) {
+					public void onNewMessage(RobotLocation message) {
 						if ( firstUpdate ) {
 							firstUpdate = false;
               //Robot.resetRobotBase();

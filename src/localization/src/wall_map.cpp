@@ -223,9 +223,16 @@ double WallMap::DistanceToWall(const Ray_2 &ray) {
       double C = x2*y1-x1*y2;
       if (fabs(A*vx+B*vy) < 1e-6) {
         if (fabs(A*x + B*y + C) < 1e-6) {
-          closest = min(closest, sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1)));
-          closest = min(closest, sqrt((x-x2)*(x-x2)+(y-y2)*(y-y2)));
-          ++interCount;
+          double dis1 = vx*(x1-x)+vy*(y1-y);
+          if (dis1 > 0) {
+            closest = min(closest, dis1);
+            ++interCount;
+          }
+          double dis2 = vx*(x2-x)+vy*(y2-y);
+          if (dis2 > 0) {
+            closest = min(closest, dis2);
+            ++interCount;
+          }
         }
       } else {
         double t = (-C - A*x - B*y) / (A*vx + B*vy);
