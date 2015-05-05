@@ -87,6 +87,7 @@ public class BlobTracking {
 	// process.  Visual results are valid only if targetDetected==true; motor
 	// velocities should do something sane in this case.
 	public boolean targetDetected = false; // set in blobPresent()
+  public boolean targetNotRisky = false;
 	public double centroidX = 0.0; // set in blobPresent()
 	public double centroidY = 0.0; // set in blobPresent()
 	public double targetArea = 0.0; // set in blobPresent()
@@ -206,10 +207,17 @@ public class BlobTracking {
           double[] rangeBear = getRangeBearing(xC, yC);
           LocFreeRequest request =
             messageFactory.newFromType(LocFreeRequest._TYPE);
-          double d = Math.min(0.4, rangeBear[0]);
-          request.setX(curLocX + Math.cos(curLocTheta)*d);
-          request.setY(curLocY + Math.sin(curLocTheta)*d);
+          double d = Math.abs(rangeBear[0]/Math.cos(rangeBear[1]));
+          double dSafe = Math.max(0.0, d-0.36);
+          double dRisky = Math.max(0.0, d-0.25);
+          double ux = Math.cos(curLocTheta);
+          double uy = Math.sin(curLocTheta);
+          request.setX(curLocX + ux*dSafe);
+          request.setY(curLocY + uy*dSafe);
           request.setTheta(curLocTheta + rangeBear[1]);
+          request.setXr(curLocX + ux*dRisky);
+          request.setYr(curLocY + uy*dRisky);
+          request.setThetar(curLocTheta + rangeBear[1]);
 
           final Detection det = new Detection(xC, yC, area, i);
           free_cell_client.call(request, new ServiceResponseListener<LocFreeResponse>() {
@@ -221,6 +229,7 @@ public class BlobTracking {
                   // Set internal variables
                   max_area = det.targetArea;
                   targetDetected = true;
+                  targetNotRisky = message.getResultr();
                   targetArea = det.targetArea;
                   centroidX = det.xC;
                   centroidY = det.yC;
