@@ -585,7 +585,7 @@ public class BlobTracking {
 		blobPresent(blobPixelGreenMask, imageConnected, blobMask);
 		 //(Solution)
 		if (targetDetected) { // (Solution)
-      System.out.println("Target detected!");
+        	System.out.println("Target detected!");
 			blobFix(); // (Solution)
 			computeTranslationVelocityCommand(); // (Solution)
 			computeRotationVelocityCommand(); // (Solution)

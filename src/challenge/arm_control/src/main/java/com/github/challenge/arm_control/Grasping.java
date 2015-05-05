@@ -118,6 +118,8 @@ public class Grasping extends AbstractNodeMain {
 	static final int ASSEMBLING = 1;
 	static final int BACKGROUND_PROCESSING =2 ;
 
+	static final int WALL_COLLECTING = 3;
+
 	static final int OFF = 5;
 	/**
 	 * <p>Shoulder joint array index.  Note, current sense is on Orc port 0,
@@ -382,7 +384,7 @@ boolean rotating = true;
 	public void handle(GraspingMsg msg){
 		SERVO_MODE = msg.getServomode();
 
-		if (SERVO_MODE == COLLECTING  || SERVO_MODE==ASSEMBLING){
+		if (SERVO_MODE == COLLECTING  || SERVO_MODE==ASSEMBLING || SERVO_MODE == WALL_COLLECTING){
 			fsmState = RoboFSM.INITIALIZE_ARM;
 		}
 		else if (SERVO_MODE == BACKGROUND_PROCESSING){
@@ -418,6 +420,84 @@ boolean rotating = true;
 		armPub.publish(armMsg);
 
 		if (SERVO_MODE == COLLECTING) {
+
+			switch (fsmState) {
+
+				case INITIALIZE_ARM: {
+					if (wristControl.isAtDesired() && shoulderControl.isAtDesired() ) {
+						System.out.println("========================================================");
+						System.out.println("GRASPING: Arm is now initialized (in retracted state)");
+						
+
+						// part 3b
+						fsmState = RoboFSM.VISUAL_SERVO_SEARCH;
+						//fsmState = RoboFSM.SET_ARM_FOR_GRASP;
+						// Part 4:
+					}
+					break;
+				}
+
+				case SET_ARM_TO_COLLECT: {
+					System.out.println("GRASPING: SET_BLADE_TO_COLLECT");
+					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
+						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
+						fsmState = RoboFSM.MOVE_FORWARD;
+						moveDistance = 0.35;
+						//fsmState = RoboFSM.BLIND_APPROACH;
+					}
+					break;
+				}
+
+				case COLLECTING: {
+					// if (bumpPressed){
+					// 	blockCollected = true;
+					// 	//code here to announce the block has been collected.
+					// }
+					System.out.println("GRASPING: COLLECTING");
+					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
+						
+     					//BUMP SENSOR LOGIC
+						// try {
+						//     Thread.sleep(1000);                 //1000 milliseconds is one second.
+						// } catch(InterruptedException ex) {
+						//     Thread.currentThread().interrupt();
+						// }
+						//BUMP SENSOR LOGIC
+						
+						// if (bumpPressed){
+						// 	System.out.println("GRASPING: BLOCK IS COLLECTED");
+						// 	fsmState = RoboFSM.OFF;
+						// 	setGrasping(OFF, true);
+						// } else {
+						// 	System.out.println("GRASPING: BLOCK WAS NOT COLLECTED");
+						// 	fsmState = RoboFSM.OFF;
+						// 	setGrasping(OFF, false);
+						// }
+
+						//fsmState = RoboFSM.INITIALIZE_ARM;
+
+						fsmState = RoboFSM.OFF;
+
+						setGrasping(OFF, true, true);
+							//setGrasping(OFF, true);
+						//fsmState = RoboFSM.BLIND_APPROACH;
+					}
+					break;
+				}
+
+				case RELEASING: {
+					System.out.println("GRASPING: RELEASING");
+					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
+						System.out.println("GRASPING: BLOCK IS RELEASED");
+						fsmState = RoboFSM.OFF;
+						setGrasping(OFF, false, false);
+						//fsmState = RoboFSM.BLIND_APPROACH;
+					}
+					break;
+				}
+			}
+
+		} else if (SERVO_MODE == WALL_COLLECTING) {
 
 			switch (fsmState) {
 
@@ -539,8 +619,7 @@ boolean rotating = true;
 				}
 			}
 
-		}
-		else if (SERVO_MODE == ASSEMBLING) {
+		} else if (SERVO_MODE == ASSEMBLING) {
 
 			switch (fsmState) {
 				
@@ -596,43 +675,52 @@ boolean rotating = true;
 					break;
 				}
 
-				// case VISUAL_SERVO_APPROACH: {
+				case MOVE_FORWARD: {
 
-				// 	System.out.println("GRASPING: VISUAL_SERVO APPROACH");
-				// 	// TODO
-				// 	//if (Math.abs(blobTrack.target
-				// 	// check distance to target and decrease standoff
+					System.out.println("GRASPING: MOVE FORWARD");
+					// TODO
+					//if (Math.abs(blobTrack.target
+					// check distance to target and decrease standoff
 
-				// 	// if object is lost, go back to VSSEARCH
+					// if object is lost, go back to VSSEARCH
 
-				// 	//this is just a placeholder for moving forward.
-				// 	System.out.println("GRASPING: *** MOVE_FORWARD *** " + startingMove);
-				// 	if(startingMove) {
-				// 		startPoint = new Point2D.Double();
-				// 		startPoint.x = msg.getX();
-				// 		startPoint.y = msg.getY();
-				// 		startTheta = msg.getTheta();
-				// 		targetPoint = new Point2D.Double();
-				// 		targetPoint.x = startPoint.x +
-				// 		APPROACH_DISTANCE*Math.cos(startTheta);
-				// 		targetPoint.y = startPoint.y +
-				// 		APPROACH_DISTANCE*Math.sin(startTheta);
-				// 		targetTheta = startTheta;
-				// 		startingMove = false;
-				// 	}
+					//this is just a placeholder for moving forward.
+					System.out.println("GRASPING: *** MOVE_FORWARD *** " + startingMove);
+					if(startingMove) {
+						startPoint = new Point2D.Double();
+						startPoint.x = msg.getX();
+						startPoint.y = msg.getY();
+						startTheta = msg.getTheta();
+						targetPoint = new Point2D.Double();
+						targetPoint.x = startPoint.x +
+						moveDistance*Math.cos(startTheta);
+						targetPoint.y = startPoint.y +
+						moveDistance*Math.sin(startTheta);
+						targetTheta = startTheta;
+						startingMove = false;
+					}
 
-				// 	if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-				// 			targetPoint.y, DIR_FORWARD)) {
-				// 		System.out.println("GRASPING: We are within range of target");
-				// 		// TBD
-				// 		//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
-				// 		startingMove = true;
-				// 		setVelocity(0.0, 0.0);
-				// 		//					Robot.setVelocity(0.0, 0.0);
-				// 		fsmState = RoboFSM.ENGAGE_BLOCK; 
-				// 	}
-				// 	break;
-				// }
+					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
+							targetPoint.y, DIR_FORWARD)) {
+						System.out.println("GRASPING: We are within range of target");
+						// TBD
+						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
+						startingMove = true;
+						setVelocity(0.0, 0.0);
+						//					Robot.setVelocity(0.0, 0.0);
+						fsmState = RoboFSM.COLLECTING; 
+					}
+					break;
+				}
+			}
+		} else if (SERVO_MODE == WALL_COLLECTING) {
+			switch (fsmState) {
+
+				case INITIALIZE_ARM: {
+					//setVelocity(0.0, 0.0);
+					break;
+				}
+
 				case MOVE_FORWARD: {
 
 					System.out.println("GRASPING: MOVE FORWARD");
@@ -968,7 +1056,7 @@ boolean rotating = true;
 
 	private double target_red_hue_level = 0.00;
 	private double target_blue_hue_level = 0.63; 
-	private double target_yellow_hue_level = 0.15;
+	private double target_yellow_hue_level = 0.167;
 	private double target_green_hue_level = 0.4; 
 
 	public double target_red_sat_level=0.5; // (Solution)
@@ -1079,7 +1167,13 @@ boolean rotating = true;
 
 			if (Math.abs(blobTrack.rotationVelocityCommand)<0.001 && Math.abs(blobTrack.targetRange-SEARCH_STANDOFF) < EPS_SEARCH_STANDOFF) {
 				//fsmState = RoboFSM.SET_ARM_RETRACTED;<<
-				fsmState = RoboFSM.SET_ARM_TO_PULL;
+
+				if (SERVO_MODE == WALL_COLLECTING){
+					fsmState = RoboFSM.SET_ARM_TO_PULL;
+				} else {
+					fsmState = RoboFSM.SET_ARM_TO_COLLECT;
+				}
+				
 				setVelocity(0.0, 0.0);
 			} else {
 				// move robot towards target
@@ -1346,7 +1440,7 @@ boolean rotating = true;
 		}
 
 		public long step(ArmMsg msg) {
-			if(SERVO_MODE == COLLECTING) {return step_COLLECTING(msg);}
+			if(SERVO_MODE == COLLECTING || SERVO_MODE == WALL_COLLECTING) {return step_COLLECTING(msg);}
 			else if(SERVO_MODE == ASSEMBLING) {return step_ASSEMBLING(msg);}
 			else {return (long) 0;}
 		}
@@ -1572,7 +1666,7 @@ boolean rotating = true;
 		}
 
 		public long step(ArmMsg msg) {
-			if(SERVO_MODE == COLLECTING) {return step_COLLECTING(msg);}
+			if(SERVO_MODE == COLLECTING || SERVO_MODE == WALL_COLLECTING) {return step_COLLECTING(msg);}
 			else if(SERVO_MODE == ASSEMBLING) {return step_ASSEMBLING(msg);}
 			else {return (long) 0;}
 		}
