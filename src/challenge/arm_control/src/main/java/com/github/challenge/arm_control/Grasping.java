@@ -703,7 +703,7 @@ boolean rotating = true;
 					}
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, DIR_FORWARD)) {
+							targetPoint.y, startTheta)) {
 						System.out.println("GRASPING: We are within range of target");
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
