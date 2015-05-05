@@ -358,6 +358,8 @@ public class BlobTracking {
 	 */ //(Solution)
 	protected void computeRotationVelocityCommand() { //(Solution)
 		double rotationError = targetBearing; //(Solution)
+    rotationError += 2*0.017453293; // Account for assymetry in the blade position
+    // by adding 2 degrees
 		if (Math.abs(rotationError) < rotationErrorTolerance) //(Solution)
 			rotationVelocityCommand = 0.0; //(Solution)
 		else //(Solution)
