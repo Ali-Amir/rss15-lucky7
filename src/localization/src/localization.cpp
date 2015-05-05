@@ -93,15 +93,15 @@ void Localization::InitializeParticles() {
   double dt = HEADING_TOLERANCE;
 
   default_random_engine generator;
-  /*
   uniform_real_distribution<double> xDist(sx-dx, sx+dx);
   uniform_real_distribution<double> yDist(sy-dy, sy+dy);
   uniform_real_distribution<double> tDist(st-dt, st+dt);
-  */
 
+  /*
   uniform_real_distribution<double> xDist(sx-dx, sx+dx);
   uniform_real_distribution<double> yDist(sy-dy, sy+dy);
   uniform_real_distribution<double> tDist(0.0, 2*M_PI);
+  */
 
   for (int i = 0; i < N; ++i) {
     double x = xDist(generator);
@@ -154,9 +154,11 @@ void Localization::PublishLocation() {
       _prev_odo_x, _prev_odo_y, _prev_odo_t);
   */
   // TODO: remove
+  /*
   currentBelief.x = _prev_odo_x;
   currentBelief.y = _prev_odo_y;
   currentBelief.theta = _prev_odo_t;
+  */
   _location_pub.publish(currentBelief);
 
   if (_leaveBreadCrumbs) {

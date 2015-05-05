@@ -536,6 +536,7 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
           _rot_velocity = MAX_ROT_VELOCITY;
           _time_until = min(MAX_BLIND_TIME, fabs(dtheta/_rot_velocity))
                           + CurTime();
+          return;
         }
       }
 
