@@ -199,7 +199,8 @@ public class BlobTracking {
       double aveArea = (minArea + maxArea)/2.0;
       double aspectRatio = 1.0*b_w/b_h;
       double fractionFilled = labelArea[i]*1.0/aveArea;
-      if (Math.abs(1.0 - aspectRatio) < 0.2 && r > 5.0 && fractionFilled > 0.5) {
+      if (Math.abs(1.0 - aspectRatio) < 0.2 && r > 5.0 && fractionFilled > 0.5 &&
+          labelArea[i] > 75) {
       	if (b_w*b_h>max_area && !isDouble(b_w, b_h)) {
 
           ++totalDetections;

@@ -242,7 +242,7 @@ boolean rotating = true;
 	/**
 	 * <p>Target reached threshold (m).</p>
 	 **/
-	public static final double THETA_THRESHOLD = Math.PI/180;
+	public static final double THETA_THRESHOLD = 2.0*Math.PI/180;
 
 	/**
 	 * <p>Indicates backward direction motion<\p>
@@ -874,7 +874,7 @@ boolean rotating = true;
 				case ASSEMBLY_ROTATE: {
 					System.out.println("Assembly done: Rotating now");
 
-					if(rotating) {
+					if (!rotating) {
 						startPoint = new Point2D.Double();
 						startPoint.x = msg.getX();
 						startPoint.y = msg.getY();
@@ -885,7 +885,7 @@ boolean rotating = true;
 						targetPoint.y = startPoint.y -
 						0.1*Math.sin(startTheta);
 						targetTheta = startTheta;
-						rotating = false;
+						rotating = true;
 						//
 					}
 
@@ -893,11 +893,11 @@ boolean rotating = true;
 							targetPoint.y, DIR_FORWARD)) {
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
-						rotating = true;
+						rotating = false;
 						setVelocity(0.0, 0.0);//					Robot.setVelocity(0.0, 0.0);
 						fsmState = RoboFSM.OFF;
 						setGrasping(OFF, true, true);
-						}
+          }
 					break; 
 
 				}
@@ -990,7 +990,7 @@ boolean rotating = true;
 
 		double thetaError = Math.atan2(sError, cError);
 
-		if (thetaError<THETA_THRESHOLD){
+		if (Math.abs(thetaError) < THETA_THRESHOLD){
 			return true;
 		}
 		else {
@@ -1165,16 +1165,18 @@ boolean rotating = true;
 
     if (fsmState==RoboFSM.VISUAL_SERVO_SEARCH){
       double curTime = CurTime();
-      if (lastDetectionTime > -1e17 &&
-          curTime - lastDetectionTime > VS_TIMEOUT_SEC) {
-        System.out.println("Timed out with the detection");
-        lastDetectionTime = -1e18;
-        fsmState = RoboFSM.OFF;
-        setGrasping(OFF, false, false);
-        return;
+      if (!blobTrack.targetDetected) {
+        if (lastDetectionTime > -1e17 &&
+            curTime - lastDetectionTime > VS_TIMEOUT_SEC) {
+          System.out.println("Timed out with the detection");
+          lastDetectionTime = -1e18;
+          fsmState = RoboFSM.OFF;
+          setGrasping(OFF, false, false);
+          return;
+        }
+      } else {
+        lastDetectionTime = curTime;
       }
-
-      lastDetectionTime = curTime;
 
       System.out.println("GRASPING: VISUAL SERVO SEARCH");
 			System.out.println("GRASPING:   range, bearing:" +
@@ -1183,7 +1185,6 @@ boolean rotating = true;
 
 			if (Math.abs(blobTrack.rotationVelocityCommand)<0.001 && Math.abs(blobTrack.targetRange-SEARCH_STANDOFF) < EPS_SEARCH_STANDOFF) {
 				//fsmState = RoboFSM.SET_ARM_RETRACTED;<<
-
 
 				if (SERVO_MODE == WALL_COLLECTING){
 					fsmState = RoboFSM.SET_ARM_TO_PULL;

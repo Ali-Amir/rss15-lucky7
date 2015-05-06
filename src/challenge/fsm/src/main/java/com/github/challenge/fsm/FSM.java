@@ -114,9 +114,9 @@ public class FSM extends AbstractNodeMain {
 
   protected Block[] queue = {
     new Block(0.6, 0.6, "asd"),
-    new Block(2.3875, 1.1625, "asd"),
-    new Block(3.9125, 0.525, "asd"),
     new Block(4.25, 2.5875, "asd"),
+    //new Block(2.3875, 1.1625, "asd"),
+    new Block(3.9125, 0.525, "asd"),
     new Block(0.9375, 2.1, "asd"),
   };
 
