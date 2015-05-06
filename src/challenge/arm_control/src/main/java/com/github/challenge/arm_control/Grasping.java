@@ -706,7 +706,7 @@ boolean rotating = true;
 					}
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, startTheta, -10.0, 0.03)) {
+							targetPoint.y, startTheta, -0.10, 0.03)) {
 						System.out.println("GRASPING: We are within range of target");
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
@@ -822,7 +822,7 @@ boolean rotating = true;
 					}
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, startTheta, -TARGET_THRESHOLD, 10.0)) {
+							targetPoint.y, startTheta, -TARGET_THRESHOLD, 0.10)) {
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
 						startingMove = true;
@@ -851,7 +851,7 @@ boolean rotating = true;
 					}
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, startTheta, -TARGET_THRESHOLD, 10.0)) {
+							targetPoint.y, startTheta, -TARGET_THRESHOLD, 0.10)) {
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
 						startingMove = true;
@@ -920,7 +920,7 @@ boolean rotating = true;
 					}
 					
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, startTheta, -TARGET_THRESHOLD, 10.0)) {
+							targetPoint.y, startTheta, -TARGET_THRESHOLD, 0.10)) {
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
 						startingMove = true;
@@ -1044,7 +1044,7 @@ boolean rotating = true;
 				rv = -WHEEL_MAX_RV;
 			}
 
-      double tvBias = (tDthreshLeft + tDthreshRight)/2.0;
+      double tvBias = -(tDthreshLeft + tDthreshRight)/2.0;
 			double tv = (tvBias+transDisplacement) * WHEEL_TV * 2.0;
       if (tv > WHEEL_TV) {
         tv = WHEEL_TV;
