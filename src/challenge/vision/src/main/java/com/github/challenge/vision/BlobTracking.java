@@ -210,19 +210,20 @@ public class BlobTracking {
           double[] rangeBear = getRangeBearing(xC, yC);
           LocFreeRequest request =
             messageFactory.newFromType(LocFreeRequest._TYPE);
-          double d = Math.abs(rangeBear[0]/Math.cos(rangeBear[1]));
+          double bearing = Math.min(1.4*Math.PI/4.0, Math.max(-1.4*Math.PI/4.0, rangeBear[1]));
+          double d = Math.abs(rangeBear[0]/Math.cos(bearing));
           double dSafe = Math.max(0.0, d-0.36);
           double dRisky = Math.max(0.0, d-0.25);
-          double ux = Math.cos(curLocTheta+rangeBear[1]);
-          double uy = Math.sin(curLocTheta+rangeBear[1]);
+          double ux = Math.cos(curLocTheta+bearing);
+          double uy = Math.sin(curLocTheta+bearing);
           request.setXSafe(curLocX + ux*dSafe);
           request.setYSafe(curLocY + uy*dSafe);
           request.setXRisky(curLocX + ux*dRisky);
           request.setYRisky(curLocY + uy*dRisky);
-          request.setThetaTarget(curLocTheta + rangeBear[1]);
+          request.setThetaTarget(curLocTheta + bearing);
           request.setXStart(curLocX + ux*dRisky);
           request.setYStart(curLocY + uy*dRisky);
-          request.setThetaStart(curLocTheta + rangeBear[1]);
+          request.setThetaStart(curLocTheta + bearing);
 
           final Detection det = new Detection(xC, yC, area, i);
           free_cell_client.call(request, new ServiceResponseListener<LocFreeResponse>() {

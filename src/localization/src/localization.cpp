@@ -244,8 +244,9 @@ void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
   ROS_DEBUG_STREAM("onOdometryUpdate: " << dx << " " << dy <<
       " dt: " << dt << " at time: " << curTime()-_time);
 
-  double varD = pow(0.001, 2.0);
-  double varT = pow(0.017453293, 2.0);
+  double translationDistance = sqrt(dx*dx + dy*dy);
+  double varD = 0.001*translationDistance;
+  double varT = 0.017453293*translationDistance;
 
   default_random_engine gen;
   normal_distribution<double> xyDist(0.0, varD);
@@ -292,7 +293,7 @@ void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
   ROS_INFO_STREAM_THROTTLE(2,
       "Got sonar update: " << son->sonarId << " range: " << son->range);
   double start_time = curTime();
-  double varD = 1.0;
+  double varD = 0.4;
   for (Particle &par : _particles) {
     Vector_2 dir(Rotate(SONAR_DIR[son->sonarId], par.t));
     Point_2 sonarLoc(Point_2(par.x, par.y) + Rotate(SONAR_POS[son->sonarId], par.t));
