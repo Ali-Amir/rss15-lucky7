@@ -655,7 +655,6 @@ boolean rotating = true;
 				} 
 				case OFF: {
 					System.out.println("Structure Assembly finished"); 
-					setGrasping(OFF, false, false);
 					break;	
 				}
 					
@@ -883,7 +882,7 @@ boolean rotating = true;
 						0.1*Math.sin(startTheta);
 						targetTheta = startTheta;
 						rotating = false;
-						fsmState = RoboFSM.OFF;
+						//
 					}
 
 					if(rotateTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
@@ -892,6 +891,8 @@ boolean rotating = true;
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
 						rotating = true;
 						setVelocity(0.0, 0.0);//					Robot.setVelocity(0.0, 0.0);
+						fsmState = RoboFSM.OFF;
+						setGrasping(OFF, true, true);
 						}
 					break; 
 
@@ -911,7 +912,7 @@ boolean rotating = true;
 						BACK_DISTANCE*Math.sin(startTheta);
 						targetTheta = startTheta;
 						startingMove = false;
-						fsmState=RoboFSM.ASSEMBLY_ROTATE;
+						
 					}
 					
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
@@ -919,6 +920,7 @@ boolean rotating = true;
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
 						startingMove = true;
+						fsmState=RoboFSM.ASSEMBLY_ROTATE;
 						setVelocity(0.0, 0.0);//					Robot.setVelocity(0.0, 0.0);
 					}
 					break;

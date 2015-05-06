@@ -399,9 +399,9 @@ public class FSM extends AbstractNodeMain {
 						break;
 					}
 					case OFF:{
-					System.out.println("Assembly done");
-					fsmState=RobotFSM.SMART_PATHING;
-					break;
+						System.out.println("Assembly done");
+						fsmState=RobotFSM.SMART_PATHING;
+						break;
 					}
 				}
 			}
