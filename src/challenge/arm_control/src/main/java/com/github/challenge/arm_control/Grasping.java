@@ -110,11 +110,13 @@ public class Grasping extends AbstractNodeMain {
 	 * lab<\p>
 	 */
 	public int SERVO_MODE;
+  protected static final double VS_TIMEOUT_SEC = 1.0;
   protected double curLocX;
   protected double curLocY;
   protected double curLocTheta;
   protected double prevRotVel;
   protected double prevTransVel;
+  protected double lastDetectionTime;
 	static final int INITIALIZED = -1;
 	static final int COLLECTING = 0;
 	static final int ASSEMBLING = 1;
@@ -481,8 +483,7 @@ boolean rotating = true;
 						fsmState = RoboFSM.OFF;
 
 						setGrasping(OFF, true, true);
-							//setGrasping(OFF, true);
-						//fsmState = RoboFSM.BLIND_APPROACH;
+							//setGrasping(OFF, true); //fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
 				}
@@ -492,7 +493,7 @@ boolean rotating = true;
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("GRASPING: BLOCK IS RELEASED");
 						fsmState = RoboFSM.OFF;
-						setGrasping(OFF, false, false);
+						setGrasping(OFF, true, true);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
@@ -603,7 +604,7 @@ boolean rotating = true;
 						fsmState = RoboFSM.OFF;
 
 						setGrasping(OFF, true, true);
-							//setGrasping(OFF, true);
+            //setGrasping(OFF, true);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
@@ -614,7 +615,7 @@ boolean rotating = true;
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("GRASPING: BLOCK IS RELEASED");
 						fsmState = RoboFSM.OFF;
-						setGrasping(OFF, false, false);
+						setGrasping(OFF, true, true);
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
@@ -655,6 +656,9 @@ boolean rotating = true;
 				} 
 				case OFF: {
 					System.out.println("Structure Assembly finished"); 
+
+       			    fsmState = RoboFSM.OFF;
+					setGrasping(OFF, false, false);
 					break;	
 				}
 					
@@ -1079,14 +1083,14 @@ boolean rotating = true;
 	private double rotation_velocity_gain = 0.4;
 	private double rotation_velocity_max = 0.10;
 	private boolean use_gaussian_blur = false;//true;
-  	int videoCounter = 0;
+  int videoCounter = 0;
 
 
-  	private double desired_fixation_distance_approach = .31;
-  	private double rotation_velocity_gain_approach = 0.3;
-  	private double rotation_velocity_max_approach = 0.05;
-  	private double translation_error_tolerance_approach = .005;
-  	private double translation_velocity_gain_approach = 0.2;
+  private double desired_fixation_distance_approach = .31;
+  private double rotation_velocity_gain_approach = 0.3;
+  private double rotation_velocity_max_approach = 0.05;
+  private double translation_error_tolerance_approach = .005;
+  private double translation_velocity_gain_approach = 0.2;
 	private double translation_velocity_max_approach = .04;
 
 	/**
@@ -1107,7 +1111,7 @@ boolean rotating = true;
 			blobTrack = new BlobTracking(width, height, freeCellClient);
       blobTrack.updateLocation(curLocX, curLocY, curLocTheta);
 
-      /*j
+      /*
 			blobTrack.targetRedHueLevel = target_red_hue_level;
 			blobTrack.targetBlueHueLevel = target_blue_hue_level;
 			blobTrack.targetYellowHueLevel = target_yellow_hue_level;
@@ -1134,19 +1138,19 @@ boolean rotating = true;
 			System.out.println("Initializing blotTrack: done");
 		}
 
-        Image src = new Image(rawImage, width, height);
-        Image dest = new Image(rawImage, width, height);
-        blobTrack.apply(src, dest);
+    Image src = new Image(rawImage, width, height);
+    Image dest = new Image(rawImage, width, height);
+    blobTrack.apply(src, dest);
 
-        sensor_msgs.Image pubImage = vidPub.newMessage();
-        pubImage.setWidth(width);
-        pubImage.setHeight(height);
-        pubImage.setEncoding("rgb8");
-        pubImage.setIsBigendian((byte)0);
-        pubImage.setStep(width*3);
-        pubImage.setData(org.jboss.netty.buffer.ChannelBuffers.
-                          copiedBuffer(org.jboss.netty.buffer.ChannelBuffers.LITTLE_ENDIAN, dest.toArray()));
-        vidPub.publish(pubImage);
+    sensor_msgs.Image pubImage = vidPub.newMessage();
+    pubImage.setWidth(width);
+    pubImage.setHeight(height);
+    pubImage.setEncoding("rgb8");
+    pubImage.setIsBigendian((byte)0);
+    pubImage.setStep(width*3);
+    pubImage.setData(org.jboss.netty.buffer.ChannelBuffers.
+                      copiedBuffer(org.jboss.netty.buffer.ChannelBuffers.LITTLE_ENDIAN, dest.toArray()));
+    vidPub.publish(pubImage);
 
 		// to calibrate standoff distance
 		// wait until breakbeam is tripped, then output that range
@@ -1167,6 +1171,18 @@ boolean rotating = true;
 		// TODO: if we lose target during APPROACH, go back to search
 
     if (fsmState==RoboFSM.VISUAL_SERVO_SEARCH){
+      double curTime = CurTime();
+      if (lastDetectionTime > -1e17 &&
+          curTime - lastDetectionTime > VS_TIMEOUT_SEC) {
+        System.out.println("Timed out with the detection");
+        lastDetectionTime = -1e18;
+        fsmState = RoboFSM.OFF;
+        setGrasping(OFF, false, false);
+        return;
+      }
+
+      lastDetectionTime = curTime;
+
       System.out.println("GRASPING: VISUAL SERVO SEARCH");
 			System.out.println("GRASPING:   range, bearing:" +
           blobTrack.targetRange + ", " +
@@ -1906,6 +1922,10 @@ boolean rotating = true;
   	//System.out.println(bumpPressed);
   	//System.out.println("GRASPING: ////End Bump Status////");
     this.bumpPressed = value;
+  }
+
+  public double CurTime() {
+    return System.currentTimeMillis()/1000.0;
   }
 
 }
