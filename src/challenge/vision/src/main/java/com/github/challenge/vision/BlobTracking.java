@@ -507,12 +507,14 @@ public class BlobTracking {
           hdist = 1.0 - hdist;
         } 
 
+        /*
         if (x == width/2 && y == height/2) {
           System.out.println("Pixel center: (" + hsb[0] + "," + hsb[1] + "," + hsb[2] + ")");
           System.out.println("red: " + (Image.pixelRed(pix)&0xFF) +
                              "green: " + (Image.pixelGreen(pix)&0xFF) +
                              "blue: " + (Image.pixelBlue(pix)&0xFF));
         }
+        */
 
 				if (hsb[1] > targetSatLevel && hdist < hueThreshold) {
           ++cnt;
