@@ -40,13 +40,11 @@ class Localization {
   rss_msgs::RobotLocation currentPositionBelief() const;
 
  private:
-  static const int N = 5000;
+  static const int N = 7000;
   // 5 cm distance tolerance
-  static constexpr double DISTANCE_TOLERANCE = 0.02;
+  static constexpr double DISTANCE_TOLERANCE = 0.03;
   // 10 degree heading tolerance
-  static constexpr double HEADING_TOLERANCE = 0.087266463;
-  // TODO: measure the actual value.
-  static constexpr double ODOMETRY_TIMESTEP = 0.1;
+  static constexpr double HEADING_TOLERANCE = 0.122173048;
   std::vector<cgal_kernel::Vector_2> SONAR_DIR;
   std::vector<cgal_kernel::Vector_2> SONAR_POS;
 
