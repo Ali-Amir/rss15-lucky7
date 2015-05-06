@@ -1044,7 +1044,14 @@ boolean rotating = true;
 				rv = -WHEEL_MAX_RV;
 			}
 
-			double tv = transDisplacement * WHEEL_TV * 2.0;
+      double tvBias = (tDthreshLeft + tDthreshRight)/2.0;
+			double tv = (tvBias+transDisplacement) * WHEEL_TV * 2.0;
+      if (tv > WHEEL_TV) {
+        tv = WHEEL_TV;
+      }
+      if (tv < -WHEEL_TV) {
+        tv = -WHEEL_TV;
+      }
 			
 			System.out.println("GRASPING:  thetaError: " + thetaError + " rv: " + rv
           + " tv: " + tv + " transDistance: " + transDisplacement);

@@ -246,7 +246,7 @@ void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
 
   double translationDistance = sqrt(dx*dx + dy*dy);
   double varD = 0.1*translationDistance;
-  double varT = 0.174532925/2*fabs(dt);
+  double varT = 0.0174532925*fabs(dt);
 
   default_random_engine gen;
   normal_distribution<double> xyDist(0.0, varD);
@@ -287,7 +287,7 @@ Vector_2 Rotate(Vector_2 vec, double alfa) {
 
 void Localization::onSonarUpdate(const SonarMsg::ConstPtr &son) {
   // Skip if sonar is out of range.
-  if (son->range < 0.2 || son->range > 1.3) {
+  if (son->range < 0.2 || son->range > 1.2) {
     return;
   }
   ROS_INFO_STREAM_THROTTLE(2,

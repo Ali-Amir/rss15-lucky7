@@ -113,11 +113,16 @@ public class FSM extends AbstractNodeMain {
   protected LinkedList<Block> blocks = new LinkedList<Block>();
 
   protected Block[] queue = {
+    new Block(0.58112560080425, 2.040760309261669, "top left"),
+    new Block(4.17016236000813, 2.5105912353985316, "top right"),
+    new Block(3.985988383945902, 0.6304818964299568, "bottom right")
+  /*
     new Block(0.6, 0.6, "asd"),
     new Block(4.25, 2.5875, "asd"),
     //new Block(2.3875, 1.1625, "asd"),
     new Block(3.9125, 0.525, "asd"),
     new Block(0.9375, 2.1, "asd"),
+    */
   };
 
 
