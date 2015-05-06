@@ -1,6 +1,7 @@
 package com.github.rosjava.challenge.vision;
 
 import java.awt.Color;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.CountDownLatch;
 import com.github.rosjava.challenge.gui.Image;
 import org.ros.node.service.ServiceClient;
@@ -230,7 +231,6 @@ public class BlobTracking {
             @Override
             public void onSuccess(LocFreeResponse message) {
               synchronized(this) {
-                ++totalResponses;
                 if (det.targetArea>max_area && message.getResultSafe()) {
                   // Set internal variables
                   max_area = det.targetArea;
@@ -249,6 +249,7 @@ public class BlobTracking {
                     }
                   }
                 }
+                ++totalResponses;
                 if (totalResponses == totalDetections) {
                   doneSignal.countDown();
                 }
@@ -277,7 +278,7 @@ public class BlobTracking {
 
     if (totalDetections > 0) {
       try { 
-        doneSignal.await();
+        doneSignal.await(1, TimeUnit.SECONDS);
       } catch (InterruptedException e) {
       }
     }
