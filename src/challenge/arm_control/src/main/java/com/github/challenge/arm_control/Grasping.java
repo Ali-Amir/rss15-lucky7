@@ -110,6 +110,7 @@ public class Grasping extends AbstractNodeMain {
 	 * lab<\p>
 	 */
 	public int SERVO_MODE;
+  protected static final double VS_TIMEOUT_SEC = 1.0;
   protected double curLocX;
   protected double curLocY;
   protected double curLocTheta;
@@ -1168,7 +1169,6 @@ boolean rotating = true;
       double curTime = CurTime();
       if (lastDetectionTime > -1e17 &&
           curTime - lastDetectionTime > VS_TIMEOUT_SEC) {
-        // TODO: signal timeout
         System.out.println("Timed out with the detection");
         lastDetectionTime = -1e18;
         setGrasping(OFF, false, false);

@@ -79,7 +79,7 @@ public class FSM extends AbstractNodeMain {
 	Point2D.Double startPoint;
 
 	Point2D.Double assemblyPoint = new Point2D.Double(0.6, 0.6);
-	int assemblyXMod = .2;
+	double assemblyXMod = .2;
 
 	Point2D.Double testPoint = new Point2D.Double(3.34, 0.73);
   	int queueInd = 0;
@@ -261,11 +261,11 @@ public class FSM extends AbstractNodeMain {
 				double distance = Math.sqrt(
             	(currentPoint.x-assemblyPoint.x)*(currentPoint.x-assemblyPoint.x) +
             	(currentPoint.y-assemblyPoint.y)*(currentPoint.y-assemblyPoint.y));
-		        if (distance < 2e-1 && Math.abs(currentTheta-Math.PI) < Math.PI/180*3.0 {
-		          fsmState = RobotFSM.ASSEMBLY;
-		          setGrasping(ASSEMBLING);
-		          assemblyPoint.x += assemblyXMod;
-		        }
+        if (distance < 2e-1 && Math.abs(currentTheta-Math.PI) < Math.PI/180*3.0) {
+          fsmState = RobotFSM.ASSEMBLY;
+          setGrasping(ASSEMBLING);
+          assemblyPoint.x += assemblyXMod;
+        }
 				setNavigationTheta(assemblyPoint, Math.PI);
 			}
 
@@ -350,8 +350,9 @@ public class FSM extends AbstractNodeMain {
 					}
 
 					case OFF: {
+            boolean collected = notRisky;
 
-						if (notRisky) {
+						if (collected) {
 
 							System.out.println("FSM: BLOCK COLLECTED");
 
@@ -363,10 +364,12 @@ public class FSM extends AbstractNodeMain {
 							} else {
 								fsmState = RobotFSM.SMART_PATHING;
 							}
-
-						
-						} else {
+						} else if (!found) {
+              System.out.println("FSM: Lost track of the blob");
+              fsmState = RobotFSM.SMART_PATHING;
+            } else {
 							System.out.println("FSM: BLOCK NOT COLLECTED");
+              assert(false);
 						}
 
 						// if (collected){
