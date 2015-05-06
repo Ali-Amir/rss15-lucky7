@@ -262,11 +262,12 @@ double Grid::RunBfs(vector<CellId> start_ids) {
     ROS_INFO("Cell is: r:%d/%d c:%d/%d rotId:%d/%d", cell_id.r, ROWS, cell_id.c, COLS, cell_id.rotId, ANGLE_DIVISIONS);
     */
     int comp_ind = _compressed_id[cell_id.GetIndex()];
+    _free_cells[comp_ind].color = BFS_COLOR;
     _cells[comp_ind].color = BFS_COLOR;
     _cells[comp_ind].min_dist_to_goal = 0.0;
     _cells[comp_ind].to_goal_next = nullptr;
     _dp[comp_ind] = 0;
-    queue.push(make_pair(_dp[comp_ind], comp_ind));
+    queue.push(make_pair(_dist_to_obs[comp_ind], comp_ind));
   }
 
   ROS_INFO("Doing bfs! Initial points: %d", (int)queue.size());
@@ -301,6 +302,7 @@ double Grid::RunBfs(vector<CellId> start_ids) {
         _cells[v].min_dist_to_goal = _cells[cur_cell].min_dist_to_goal
                                       + _resolutionX;
         _cells[v].to_goal_next = _cells + cur_cell;
+        _free_cells[v].color = BFS_COLOR;
         _cells[v].color = BFS_COLOR;
         max_dist = max(max_dist, cur_dist + _resolutionX);
         queue.push(make_pair(w, v));

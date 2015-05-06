@@ -442,6 +442,32 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
       // these we are trying to reach next point for some reason
       // forcefully turn around.
       if (!bad || j <= 2) {
+        if (j < furthest) {
+          int ind = min(furthest, (int)path.size()-1);
+          double tarrad = CGAL::to_double(path[ind].z());
+          double currad = CGAL::to_double(path[0].z());
+          double dtheta = NormalizeRad(tarrad-currad);
+          if (dtheta > M_PI) dtheta -= 2*M_PI;
+          if (fabs(dtheta) < M_PI/180*5) {
+            double dx = CGAL::to_double(path[ind].x()-path[0].x());
+            double dy = CGAL::to_double(path[ind].y()-path[0].y());
+            double d = sqrt(dx*dx+dy*dy);
+            _trans_velocity = (dx*cos(currad)+dy*sin(currad))*MAX_TRANS_VELOCITY;
+            _rot_velocity = 0.0;
+            CapVelocities();
+            _time_until = min(MAX_BLIND_TIME, fabs(d*0.9/_trans_velocity))
+                            + CurTime();
+          } else {
+            _trans_velocity = 0.0;
+            _rot_velocity = dtheta*MAX_ROT_VELOCITY*0.5;
+            CapVelocities();
+            _time_until = min(MAX_BLIND_TIME, fabs(dtheta*0.9/_rot_velocity))
+                            + CurTime();
+          }
+          ROS_INFO("!!!!!!~~~~DOING VERY RISKY STUFF~~~~!!!!!!");
+          return;
+        }
+
         _trans_velocity = 0.0;
         _rot_velocity = sgn(dtheta)*MAX_ROT_VELOCITY;
         CapVelocities();
@@ -509,6 +535,10 @@ void Navigation::GetSmoothPathVelocities(const vector<Point_3> &path) {
       Point_3 cur_point(curx, cury, ObstacleMap::RadToRotation(cur_rad));
       Grid::CellId cur_cell;
       if (!_world->GetCellId(cur_point, &cur_cell) && total_dist_so_far > BUFFER_SIZE) {
+        ok = false;
+        break;
+      }
+      if (j > 10 && _world->DistToObs(cur_cell) < 4) {
         ok = false;
         break;
       }

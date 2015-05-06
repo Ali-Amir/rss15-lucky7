@@ -14,7 +14,7 @@ namespace cspace {
 
 class Grid {
  public:
-  static const int ROWS = 750;
+  static const int ROWS = 700;
   static const int COLS = 650;
   static const int ANGLE_DIVISIONS = ObstacleMap::ANGLE_DIVISIONS;
   static int BFS_COLOR;
@@ -103,6 +103,13 @@ class Grid {
       return _cells + _compressed_id[cell_id.GetIndex()];
     }
     return nullptr;
+  }
+
+  const int DistToObs(const CellId &cell_id) {
+    if (_compressed_id.count(cell_id.GetIndex())) {
+      return _dist_to_obs[_compressed_id[cell_id.GetIndex()]];
+    }
+    return 0;
   }
 
   const std::vector<const Cell*> *getFreeCellsByRotId(int rotId) const {

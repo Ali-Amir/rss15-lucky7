@@ -60,14 +60,16 @@ Polygon_2_exact GetReflectedRobotRepresentation(double rad) {
       -(pBackward*cos(rad)-pRight*sin(rad)),
       -(pBackward*sin(rad)+pRight*cos(rad))));
       */
-  points.push_back(Point_2_exact(-0.26, 0.09));
-  points.push_back(Point_2_exact(+0.26, 0.09));
-  points.push_back(Point_2_exact(+0.26, -0.10));
-  points.push_back(Point_2_exact(+0.22, -0.10));
-  points.push_back(Point_2_exact(+0.22, -0.36));
-  points.push_back(Point_2_exact(-0.22, -0.36));
-  points.push_back(Point_2_exact(-0.22, -0.10));
-  points.push_back(Point_2_exact(-0.26, -0.10));
+  points.push_back(Point_2_exact(-0.27, 0.10));
+  points.push_back(Point_2_exact(-0.27+0.15, 0.10+0.15));
+  points.push_back(Point_2_exact(+0.27-0.14, 0.10+0.15));
+  points.push_back(Point_2_exact(+0.27, 0.10));
+  points.push_back(Point_2_exact(+0.27, -0.11));
+  points.push_back(Point_2_exact(+0.23, -0.11));
+  points.push_back(Point_2_exact(+0.23, -0.37));
+  points.push_back(Point_2_exact(-0.23, -0.37));
+  points.push_back(Point_2_exact(-0.23, -0.11));
+  points.push_back(Point_2_exact(-0.27, -0.11));
   // Reflect and rotate
   for (int i = 0; i < points.size(); ++i) {
     double nx = CGAL::to_double(points[i].y());

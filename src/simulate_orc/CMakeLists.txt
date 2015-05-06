@@ -6,6 +6,8 @@ project(simulate_orc)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED roscpp std_msgs)
 
+catkin_package()
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 

@@ -83,40 +83,27 @@ int main(int argc, char **argv) {
           &navigation);
 
   int tar = 0;
+  int N = 12;
+  double x[] = {1.0, 2.0, 3.0, 3.5, 4.0, 4.0, 4.4, 4.3, 2.7, 1.0, 2.0, 0.6};
+  double y[] = {0.6, 1.0, 1.0, 0.55, 1.0, 1.0, 1.8, 2.6, 2.55, 2.0, 2.0, 0.6};
+
+
   while (true) {
     // TEST CASE 04
     {
       std::string res;
       if (n.getParam("/nav/testNavigationInReality", res)) {
         if (res == "yes") {
+          double d = sqrt(pow(navigation._cur_loc.x-x[tar], 2.0)+pow(navigation._cur_loc.y-y[tar], 2.0));
+          if (d < 2e-1) {
+            tar = (tar+1)%N;
+          }
+
           boost::shared_ptr<rss_msgs::RobotLocation> loc(
               new rss_msgs::RobotLocation());
-          boost::shared_ptr<rss_msgs::RobotLocation> loc1(
-              new rss_msgs::RobotLocation());
-          boost::shared_ptr<rss_msgs::RobotLocation> loc2(
-              new rss_msgs::RobotLocation());
-
-          loc1->x = 0.5811256;
-          loc1->y = 2.0407603;
-          loc1->theta = -20.0;
-          loc2->x = 4.17016236;
-          loc2->y = 2.51059123;
-          loc2->theta = -20.0;
-
-          double d1 = sqrt(pow(navigation._cur_loc.x-loc1->x, 2.0)+pow(navigation._cur_loc.y-loc1->y, 2.0));
-          double d2 = sqrt(pow(navigation._cur_loc.x-loc2->x, 2.0)+pow(navigation._cur_loc.y-loc2->y, 2.0));
-          if (d1 < 3e-2 && !tar) {
-            tar = 1;
-          }
-          if (d2 < 3e-2 && tar) {
-            tar = 0;
-          }
-
-          if (tar) {
-            *loc = *loc2;
-          } else {
-            *loc = *loc1;
-          }
+          loc->x = x[tar];
+          loc->y = y[tar];
+          loc->theta = -20.0;
           navigation.moveRobotTo(loc);
         }
       }

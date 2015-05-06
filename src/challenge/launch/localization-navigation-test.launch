@@ -1,6 +1,7 @@
 <launch>
   <machine name="workstation" address="localhost"/>
   
+  <!--
   <node name="gui" pkg="challenge"
                    type="navigation"
                    args="com.github.rosjava.challenge.gui.MapGUI"
@@ -14,7 +15,9 @@
                        output="log">
       <param name="mapFileName" value="$(env CHALLENGE)/maps/challenge_2015.map" />
   </node>
+  -->
 
+  <!--
   <node name="pub" pkg="challenge"
                    type="uorc_publisher"
                    args="com.github.rosjava.challenge.uorc_publisher.Publisher"
@@ -32,20 +35,22 @@
                    args="com.github.rosjava.challenge.odometry.Odometry"
                    machine="workstation"
                    output="log"/> 
+  -->
 
   <node name="nav" pkg="navigation"
                    type="navigation"
                    args=""
                    machine="workstation"
                    output="screen">
-      <param name="calculateFromScratch" value="no" />
+      <param name="calculateFromScratch" value="yes" />
       <param name="precalcPath" value="$(env CHALLENGE)/maps/challenge_2015.dec" />
       <param name="mapFileName" value="$(env CHALLENGE)/maps/challenge_2015.map" />
       <param name="testLocalization" value="no" />
       <param name="testWheelVelocities" value="no" />
-      <param name="testNavigationInReality" value="yes" />
+      <param name="testNavigationInReality" value="no" />
   </node>
 
+  <!--
   <node name="loc" pkg="localization"
                    type="localization"
                    args=""
@@ -55,14 +60,13 @@
       <param name="testTriangulation" value="no" />
       <param name="leaveBreadCrumbs" value="yes" />
   </node>
+  -->
 
-  <!--
   <node name="sim" pkg="simulate_orc"
                    type="simulate_orc"
                    args=""
                    machine="workstation"
                    output="screen">
   </node>
-  -->
 
 </launch>

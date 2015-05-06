@@ -245,7 +245,7 @@ void Localization::onOdometryUpdate(const OdometryMsg::ConstPtr &odo) {
       " dt: " << dt << " at time: " << curTime()-_time);
 
   double translationDistance = sqrt(dx*dx + dy*dy);
-  double varD = 0.1*translationDistance;
+  double varD = 0.01*translationDistance;
   double varT = 0.0174532925*fabs(dt);
 
   default_random_engine gen;
