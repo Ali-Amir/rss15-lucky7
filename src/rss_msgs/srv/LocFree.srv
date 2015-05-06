@@ -1,9 +1,11 @@
-float64 x
-float64 y
-float64 theta
-float64 xr
-float64 yr
-float64 thetar
+float64 xStart
+float64 yStart
+float64 thetaStart
+float64 xSafe
+float64 ySafe
+float64 xRisky
+float64 yRisky
+float64 thetaTarget
 ---
-bool result
-bool resultr
+bool resultSafe
+bool resultRisky

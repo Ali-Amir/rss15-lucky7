@@ -52,27 +52,31 @@ public class BlobTracking {
 	public double redSaturationLevel=0.42; // (Solution)
 	public double blueSaturationLevel=0.25; // (Solution)
 	public double greenSaturationLevel=0.45; // (Solution)
-	public double yellowSaturationLevel=0.5; // (Solution)
+	public double yellowSaturationLevel=0.6; // (Solution)
+
+	public double redHueThresh=0.05;
+	public double blueHueThresh=0.12;
+	public double greenHueThresh=0.08;
+	public double yellowHueThresh=0.08;
 
 	public double max_area = -1;
 
-	public double targetRadius=28; // (Solution)
-	public double hueThreshold=0.12; // (Solution)
+	public double targetRadius=28;
+	public double hueThreshold=0.12;
 	
-	public double blobSizeThreshold=400.0/128.0/128.0; // (Solution)
-	public double desiredFixationDistance=0.4; // (Solution)
-	public double translationErrorTolerance=0.05; // (Solution)
-	public double rotationErrorTolerance=Math.PI/180.0*1.0; // (Solution)
-	public boolean useGaussianBlur=false; // (Solution)
-	public boolean approximateGaussian=false; // (Solution)
-	public double translationVelocityGain=0.8; // (Solution)
-	public double translationVelocityMax=0.1; // (Solution)
-	public double rotationVelocityGain=0.9; // (Solution)
-	public double rotationVelocityMax=Math.PI/10.0; // (Solution)
-	// (Solution)
+	public double blobSizeThreshold=400.0/128.0/128.0;
+	public double desiredFixationDistance=0.4;
+	public double translationErrorTolerance=0.05;
+	public double rotationErrorTolerance=Math.PI/180.0*1.0;
+	public boolean useGaussianBlur=false;
+	public boolean approximateGaussian=false;
+	public double translationVelocityGain=0.8;
+	public double translationVelocityMax=0.1;
+	public double rotationVelocityGain=0.9;
+	public double rotationVelocityMax=Math.PI/10.0;
 	/** //(Solution)
 	 * <p>Focal plane distance, experimentally determined, in pixels.</p> //(Solution)
-	 **/ //(Solution)
+	 **/
 	public double focalPlaneDistance = 107.0; //(Solution)
 	// (Solution)
 	protected ConnectedComponents connComp = new ConnectedComponents(); //(Solution)
@@ -86,11 +90,11 @@ public class BlobTracking {
 	// Variables used for velocity controller that are available to calling
 	// process.  Visual results are valid only if targetDetected==true; motor
 	// velocities should do something sane in this case.
-	public boolean targetDetected = false; // set in blobPresent()
+	public boolean targetDetected = false;
   public boolean targetNotRisky = false;
-	public double centroidX = 0.0; // set in blobPresent()
-	public double centroidY = 0.0; // set in blobPresent()
-	public double targetArea = 0.0; // set in blobPresent()
+	public double centroidX = 0.0;
+	public double centroidY = 0.0;
+	public double targetArea = 0.0;
 	public double targetRange = 0.0; // set in blobFix()
 	public double targetBearing = 0.0; // set in blobFix()
   private NodeConfiguration nodeConfiguration;
@@ -111,16 +115,15 @@ public class BlobTracking {
     nodeConfiguration = NodeConfiguration.newPrivate();
     messageFactory = nodeConfiguration.getTopicMessageFactory();
 
-		histogram = new float[width][3]; // (Solution)
-		// (Solution)
-		// initialize image structures and masks // (Solution)
-		blobMask = new int[width * height]; // (Solution)
-		blobPixelRedMask = new int[width * height]; // (Solution)
-		blobPixelBlueMask = new int[width * height]; // (Solution)
-		blobPixelGreenMask = new int[width * height]; // (Solution)
-		blobPixelYellowMask = new int[width * height]; // (Solution)
-		imageConnected = new int[width * height]; // (Solution)
-		imageHsb = new float[width * height * 3]; // (Solution)
+		histogram = new float[width][3];
+		// initialize image structures and masks
+		blobMask = new int[width * height];
+		blobPixelRedMask = new int[width * height];
+		blobPixelBlueMask = new int[width * height];
+		blobPixelGreenMask = new int[width * height];
+		blobPixelYellowMask = new int[width * height];
+		imageConnected = new int[width * height];
+		imageHsb = new float[width * height * 3];
 	}
 
   public void updateLocation(double newLocX, double newLocY, double newLocTheta) {
@@ -210,14 +213,16 @@ public class BlobTracking {
           double d = Math.abs(rangeBear[0]/Math.cos(rangeBear[1]));
           double dSafe = Math.max(0.0, d-0.36);
           double dRisky = Math.max(0.0, d-0.25);
-          double ux = Math.cos(curLocTheta);
-          double uy = Math.sin(curLocTheta);
-          request.setX(curLocX + ux*dSafe);
-          request.setY(curLocY + uy*dSafe);
-          request.setTheta(curLocTheta + rangeBear[1]);
-          request.setXr(curLocX + ux*dRisky);
-          request.setYr(curLocY + uy*dRisky);
-          request.setThetar(curLocTheta + rangeBear[1]);
+          double ux = Math.cos(curLocTheta+rangeBear[1]);
+          double uy = Math.sin(curLocTheta+rangeBear[1]);
+          request.setXSafe(curLocX + ux*dSafe);
+          request.setYSafe(curLocY + uy*dSafe);
+          request.setXRisky(curLocX + ux*dRisky);
+          request.setYRisky(curLocY + uy*dRisky);
+          request.setThetaTarget(curLocTheta + rangeBear[1]);
+          request.setXStart(curLocX + ux*dRisky);
+          request.setYStart(curLocY + uy*dRisky);
+          request.setThetaStart(curLocTheta + rangeBear[1]);
 
           final Detection det = new Detection(xC, yC, area, i);
           free_cell_client.call(request, new ServiceResponseListener<LocFreeResponse>() {
@@ -225,11 +230,11 @@ public class BlobTracking {
             public void onSuccess(LocFreeResponse message) {
               synchronized(this) {
                 ++totalResponses;
-                if (det.targetArea>max_area && message.getResult()) {
+                if (det.targetArea>max_area && message.getResultSafe()) {
                   // Set internal variables
                   max_area = det.targetArea;
                   targetDetected = true;
-                  targetNotRisky = message.getResultr();
+                  targetNotRisky = message.getResultRisky();
                   targetArea = det.targetArea;
                   centroidX = det.xC;
                   centroidY = det.yC;
@@ -275,7 +280,7 @@ public class BlobTracking {
       } catch (InterruptedException e) {
       }
     }
-	} // blobPresent method
+	}
 
 	// (Solution)
 	// (Solution)
@@ -491,7 +496,7 @@ public class BlobTracking {
 	 * @param src source image (float) //(Solution)
 	 * @param src dest image (int) //(Solution)
 	 **/ //(Solution)
-	protected void blobPixel(Image src, int[] mask, double targetHueLevel, double targetSatLevel) { //(Solution)
+	protected void blobPixel(Image src, int[] mask, double targetHueLevel, double targetSatLevel, double targetHueThresh) { //(Solution)
 		int maskIndex = 0; //(Solution)
     int cnt = 0;
 		for (int y = 0; y < height; y++) { // (Solution)
@@ -516,7 +521,7 @@ public class BlobTracking {
         }
         */
 
-				if (hsb[1] > targetSatLevel && hdist < hueThreshold) {
+				if (hsb[1] > targetSatLevel && hdist < targetHueThresh) {
           ++cnt;
 					mask[maskIndex++] = 255;
 				} else {
@@ -571,10 +576,10 @@ public class BlobTracking {
 			} // (Solution)
 			src = new Image(destArray, src.getWidth(), src.getHeight()); // (Solution)
 		}
-		blobPixel(src, blobPixelRedMask, targetRedHueLevel, redSaturationLevel); //(Solution)
-		blobPixel(src, blobPixelBlueMask, targetBlueHueLevel, blueSaturationLevel); //(Solution)
-		blobPixel(src, blobPixelYellowMask, targetYellowHueLevel, yellowSaturationLevel); //(Solution)
-		blobPixel(src, blobPixelGreenMask, targetGreenHueLevel, greenSaturationLevel); //(Solution)
+		blobPixel(src, blobPixelRedMask, targetRedHueLevel, redSaturationLevel, redHueThresh); //(Solution)
+		blobPixel(src, blobPixelBlueMask, targetBlueHueLevel, blueSaturationLevel, blueHueThresh); //(Solution)
+		blobPixel(src, blobPixelYellowMask, targetYellowHueLevel, yellowSaturationLevel, yellowHueThresh); //(Solution)
+		blobPixel(src, blobPixelGreenMask, targetGreenHueLevel, greenSaturationLevel, greenHueThresh); //(Solution)
 		max_area = -1;
 
 		targetDetected = false;

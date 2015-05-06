@@ -34,6 +34,11 @@ class Navigation {
   void moveRobotTo(const rss_msgs::RobotLocation::ConstPtr& msg);
   bool isLocationFree(rss_msgs::LocFree::Request &req,
                       rss_msgs::LocFree::Response &res);
+  bool safeRotation(double x, double y,
+      double starad, double tarrad);
+  bool safeStraightPath(double x, double y,
+                        double xt, double yt, double rad);
+
 
  private:
   void TestWheelVelocities();

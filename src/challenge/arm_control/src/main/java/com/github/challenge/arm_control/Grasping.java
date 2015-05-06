@@ -446,7 +446,7 @@ boolean rotating = true;
 					if (wristControl.isAtDesired() && shoulderControl.isAtDesired()) {
 						System.out.println("GRASPING: BLADE IS SET TO COLLECT");
 						fsmState = RoboFSM.MOVE_FORWARD;
-						moveDistance = 0.30;
+						moveDistance = 0.35;
 						//fsmState = RoboFSM.BLIND_APPROACH;
 					}
 					break;
@@ -934,10 +934,12 @@ boolean rotating = true;
 	}
 
 	public void setVelocity(double rotVel, double transVel) {
+    /*
     if (Math.abs(rotVel-prevRotVel) < 1e-5 &&
         Math.abs(transVel-prevTransVel) < 1e-4) {
       return;
     }
+    */
     prevRotVel = rotVel;
     prevTransVel = transVel;
 		MotionMsg motionMsg = motionPub.newMessage();

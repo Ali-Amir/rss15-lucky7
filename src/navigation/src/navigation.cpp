@@ -136,25 +136,66 @@ void Navigation::updateRobotLocation(const RobotLocation::ConstPtr &loc) {
   }
 }
 
+bool Navigation::safeRotation(double x, double y,
+    double starad, double tarrad) {
+  double dtheta = NormalizeRad(tarrad-starad);
+  if (dtheta > M_PI) {
+    dtheta -= 2*M_PI;
+  }
+
+  for (int i = 0; i < 50; ++i) {
+    double theta = starad + i*dtheta/50;
+    Grid::CellId cur_cell_id;
+    if (!_world->GetCellId(Point_3(x, y,
+                             ObstacleMap::RadToRotation(theta)),
+                             &cur_cell_id)) {
+      return false;
+    }
+    const Grid::Cell *cur_cell(_world->GetCell(cur_cell_id));
+    if (cur_cell == nullptr) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool Navigation::safeStraightPath(double x, double y,
+                                  double xt, double yt, double rad) {
+  double ux = cos(rad), uy = sin(rad);
+  double dis = sqrt((xt-x)*(xt-x)+(yt-y)*(yt-y));
+  for (int i = 0; i < 50; ++i) {
+    double xc = x + i*ux*dis/50;
+    double yc = y + i*uy*dis/50;
+    Grid::CellId cur_cell_id;
+    if (!_world->GetCellId(Point_3(xc, yc,
+                             ObstacleMap::RadToRotation(rad)),
+                             &cur_cell_id)) {
+      return false;
+    }
+    const Grid::Cell *cur_cell(_world->GetCell(cur_cell_id));
+    if (cur_cell == nullptr) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool Navigation::isLocationFree(
     LocFree::Request &req, LocFree::Response &res) {
-  // Check safe
-  {
-    Grid::CellId cur_cell_id;
-    assert(_world->GetCellId(Point_3(req.x, req.y,
-                             ObstacleMap::RadToRotation(req.theta)),
-                             &cur_cell_id));
-    const Grid::Cell *cur_cell(_world->GetCell(cur_cell_id));
-    res.result = cur_cell != nullptr;
+  if (!safeRotation(req.xStart, req.yStart, req.thetaStart, req.thetaTarget)) {
+    res.resultSafe = res.resultRisky = false;
+    return true;
   }
-  // Check risky
-  {
-    Grid::CellId cur_cell_id;
-    assert(_world->GetCellId(Point_3(req.xr, req.yr,
-                             ObstacleMap::RadToRotation(req.thetar)),
-                             &cur_cell_id));
-    const Grid::Cell *cur_cell(_world->GetCell(cur_cell_id));
-    res.resultr = cur_cell != nullptr;
+  // Check rotation towards the desired orientation
+  res.resultSafe = safeStraightPath(req.xStart, req.yStart,
+                                    req.xSafe, req.ySafe,
+                                    req.thetaTarget);
+  res.resultRisky = safeStraightPath(req.xStart, req.yStart,
+                                     req.xRisky, req.yRisky,
+                                     req.thetaTarget); 
+  if (res.resultSafe) {
+    ROS_INFO_THROTTLE(1, "Safe thing for input: start(%.3lf,%.3lf) safe(%.3lf,%.3lf) risky(%.3lf,%.3lf) angle(start=%.3lf,end=%.3lf)",
+        req.xStart, req.yStart, req.xSafe, req.ySafe, req.xRisky, req.yRisky, req.thetaStart, req.thetaTarget);
   }
   return true;
 }
