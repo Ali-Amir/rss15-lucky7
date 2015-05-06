@@ -1671,8 +1671,8 @@ boolean rotating = true;
 
 		static final double servoPwmMin = 450;
 		static final double thetaAtPwmMin = 90.0*Math.PI/180;//-110*Math.PI/180;
-		static final double servoPwmMax = 2400;
-		static final double thetaAtPwmMax = -105.0*Math.PI/180;
+		static final double servoPwmMax = 2500;
+		static final double thetaAtPwmMax = -110.0*Math.PI/180;
 
 		static final double maxThetaChange = .05;    //Rad/sec
 
@@ -1680,7 +1680,7 @@ boolean rotating = true;
 		double poseCollecting = pwmToTheta(2400);//thetaMax;
 		double poseSetWristToPull = pwmToTheta(800);
 		double poseWristEngage = pwmToTheta(1100);
-		double poseGating = pwmToTheta(2400);
+		double poseGating = pwmToTheta(2600);
 		//double poseReleasing = thetaMin;  //radians
 
 		public WristController() {
