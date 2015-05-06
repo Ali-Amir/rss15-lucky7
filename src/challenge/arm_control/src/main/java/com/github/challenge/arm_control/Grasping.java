@@ -1102,7 +1102,7 @@ boolean rotating = true;
 	public synchronized void handle(byte[] rawImage, int width, int height) {
 
     ++videoCounter;
-    if (videoCounter % 12 != 0) {
+    if (videoCounter % 10 != 0) {
       return;
     }
 		// on first camera message, create new BlobTracking instance
