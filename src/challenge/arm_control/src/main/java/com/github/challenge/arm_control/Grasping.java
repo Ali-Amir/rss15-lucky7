@@ -656,6 +656,7 @@ boolean rotating = true;
 				} 
 				case OFF: {
 					System.out.println("Structure Assembly finished"); 
+          fsmState = RoboFSM.OFF;
 					setGrasping(OFF, false, false);
 					break;	
 				}
@@ -1171,6 +1172,7 @@ boolean rotating = true;
           curTime - lastDetectionTime > VS_TIMEOUT_SEC) {
         System.out.println("Timed out with the detection");
         lastDetectionTime = -1e18;
+        fsmState = RoboFSM.OFF;
         setGrasping(OFF, false, false);
         return;
       }
