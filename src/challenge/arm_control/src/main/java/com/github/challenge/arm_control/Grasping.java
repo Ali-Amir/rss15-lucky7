@@ -706,7 +706,7 @@ boolean rotating = true;
 					}
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, startTheta, 0.03)) {
+							targetPoint.y, startTheta, -10.0, 0.03)) {
 						System.out.println("GRASPING: We are within range of target");
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
@@ -753,7 +753,7 @@ boolean rotating = true;
 					}
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, startTheta, TARGET_THRESHOLD)) {
+							targetPoint.y, startTheta, -TARGET_THRESHOLD, TARGET_THRESHOLD)) {
 						System.out.println("GRASPING: We are within range of target");
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
@@ -792,7 +792,7 @@ boolean rotating = true;
 					}
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, startTheta, TARGET_THRESHOLD)) {
+							targetPoint.y, startTheta, -TARGET_THRESHOLD, TARGET_THRESHOLD)) {
 						System.out.println("GRASPING: We are within range of target");
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
@@ -822,7 +822,7 @@ boolean rotating = true;
 					}
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, startTheta, TARGET_THRESHOLD)) {
+							targetPoint.y, startTheta, -TARGET_THRESHOLD, 10.0)) {
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
 						startingMove = true;
@@ -851,7 +851,7 @@ boolean rotating = true;
 					}
 
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, startTheta, TARGET_THRESHOLD)) {
+							targetPoint.y, startTheta, -TARGET_THRESHOLD, 10.0)) {
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
 						startingMove = true;
@@ -920,7 +920,7 @@ boolean rotating = true;
 					}
 					
 					if(moveTowardTarget(msg.getX(), msg.getY(), msg.getTheta(), targetPoint.x,
-							targetPoint.y, startTheta, TARGET_THRESHOLD)) {
+							targetPoint.y, startTheta, -TARGET_THRESHOLD, 10.0)) {
 						// TBD
 						//(new GUIPointMessage(tX, tY, MapGUI.X_POINT)).publish();
 						startingMove = true;
@@ -1016,36 +1016,27 @@ boolean rotating = true;
 	 * a forward (1) or backward (-1) direction.<\p>
 	 */
 	private boolean moveTowardTarget(double x, double y, double heading,
-			double tX, double tY, double desiredHeading, double targetThreshold) {
+			double tX, double tY, double desiredHeading,
+      double tDthreshLeft, double tDthreshRight) {
 		System.out.println("GRASPING:   - current: x:" + x + " y:" + y);
 		System.out.println("GRASPING:   - target: x:" + tX + " y:" + tY);
 
-		// distance to target
-		double tD = Math.hypot((x-tX), (y-tY));
-		//System.out.println("GRASPING:   Distance to target: " + tD);
+    //cosine and sine of actual heading
+    //cosine and sine of desired heading
+    double cActual = Math.cos(heading);
+    double sActual = Math.sin(heading);
+		// displacement to target
+    double transDisplacement = cActual*(tX-x)+sActual*(tY-y);
 
-    /*
-		if (direction == DIR_BACKWARD) {
-			heading = heading - Math.PI;
-		}
-    */
-
-		if (tD < targetThreshold) {
+    if (tDthreshLeft < transDisplacement &&
+        transDisplacement < tDthreshRight) {
 			return true;
 		} else {
-			//cosine and sine of actual heading
-			double cActual = Math.cos(heading);
-			double sActual = Math.sin(heading);
-      double actualDirection = Math.signum(cActual*(tX-x)+sActual*(tY-y));
-
-			//cosine and sine of desired heading
       double thetaError = (desiredHeading - heading)%(2.0*Math.PI);
       if (thetaError > Math.PI) {
         thetaError -= 2.0*Math.PI;
       }
-
 			double rv = WHEEL_RV_GAIN * thetaError * 0.1;
-			//System.out.println("GRASPING:  RV: " + rv);
 			if (rv > WHEEL_MAX_RV) {
 				rv = WHEEL_MAX_RV;
 			}
@@ -1053,10 +1044,10 @@ boolean rotating = true;
 				rv = -WHEEL_MAX_RV;
 			}
 
-			double tv = tD * WHEEL_TV * actualDirection * 2.0;
+			double tv = transDisplacement * WHEEL_TV * 2.0;
 			
 			System.out.println("GRASPING:  thetaError: " + thetaError + " rv: " + rv
-          + " tv: " + tv + " transDistance: " + tD);
+          + " tv: " + tv + " transDistance: " + transDisplacement);
 
 			setVelocity(rv, tv);
 		}
