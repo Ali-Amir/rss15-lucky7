@@ -561,63 +561,40 @@ public class BlobTracking {
 	 */
 	public void apply(Image src, Image dest) {
 
-		stepTiming(); // monitors the frame rate
+		stepTiming();
 
-		// Begin Student Code
-
-		//averageRGB(src); // (Solution)
-		//averageHSB(src); // (Solution)
-
-		if (useGaussianBlur) {// (Solution)
-			byte[] srcArray = src.toArray();// (Solution)
-			byte[] destArray = new byte[srcArray.length]; // (Solution)
-			if (approximateGaussian) { // (Solution)
+		if (useGaussianBlur) {
+			byte[] srcArray = src.toArray();
+			byte[] destArray = new byte[srcArray.length];
+			if (approximateGaussian) {
 				GaussianBlur.applyBox(srcArray, destArray, src.getWidth(), src.getHeight());
-			} // (Solution)
-			else { // (Solution)
-				GaussianBlur.apply(srcArray, destArray, width, height); // (Solution)
-			} // (Solution)
-			src = new Image(destArray, src.getWidth(), src.getHeight()); // (Solution)
+			} else {
+				GaussianBlur.apply(srcArray, destArray, width, height);
+			}
+			src = new Image(destArray, src.getWidth(), src.getHeight()); 
 		}
-		blobPixel(src, blobPixelRedMask, targetRedHueLevel, redSaturationLevel, redHueThresh); //(Solution)
-		blobPixel(src, blobPixelBlueMask, targetBlueHueLevel, blueSaturationLevel, blueHueThresh); //(Solution)
+		blobPixel(src, blobPixelRedMask, targetRedHueLevel, redSaturationLevel, redHueThresh); 
+		blobPixel(src, blobPixelBlueMask, targetBlueHueLevel, blueSaturationLevel, blueHueThresh); 
 		blobPixel(src, blobPixelYellowMask, targetYellowHueLevel, yellowSaturationLevel, yellowHueThresh); //(Solution)
 		blobPixel(src, blobPixelGreenMask, targetGreenHueLevel, greenSaturationLevel, greenHueThresh); //(Solution)
-		max_area = -1;
 
 		targetDetected = false;
-
+		max_area = -1;
 		blobPresent(blobPixelRedMask, imageConnected);
 		blobPresent(blobPixelBlueMask, imageConnected);
 		blobPresent(blobPixelYellowMask, imageConnected);
 		blobPresent(blobPixelGreenMask, imageConnected);
-		 //(Solution)
-		if (targetDetected) { // (Solution)
-      //System.out.println("Target detected!");
-			blobFix(); // (Solution)
-			computeTranslationVelocityCommand(); // (Solution)
-			computeRotationVelocityCommand(); // (Solution)
-			// System.err.println("Bearing (Deg): " + (targetBearing*180.0/Math.PI)); // (Solution)
-			// System.err.println("Range (M): " + targetRange); // (Solution)
-		} else { // (Solution)
-			// System.err.println("no target"); // (Solution)
+		if (targetDetected) {
+			blobFix();
+			computeTranslationVelocityCommand();
+			computeRotationVelocityCommand();
+		} else {
       targetRange = 0.0;
       targetBearing = 0.0;
-			translationVelocityCommand = 0.0; // (Solution)
-			rotationVelocityCommand = 0.0; // (Solution)
-		} // (Solution)
-		// (Solution)
-		// System.err.println("Tracking Velocity: " + // (Solution)
-		//		translationVelocityCommand + "m/s, " + // (Solution)
-		//		rotationVelocityCommand + "rad/s"); // (Solution)
-		// For a start, just copy src to dest. // (Solution)
-		//if (dest != null) { // (Solution)
-			// (Solution)
-			//Histogram.getHistogram(src, dest, true); // (Solution)
-			markBlob(src, dest); // (Solution) TODO
-			// (Solution)
-		//} // (Solution)
-		// End Student Code
+			translationVelocityCommand = 0.0;
+			rotationVelocityCommand = 0.0;
+		}
+    markBlob(src, dest);
 	}
 
 }

@@ -96,11 +96,11 @@ int main(int argc, char **argv) {
           boost::shared_ptr<rss_msgs::RobotLocation> loc2(
               new rss_msgs::RobotLocation());
 
-          loc1->x = CGAL::to_double(navigation._obs_map->_robot_goal.x());
-          loc1->y = CGAL::to_double(navigation._obs_map->_robot_goal.y());
+          loc1->x = 0.5811256;
+          loc1->y = 2.0407603;
           loc1->theta = -20.0;
-          loc2->x = 4.275;
-          loc2->y = 0.2875;
+          loc2->x = 4.17016236;
+          loc2->y = 2.51059123;
           loc2->theta = -20.0;
 
           double d1 = sqrt(pow(navigation._cur_loc.x-loc1->x, 2.0)+pow(navigation._cur_loc.y-loc1->y, 2.0));

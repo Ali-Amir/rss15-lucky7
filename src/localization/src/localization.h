@@ -40,7 +40,7 @@ class Localization {
   rss_msgs::RobotLocation currentPositionBelief() const;
 
  private:
-  static const int N = 1000;
+  static const int N = 5000;
   // 5 cm distance tolerance
   static constexpr double DISTANCE_TOLERANCE = 0.03;
   // 10 degree heading tolerance
