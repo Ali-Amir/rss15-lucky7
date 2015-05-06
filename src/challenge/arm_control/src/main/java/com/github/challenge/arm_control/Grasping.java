@@ -682,7 +682,7 @@ boolean rotating = true;
 
 				case MOVE_FORWARD: {
 
-					System.out.println("GRASPING: MOVE FORWARD");
+					//System.out.println("GRASPING: MOVE FORWARD");
 					// TODO
 					//if (Math.abs(blobTrack.target
 					// check distance to target and decrease standoff

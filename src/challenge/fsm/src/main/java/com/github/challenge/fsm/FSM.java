@@ -258,15 +258,22 @@ public class FSM extends AbstractNodeMain {
 			}
 
 			case RETURN_TO_ASSEMBLY: {
-				double distance = Math.sqrt(
-            	(currentPoint.x-assemblyPoint.x)*(currentPoint.x-assemblyPoint.x) +
-            	(currentPoint.y-assemblyPoint.y)*(currentPoint.y-assemblyPoint.y));
-        if (distance < 2e-1 && Math.abs(currentTheta-Math.PI) < Math.PI/180*3.0) {
+				double distance = Math.hypot(
+            	currentPoint.x-assemblyPoint.x,
+            	currentPoint.y-assemblyPoint.y);
+        double dtheta = (currentTheta - Math.PI)%(2*Math.PI);
+        if (dtheta > Math.PI) {
+          dtheta -= 2*Math.PI;
+        }
+
+        if (distance < 2e-1 && Math.abs(dtheta) < Math.PI/180*3.0) {
           fsmState = RobotFSM.ASSEMBLY;
           setGrasping(ASSEMBLING);
           assemblyPoint.x += assemblyXMod;
+          stopNavigation();
+        } else {
+          setNavigationTheta(assemblyPoint, Math.PI);
         }
-				setNavigationTheta(assemblyPoint, Math.PI);
 			}
 
 			case ASSEMBLY: {
@@ -358,7 +365,7 @@ public class FSM extends AbstractNodeMain {
 
 							blockCount += 1;
 
-							if (blockCount>4){
+							if (blockCount > 4){
 								blockCount = 0;
 								fsmState = RobotFSM.RETURN_TO_ASSEMBLY;
 							} else {
@@ -398,7 +405,7 @@ public class FSM extends AbstractNodeMain {
 				switch (mode) {
 
 					case ASSEMBLING: {
-						System.out.println("Starting to assembly blocks");
+						System.out.println("Starting to assemble blocks");
 						break;
 					}
 					case OFF:{
